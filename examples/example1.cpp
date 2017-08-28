@@ -55,7 +55,7 @@ namespace
 		/// </summary>
 		static constexpr double Pm = 1e5;
 	};
-	void run()
+	void run(std::string folder)
 	{
 		// Make parameters & IC easier to access.
 		typedef Parameters p;
@@ -70,8 +70,6 @@ namespace
 		constexpr double logPeriod = 1. / 60; // [h]
 		// Estimated maximal MOI
 		constexpr MoiSize maxMoi = 20;
-
-			
 
 		// Construct simulation
 		Simulation sim;			
@@ -189,6 +187,7 @@ namespace
 		* LOGGING *
 		**********/
 		Logger& logger = sim.GetLogger();
+		logger.SetBaseFolder(folder);
 		logger.SetLogPeriod(logPeriod);
 			
 		// Logging state values
@@ -223,7 +222,7 @@ namespace
 		sim.Run(runtime);
 	}
 }
-void example1()
+Example example1()
 {
-	run();
+	return { "batchinfect", "Infection of a bacterial batch culture with temperate phages", [](std::string folder) {run(folder); } };
 }

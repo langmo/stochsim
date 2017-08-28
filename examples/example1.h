@@ -1,2 +1,3 @@
 #pragma once
-void example1();
+#include "examples.h"
+Example example1();
