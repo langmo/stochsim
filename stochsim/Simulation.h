@@ -10,13 +10,7 @@ namespace stochsim
 	/// Main class to run simulations.
 	/// The idea is to construct a simulation by adding reactions and states to an object of this class. Once done, the simulation can be run using Simulation::run.
 	/// </summary>
-	class 
-#ifdef STOCHSIM_EXPORTS
-__declspec(dllexport)
-#else
-__declspec(dllimport)
-#endif
-		Simulation
+	class Simulation
 	{
 	public:
 		explicit Simulation();
