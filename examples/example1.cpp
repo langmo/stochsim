@@ -1,0 +1,229 @@
+#include <memory>
+
+#include "example1.h"
+#include "Parameters.h"
+
+#include "SimpleState.h"
+#include "ComplexState.h"
+#include "SimpleReaction.h"
+#include "Simulation.h"
+#include "SimpleStateLoggerTask.h"
+#include "ComplexStateLoggerTask.h"
+#include "ComplexDelayedReaction.h"
+#include "ProgressLoggerTask.h"
+#include "CustomLoggerTask.h"
+#include <iostream>
+// Anonymous namespace to avoid name collisions with other examples.
+namespace
+{
+	using namespace stochsim;
+	struct InfectedBacterium
+	{
+		unsigned long numInfections;
+		double firstInfectionTime;
+	};
+	struct LysingBacterium
+	{
+		double fateDecisionTime;
+	};
+	/// <summary>
+	/// Initial conditions.
+	/// Note that these values are given in #molecules/ml, and have to be converted to absolute numbers
+	/// by multiplying them with the volume. To emphasize this, values are given as doubles not as integers even in the cases
+	/// where they could be integers.
+	/// </summary>
+	struct InitialConditions
+	{
+		/// <summary>
+		/// RM-, non-lysogenic, not infected [ml^-1]
+		/// </summary>
+		static constexpr double B0m = 4e6;
+		/// <summary>
+		/// RM-, non-lysogenic, infected, fate not yet determined [ml^-1]
+		/// </summary>
+		static constexpr double B0i = 0;
+		/// <summary>
+		/// RM-, non-lysogenic, infected, fate decided to lyse [ml^-1]
+		/// </summary>
+		static constexpr double B0l = 0;
+		/// <summary>
+		/// RM-, lysogenic [ml^-1]
+		/// </summary>
+		static constexpr double B0p = 0;
+		/// <summary>
+		/// phage, non-modified [ml^-1]
+		/// </summary>
+		static constexpr double Pm = 1e5;
+	};
+	void run()
+	{
+		// Make parameters & IC easier to access.
+		typedef Parameters p;
+		typedef InitialConditions ic;
+		typedef std::vector<unsigned long>::size_type MoiSize;
+
+		// Volume
+		constexpr double V = 1.; // [ml]
+		// Simulation time 
+		constexpr double runtime = 12; // [h]
+		// Logging period of 1min
+		constexpr double logPeriod = 1. / 60; // [h]
+		// Estimated maximal MOI
+		constexpr MoiSize maxMoi = 20;
+
+			
+
+		// Construct simulation
+		Simulation sim;			
+								
+		// find out maximal capacity for complex states
+		unsigned long initialCapcity = static_cast<size_t>(1e6);
+
+		/*********
+		* STATES *
+		*********/
+		// RM-, non-lysogenic, not infected
+		std::shared_ptr<SimpleState> B0m = sim.CreateState<SimpleState>("B0m", static_cast<unsigned long>(std::round(ic::B0m*V)));
+
+		// RM-, non-lysogenic, infected, fate not yet determined
+		auto B0i_initializer = [](InfectedBacterium& bacterium, double time) {
+			bacterium.numInfections = 1;
+			bacterium.firstInfectionTime = time;
+		};
+		auto B0i_modifier = [](InfectedBacterium& bacterium, double time) {
+			bacterium.numInfections++;;
+		};
+		std::shared_ptr<ComplexState<InfectedBacterium>> B0i = sim.CreateState<ComplexState<InfectedBacterium>>("B0i", static_cast<unsigned long>(std::round(ic::B0i*V)), B0i_initializer, B0i_modifier, initialCapcity);
+		// RM-, non-lysogenic, infected, fate decided to lyse
+		auto B0l_initializer = [](LysingBacterium& bacterium, double time)
+		{
+			bacterium.fateDecisionTime = time;
+		};
+		auto B0l_modifier = [](LysingBacterium& bacterium, double time) {
+			// do nothing
+		};
+		std::shared_ptr<ComplexState<LysingBacterium>> B0l = sim.CreateState<ComplexState<LysingBacterium>>("B0l", static_cast<unsigned long>(std::round(ic::B0l*V)), B0l_initializer, B0l_modifier, initialCapcity);
+
+		// RM-, lysogenic
+		std::shared_ptr<SimpleState> B0p = sim.CreateState<SimpleState>("B0p", static_cast<unsigned long>(std::round(ic::B0p*V)));
+
+		// phage, non - modified
+		std::shared_ptr<SimpleState> Pm = sim.CreateState<SimpleState>("Pm", static_cast<unsigned long>(std::round(ic::Pm*V)));
+
+		/************
+		* REACTIONS *
+		************/
+		// B0m -> 2 B0m
+		auto B0m_doubling = sim.CreateReaction<SimpleReaction>(p::v_max);
+		B0m_doubling->AddReactant(B0m, 1, true);
+		B0m_doubling->AddProduct(B0m);
+			
+		// B0p -> 2 B0p
+		auto B0p_doubling = sim.CreateReaction<SimpleReaction>(p::v_max);
+		B0p_doubling->AddReactant(B0p, 1, true);
+		B0p_doubling->AddProduct(B0p);
+			
+
+		// B0m + Pm -> B0i
+		auto B0m_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		B0m_infection->AddReactant(B0m);
+		B0m_infection->AddReactant(Pm);
+		B0m_infection->AddProduct(B0i);
+
+		// B0i[i] + Pm -> B0i[i+1]
+		auto B0i_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		B0i_infection->AddReactant(B0i, 1, true);
+		B0i_infection->AddReactant(Pm);
+		B0i_infection->AddProduct(B0i, 1, true);
+
+		// B0p + Pm -> B0p
+		auto B0p_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		B0p_infection->AddReactant(B0p, 1, true);
+		B0p_infection->AddReactant(Pm);
+
+		// B0l + Pm -> B0l
+		auto B0l_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		B0l_infection->AddReactant(B0l, 1, true);
+		B0l_infection->AddReactant(Pm);
+
+		// B0i ---(t_moi)---> B0p||B0l
+		std::vector<unsigned long> mois(maxMoi);
+		auto B0i_fate_fireTime = [] (InfectedBacterium& bacterium)-> double
+		{
+			return bacterium.firstInfectionTime + Parameters::moiPeriod;
+		};
+		auto B0i_fate_fireAction = [B0i,B0l,B0p, &mois](InfectedBacterium& bacterium, SimInfo& simInfo)
+		{
+			while (bacterium.numInfections > mois.size())
+			{
+				mois.resize(2 * mois.size());
+			}
+			mois[bacterium.numInfections - 1]++;
+
+			B0i->Remove(simInfo);
+			if (simInfo.Rand() < Parameters::alpha)
+				B0p->Add(simInfo);
+			else
+				B0l->Add(simInfo);
+		};
+		auto B0i_fate = sim.CreateReaction<ComplexDelayedReaction<InfectedBacterium>>(B0i, B0i_fate_fireTime, B0i_fate_fireAction);
+
+		// B0l ---(t_lag-t_moi)---> beta*Pm
+		auto B0l_lysis_fireTime = [](LysingBacterium& bacterium)-> double
+		{
+			return bacterium.fateDecisionTime + Parameters::lysisPeriod;
+		};
+		auto B0l_lysis_fireAction = [B0l,Pm](LysingBacterium& bacterium, SimInfo& simInfo)
+		{
+			B0l->Remove(simInfo);
+			Pm->Add(simInfo, Parameters::beta);
+		};
+		auto B0l_lysis = sim.CreateReaction<ComplexDelayedReaction<LysingBacterium>>(B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
+
+		// B0p -> B0l
+		auto B0p_fate = sim.CreateReaction<SimpleReaction>(p::xi);
+		B0p_fate->AddReactant(B0p);
+		B0p_fate->AddProduct(B0l);
+
+		/**********
+		* LOGGING *
+		**********/
+		Logger& logger = sim.GetLogger();
+		logger.SetLogPeriod(logPeriod);
+			
+		// Logging state values
+		logger.CreateTask<SimpleStateLoggerTask>("states.csv", B0m, B0i, B0l, B0p, Pm);
+
+		// Logging MOI
+		auto MOI_logFunc = [&mois](std::ostream& out, double time)
+		{
+			out << time;
+			for (auto& moi : mois)
+			{
+				out << ", " << moi;
+				moi = 0;
+			}
+			out << std::endl;
+		};
+		auto MOI_headerFunc = [&mois](std::ostream& out)
+		{
+			out << "Time";
+			for (MoiSize i = 0; i < mois.size(); i++)
+			{
+				mois[i] = 0;
+				out << ", MOI=" << (i+1);
+			}
+			out << std::endl;
+		};
+		logger.CreateTask<CustomLoggerTask>("mois.csv", MOI_headerFunc, MOI_logFunc);
+			
+		// Logging progress
+		logger.CreateTask<ProgressLoggerTask>(runtime);
+
+		sim.Run(runtime);
+	}
+}
+void example1()
+{
+	run();
+}
