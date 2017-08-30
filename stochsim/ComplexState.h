@@ -8,6 +8,7 @@
 namespace stochsim
 {
 template<class T> class ComplexStateIterator;
+
 /// <summary>
 /// A state representing the concentration of a species, where, however, each molecule has its own identiy/properties. That is, the molecules can be distinguished, which means that this
 /// class represents something like a meta-state.

@@ -1,5 +1,4 @@
 #pragma once
-#include "ComplexState.h"
 #include "ComposedState.h"
 #include <memory>
 #include "types.h"
@@ -10,7 +9,7 @@ namespace stochsim
 	/// A reaction which fires at a specific time (instead of having a propensity), with the time when the reaction fires next being determined by the properties of the first molecule of a ComplexState.
 	/// Since the first molecule of a complex state is also the oldest molecule, this type of reaction typically represents a reaction firing a fixed delay after a molecule of a given species was created.
 	/// </summary>
-	template<class T> class ComplexDelayedReaction : public DelayedReaction
+	template<class T> class ComposedDelayedReaction : public DelayedReaction
 	{
 	public:
 		/// <summary>
@@ -22,7 +21,7 @@ namespace stochsim
 		/// </summary>
 		typedef std::function<void(T& molecule, SimInfo& simInfo)> FireAction;
 
-		ComplexDelayedReaction(std::string name, std::shared_ptr<ComplexState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
+		ComposedDelayedReaction(std::string name, std::shared_ptr<ComposedState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
 		{
 
 		}
@@ -41,11 +40,11 @@ namespace stochsim
 	private:
 		FireTime fireTime_;
 		FireAction fireAction_;
-		std::shared_ptr<ComplexState<T>> state_;
+		std::shared_ptr<ComposedState<T>> state_;
 		const std::string name_;
 	};
 
-	template<> class ComplexDelayedReaction<Molecule> : public DelayedReaction
+	template<> class ComposedDelayedReaction<Molecule> : public DelayedReaction
 	{
 	private:
 		/// <summary>
@@ -62,13 +61,13 @@ namespace stochsim
 			}
 		};
 	public:
-		ComplexDelayedReaction(std::string name, std::shared_ptr<ComplexState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
+		ComposedDelayedReaction(std::string name, std::shared_ptr<ComposedState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
 		{
 
 		}
 		virtual double NextReactionTime() const override
 		{
-			return state_->Num() > 0 ? state_->Get(0).creationTime+ delay_ : stochsim::inf;
+			return state_->Num() > 0 ? state_->Get(0).creationTime + delay_ : stochsim::inf;
 		}
 		virtual void Fire(SimInfo& simInfo) override
 		{
@@ -104,7 +103,7 @@ namespace stochsim
 		}
 	private:
 		const double delay_;
-		std::shared_ptr<ComplexState<Molecule>> state_;
+		std::shared_ptr<ComposedState<Molecule>> state_;
 		const std::string name_;
 		std::vector<ReactionElement> products_;
 	};

@@ -151,6 +151,8 @@
   <ItemGroup>
     <ClInclude Include="ComplexDelayedReaction.h" />
     <ClInclude Include="ComplexState.h" />
+    <ClInclude Include="ComposedDelayedReaction.h" />
+    <ClInclude Include="ComposedState.h" />
     <ClInclude Include="CustomLogger.h" />
     <ClInclude Include="ProgressLogger.h" />
     <ClInclude Include="SimpleReaction.h" />
