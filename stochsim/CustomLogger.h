@@ -5,17 +5,17 @@
 #include <fstream>
 namespace stochsim
 {
-	class CustomLoggerTask :
-		public LoggerTask
+	class CustomLogger :
+		public Logger
 	{
 	public:
 		typedef std::function<void(std::ostream& out)> HeaderFunc;
 		typedef std::function<void(std::ostream& out, double time)> LogFunc;
 
-		CustomLoggerTask(std::string fileName, HeaderFunc headerFunc, LogFunc logFunc) : headerFunc_(headerFunc), logFunc_(logFunc), fileName_(fileName)
+		CustomLogger(std::string fileName, HeaderFunc headerFunc, LogFunc logFunc) : headerFunc_(headerFunc), logFunc_(logFunc), fileName_(fileName)
 		{
 		}
-		virtual ~CustomLoggerTask()
+		virtual ~CustomLogger()
 		{
 			if (file_)
 			{

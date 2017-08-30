@@ -5,7 +5,6 @@
 #include "types.h"
 namespace stochsim
 {
-	class Logger;
 	/// <summary>
 	/// Main class to run simulations.
 	/// The idea is to construct a simulation by adding reactions and states to an object of this class. Once done, the simulation can be run using Simulation::run.
@@ -20,12 +19,6 @@ namespace stochsim
 		/// </summary>
 		/// <param name="maxTime">Simulation time when simulation should stop. Simulation starts at simulation time zero.</param>
 		void Run(double maxTime);
-
-		/// <summary>
-		/// Returns an object to configure when and what is logged during a simulation.
-		/// </summary>
-		/// <returns>Object to configure logging mechanism.</returns>
-		Logger& GetLogger();
 
 		/// <summary>
 		/// Creates a state of the given type and adds it to the set of states managed by this simulation. Equivalent to
@@ -95,6 +88,68 @@ namespace stochsim
 		/// <returns></returns>
 		std::shared_ptr<PropensityReaction> GetPropensityReaction(const std::string& name);
 
+		/// <summary>
+		/// Returns the delayed reaction with the given name, or nullptr if a delayed reaction with the name is not yet defined in the simulation.
+		/// </summary>
+		/// <param name="name">name of reaction</param>
+		/// <returns></returns>
+		std::shared_ptr<DelayedReaction> GetDelayedReaction(const std::string& name);
+
+		/// <summary>
+		/// Adds a logger to the simulation monitoring the progress of a simulation and e.g. writing it to a file. This logger is called every time the simulation time exceeds the log period.
+		/// </summary>
+		/// <param name="task">Logger to add.</param>
+		void AddLogger(std::shared_ptr<Logger> logger);
+		/// <summary>
+		/// Sets the time period of logging. Default = 0.1.
+		/// </summary>
+		/// <param name="logPeriod">Log period in simulation time units</param>
+		void SetLogPeriod(double logPeriod);
+		/// <summary>
+		/// Returns the time period of logging. Default = 0.1.
+		/// </summary>
+		/// <returns>Log period in simulation time units</returns>
+		double GetLogPeriod() const;
+		/// <summary>
+		/// Sets the folder under which the results of the simulation should be saved. An additional sub-folder is created
+		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
+		/// </summary>
+		/// <param name="baseFolder">Base folder where simulation results are saved.</param>
+		void SetBaseFolder(std::string baseFolder);
+		/// <summary>
+		/// Returns the folder under which the results of the simulation should be saved. An additional sub-folder is created
+		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
+		/// </summary>
+		/// <returns>Base folder where simulation results are saved.</returns>
+		std::string GetBaseFolder() const;
+		/// <summary>
+		/// Set to true to create an additional sub-folder under the base folder with the name indicating the current date and time to prevent overwriting old simulation results.
+		/// </summary>
+		/// <param name="uniqueSubFolder">True if sub-folder should be created, false if results should be saved directly in the base folder.</param>
+		void SetUniqueSubfolder(bool uniqueSubFolder);
+		/// <summary>
+		/// Returns true if an additional sub-folder under the base folder is created with the name indicating the current date and time to prevent overwriting old simulation results.
+		/// </summary>
+		/// <returns>True if sub-folder is created, false if results are saved directly in the base folder.</returns>
+		bool IsUniqueSubfolder() const;
+		/// <summary>
+		/// Creates a logger monitoring the state of the simulation and adds it to this simulation. Same as
+		/// <code>
+		/// Simulation sim;
+		/// //...
+		/// shared_pointer&lt;TaskClass&gt; logger = make_shared&lt;TaskClass&gt;(arguments...);
+		/// sim.AddLogger(logger);
+		/// </code>
+		/// </summary>
+		template<class TaskClass,
+			class... ArgumentTypes> inline
+			std::shared_ptr<TaskClass> CreateLogger(ArgumentTypes&&... arguments)
+		{
+			std::shared_ptr<TaskClass> logger = std::make_shared<TaskClass>(std::forward<ArgumentTypes>(arguments)...);
+			AddLogger(logger);
+			return logger;
+		}
+
 	private:
 		// Make this object be non-copyable
 		Simulation(const Simulation&) = delete;
@@ -102,67 +157,5 @@ namespace stochsim
 
 		class Impl;
 		Impl *impl_;
-	};
-
-	class Logger
-	{
-	public:
-		virtual ~Logger()
-		{
-		}
-		/// <summary>
-		/// Adds a task to the logger. This task is every time called the simulation time exceeds the log period.
-		/// </summary>
-		/// <param name="task">Task to add.</param>
-		virtual void AddTask(std::shared_ptr<LoggerTask> task) = 0;
-		/// <summary>
-		/// Sets the time period of logging. Default = 0.1.
-		/// </summary>
-		/// <param name="logPeriod">Log period in simulation time units</param>
-		virtual void SetLogPeriod(double logPeriod) = 0;
-		/// <summary>
-		/// Returns the time period of logging. Default = 0.1.
-		/// </summary>
-		/// <returns>Log period in simulation time units<returns>
-		virtual double GetLogPeriod() const = 0;
-		/// <summary>
-		/// Sets the folder under which the results of the simulation should be saved. An additional sub-folder is created
-		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
-		/// </summary>
-		/// <param name="baseFolder">Base folder where simulation results are saved.</param>
-		virtual void SetBaseFolder(std::string baseFolder) = 0;
-		/// <summary>
-		/// Returns the folder under which the results of the simulation should be saved. An additional sub-folder is created
-		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
-		/// </summary>
-		/// <returns>Base folder where simulation results are saved.</returns>
-		virtual std::string GetBaseFolder() const = 0;
-		/// <summary>
-		/// Set to true to create an additional sub-folder under the base folder with the name indicating the current date and time to prevent overwriting old simulation results.
-		/// </summary>
-		/// <param name="uniqueSubFolder">True if sub-folder should be created, false if results should be saved directly in the base folder.</param>
-		virtual void SetUniqueSubfolder(bool uniqueSubFolder) = 0;
-		/// <summary>
-		/// Returns true if an additional sub-folder under the base folder is created with the name indicating the current date and time to prevent overwriting old simulation results.
-		/// </summary>
-		/// <returns>True if sub-folder is created, false if results are saved directly in the base folder.</returns>
-		virtual bool IsUniqueSubfolder() const = 0;
-		/// <summary>
-		/// Creates a logging task and adds it to this logger. Same as
-		/// <code>
-		/// Logger logger;
-		/// //...
-		/// shared_pointer&lt;TaskClass&gt; task = make_shared&lt;TaskClass&gt;(arguments...);
-		/// logger.AddTask(task);
-		/// </code>
-		/// </summary>
-		template<class TaskClass,
-			class... ArgumentTypes> inline
-			std::shared_ptr<TaskClass> CreateTask(ArgumentTypes&&... arguments)
-		{
-			std::shared_ptr<TaskClass> task = std::make_shared<TaskClass>(std::forward<ArgumentTypes>(arguments)...);
-			AddTask(task);
-			return task;
-		}
 	};
 }

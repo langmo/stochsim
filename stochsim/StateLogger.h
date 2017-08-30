@@ -8,18 +8,18 @@ namespace stochsim
 	/// <summary>
 	/// A logger task which writes the concentration of all its supplied states to the disk in form of a table.
 	/// </summary>
-	class SimpleStateLoggerTask :
-		public LoggerTask
+	class StateLogger :
+		public Logger
 	{
 	public:
-		SimpleStateLoggerTask(std::string fileName) : fileName_(fileName)
+		StateLogger(std::string fileName) : fileName_(fileName)
 		{
 		}
-		template <typename... T> SimpleStateLoggerTask(std::string fileName, std::shared_ptr<State> state, T... others) : SimpleStateLoggerTask(fileName)
+		template <typename... T> StateLogger(std::string fileName, std::shared_ptr<State> state, T... others) : StateLogger(fileName)
 		{
 			AddState(state, others...);
 		}
-		virtual ~SimpleStateLoggerTask()
+		virtual ~StateLogger()
 		{
 			if (file_)
 			{

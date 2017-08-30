@@ -17,30 +17,30 @@ namespace stochsim
 {
 	std::string CreatePathRecursively(std::string rawPath);
 
-	class SimulationLogger : public Logger
+	class LogManager
 	{
 	public:
-		SimulationLogger() : logPeriod_(0.1), baseFolder_("simulations"), uniqueSubFolder_(true)
+		LogManager() : logPeriod_(0.1), baseFolder_("simulations"), uniqueSubFolder_(true)
 		{
 		}
-		virtual void SetUniqueSubfolder(bool uniqueSubFolder) override
+		virtual void SetUniqueSubfolder(bool uniqueSubFolder)
 		{
 			uniqueSubFolder_ = uniqueSubFolder;
 		}
-		virtual bool IsUniqueSubfolder() const override
+		virtual bool IsUniqueSubfolder() const
 		{
 			return uniqueSubFolder_;
 		}
-		virtual double GetLogPeriod() const override
+		virtual double GetLogPeriod() const
 		{
 			return logPeriod_;
 		}
-		virtual std::string GetBaseFolder() const  override
+		virtual std::string GetBaseFolder() const 
 		{
 			return baseFolder_;
 		}
 
-		virtual void AddTask(std::shared_ptr<LoggerTask> task) override
+		virtual void AddTask(std::shared_ptr<Logger> task)
 		{
 			tasks_.push_back(std::move(task));
 		}
@@ -88,12 +88,12 @@ namespace stochsim
 				WriteLog(lastLogTime_);
 			}
 		}
-		virtual void SetLogPeriod(double logPeriod) override
+		virtual void SetLogPeriod(double logPeriod)
 		{
 			assert(logPeriod > 0);
 			logPeriod_ = logPeriod;
 		}
-		virtual void SetBaseFolder(std::string baseFolder) override
+		virtual void SetBaseFolder(std::string baseFolder)
 		{
 			baseFolder_ = std::move(baseFolder);
 		}
@@ -105,7 +105,7 @@ namespace stochsim
 				task->WriteLog(time);
 			}
 		}
-		std::vector<std::shared_ptr<LoggerTask>> tasks_;
+		std::vector<std::shared_ptr<Logger>> tasks_;
 		double lastLogTime_;
 		double logPeriod_;
 		std::string baseFolder_;
@@ -244,7 +244,7 @@ namespace stochsim
 			return randomUniform_(randomEngine_);
 		}
 
-		Logger& GetLogger()
+		LogManager& GetLogger()
 		{
 			return logger_;
 		}
@@ -280,6 +280,15 @@ namespace stochsim
 			}
 			return nullptr;
 		}
+		std::shared_ptr<DelayedReaction> GetDelayedReaction(const std::string& name)
+		{
+			for (std::shared_ptr<DelayedReaction>& delayedReaction : delayedReactions_)
+			{
+				if (delayedReaction->Name() == name)
+					return delayedReaction;
+			}
+			return nullptr;
+		}
 
 	private:
 		std::vector<std::shared_ptr<PropensityReaction>> propensityReactions_;
@@ -287,7 +296,7 @@ namespace stochsim
 		std::vector<std::shared_ptr<State>> states_;
 		double time_;
 		double runtime_;
-		SimulationLogger logger_;
+		LogManager logger_;
 		std::default_random_engine randomEngine_;
 		// function to generate uniformly distributed random numbers in [0,1)
 		std::uniform_real<double> randomUniform_;
@@ -327,15 +336,48 @@ namespace stochsim
 		return impl_->GetPropensityReaction(name);
 	}
 
+	std::shared_ptr<DelayedReaction> Simulation::GetDelayedReaction(const std::string & name)
+	{
+		return impl_->GetDelayedReaction(name);
+	}
+
 	void Simulation::Run(double maxTime)
 	{
 		impl_->Run(maxTime);
 	}
 
-	Logger & Simulation::GetLogger()
+	void Simulation::AddLogger(std::shared_ptr<Logger> logger)
 	{
-		return impl_->GetLogger();
+		impl_->GetLogger().AddTask(logger);
 	}
+	void Simulation::SetLogPeriod(double logPeriod)
+	{
+		impl_->GetLogger().SetLogPeriod(logPeriod);
+	}
+	double Simulation::GetLogPeriod() const
+	{
+		return impl_->GetLogger().GetLogPeriod();
+	}
+	void Simulation::SetBaseFolder(std::string baseFolder)
+	{
+		impl_->GetLogger().SetBaseFolder(baseFolder);
+	}
+	std::string Simulation::GetBaseFolder() const
+	{
+		return impl_->GetLogger().GetBaseFolder();
+	}
+	void Simulation::SetUniqueSubfolder(bool uniqueSubFolder)
+	{
+		impl_->GetLogger().SetUniqueSubfolder(uniqueSubFolder);
+	}
+	bool Simulation::IsUniqueSubfolder() const
+	{
+		return impl_->GetLogger().IsUniqueSubfolder();
+	}
+
+
+
+
 	std::wstring s2ws(const std::string& str)
 	{
 		using convert_typeX = std::codecvt_utf8<wchar_t>;

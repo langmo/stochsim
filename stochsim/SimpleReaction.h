@@ -13,7 +13,7 @@ namespace stochsim
 	class SimpleReaction :
 		public PropensityReaction
 	{
-	public:
+	private:
 		/// <summary>
 		/// Structure to store the information about the reactants and products of a SimpleReaction, as well as their stochiometries.
 		/// </summary>
@@ -27,7 +27,7 @@ namespace stochsim
 			{
 			}
 		};
-
+	public:
 		SimpleReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}

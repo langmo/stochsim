@@ -7,11 +7,11 @@ namespace stochsim
 	/// <summary>
 	/// Simple logger task which displays the fraction of the simulation which is already finished in the console.
 	/// </summary>
-	class ProgressLoggerTask :
-		public LoggerTask
+	class ProgressLogger :
+		public Logger
 	{
 	public:
-		ProgressLoggerTask() : runtime_(1)
+		ProgressLogger() : runtime_(1)
 		{
 		}
 		virtual void WriteLog(double time) override

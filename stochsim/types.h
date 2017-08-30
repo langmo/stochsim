@@ -152,10 +152,10 @@ namespace stochsim
 	/// <summary>
 	/// Base class of all task which are executed when the state of the simulation should be logged, e.g. written to the disk or printed on the screen.
 	/// </summary>
-	class LoggerTask
+	class Logger
 	{
 	public:
-		virtual ~LoggerTask() {}
+		virtual ~Logger() {}
 		/// <summary>
 		/// Called when the task should write whatever information it is responsible to write to the disk/display on the screen.
 		/// </summary>

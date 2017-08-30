@@ -21,28 +21,25 @@
     <ClInclude Include="ComplexState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComplexStateLoggerTask.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomLoggerTask.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ProgressLoggerTask.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SimpleReaction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SimpleState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleStateLoggerTask.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProgressLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StateLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
