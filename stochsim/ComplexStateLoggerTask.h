@@ -18,7 +18,7 @@ namespace stochsim
 		virtual ~ComplexStateLoggerTask();
 
 		virtual void WriteLog(double time) override;
-		virtual void Initialize(std::string baseFolder) override;
+		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override;
 		virtual void Uninitialize() override;
 	private:
 		std::shared_ptr<ComplexState<T>> state_;
@@ -51,7 +51,7 @@ namespace stochsim
 	}
 
 	template<class T>
-	inline void ComplexStateLoggerTask<T>::Initialize(std::string baseFolder)
+	inline void ComplexStateLoggerTask<T>::Initialize(std::string baseFolder, SimInfo& simInfo)
 	{
 		if (file_)
 		{

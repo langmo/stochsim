@@ -28,7 +28,7 @@ namespace stochsim
 		{
 			logFunc_(*file_, time);
 		}
-		virtual void Initialize(std::string baseFolder) override
+		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
 		{
 			if (file_)
 			{

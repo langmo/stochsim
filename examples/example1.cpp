@@ -112,39 +112,39 @@ namespace
 		* REACTIONS *
 		************/
 		// B0m -> 2 B0m
-		auto B0m_doubling = sim.CreateReaction<SimpleReaction>(p::v_max);
+		auto B0m_doubling = sim.CreateReaction<SimpleReaction>("B0m -> 2 B0m", p::v_max);
 		B0m_doubling->AddReactant(B0m, 1, true);
 		B0m_doubling->AddProduct(B0m);
 			
 		// B0p -> 2 B0p
-		auto B0p_doubling = sim.CreateReaction<SimpleReaction>(p::v_max);
+		auto B0p_doubling = sim.CreateReaction<SimpleReaction>("B0p -> 2 B0p", p::v_max);
 		B0p_doubling->AddReactant(B0p, 1, true);
 		B0p_doubling->AddProduct(B0p);
 			
 
 		// B0m + Pm -> B0i
-		auto B0m_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		auto B0m_infection = sim.CreateReaction<SimpleReaction>("B0m + Pm -> B0i", p::delta / V);
 		B0m_infection->AddReactant(B0m);
 		B0m_infection->AddReactant(Pm);
 		B0m_infection->AddProduct(B0i);
 
 		// B0i[i] + Pm -> B0i[i+1]
-		auto B0i_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		auto B0i_infection = sim.CreateReaction<SimpleReaction>("B0i[i] + Pm -> B0i[i+1]", p::delta / V);
 		B0i_infection->AddReactant(B0i, 1, true);
 		B0i_infection->AddReactant(Pm);
 		B0i_infection->AddProduct(B0i, 1, true);
 
 		// B0p + Pm -> B0p
-		auto B0p_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		auto B0p_infection = sim.CreateReaction<SimpleReaction>("B0p + Pm -> B0p", p::delta / V);
 		B0p_infection->AddReactant(B0p, 1, true);
 		B0p_infection->AddReactant(Pm);
 
 		// B0l + Pm -> B0l
-		auto B0l_infection = sim.CreateReaction<SimpleReaction>(p::delta / V);
+		auto B0l_infection = sim.CreateReaction<SimpleReaction>("B0l + Pm -> B0l", p::delta / V);
 		B0l_infection->AddReactant(B0l, 1, true);
 		B0l_infection->AddReactant(Pm);
 
-		// B0i ---(t_moi)---> B0p||B0l
+		// B0i -(t_moi)-> B0p||B0l
 		std::vector<unsigned long> mois(maxMoi);
 		auto B0i_fate_fireTime = [] (InfectedBacterium& bacterium)-> double
 		{
@@ -164,9 +164,9 @@ namespace
 			else
 				B0l->Add(simInfo);
 		};
-		auto B0i_fate = sim.CreateReaction<ComplexDelayedReaction<InfectedBacterium>>(B0i, B0i_fate_fireTime, B0i_fate_fireAction);
+		auto B0i_fate = sim.CreateReaction<ComplexDelayedReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
 
-		// B0l ---(t_lag-t_moi)---> beta*Pm
+		// B0l -(t_lag-t_moi)-> beta*Pm
 		auto B0l_lysis_fireTime = [](LysingBacterium& bacterium)-> double
 		{
 			return bacterium.fateDecisionTime + Parameters::lysisPeriod;
@@ -176,10 +176,10 @@ namespace
 			B0l->Remove(simInfo);
 			Pm->Add(simInfo, Parameters::beta);
 		};
-		auto B0l_lysis = sim.CreateReaction<ComplexDelayedReaction<LysingBacterium>>(B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
+		auto B0l_lysis = sim.CreateReaction<ComplexDelayedReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
 
 		// B0p -> B0l
-		auto B0p_fate = sim.CreateReaction<SimpleReaction>(p::xi);
+		auto B0p_fate = sim.CreateReaction<SimpleReaction>("B0p -> B0l", p::xi);
 		B0p_fate->AddReactant(B0p);
 		B0p_fate->AddProduct(B0l);
 
@@ -217,7 +217,7 @@ namespace
 		logger.CreateTask<CustomLoggerTask>("mois.csv", MOI_headerFunc, MOI_logFunc);
 			
 		// Logging progress
-		logger.CreateTask<ProgressLoggerTask>(runtime);
+		logger.CreateTask<ProgressLoggerTask>();
 
 		sim.Run(runtime);
 	}

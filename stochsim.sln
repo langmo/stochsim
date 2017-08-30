@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stochsim", "stochsim\stochs
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "examples\examples.vcxproj", "{69D962A1-C380-4D53-A3BB-6F71CE2327CC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matstochsim", "matstochsim\matstochsim.vcxproj", "{EFC90022-F660-4705-BA2B-52FB902AC20E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Release|x64.Build.0 = Release|x64
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Release|x86.ActiveCfg = Release|Win32
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Release|x86.Build.0 = Release|Win32
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Debug|x64.ActiveCfg = Debug|x64
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Debug|x64.Build.0 = Debug|x64
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Debug|x86.ActiveCfg = Debug|Win32
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Debug|x86.Build.0 = Debug|Win32
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x64.ActiveCfg = Release|x64
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x64.Build.0 = Release|x64
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x86.ActiveCfg = Release|Win32
+		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

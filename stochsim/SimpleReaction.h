@@ -28,7 +28,7 @@ namespace stochsim
 			}
 		};
 
-		SimpleReaction(double rateConstant) : rateConstant_(rateConstant)
+		SimpleReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}
 		/// <summary>
@@ -90,8 +90,13 @@ namespace stochsim
 			}
 			return rate;
 		}
+		virtual std::string Name() const override
+		{
+			return name_;
+		}
 	private:
-		double rateConstant_;
+		const double rateConstant_;
+		const std::string name_;
 		std::vector<ReactionElement> reactants_;
 		std::vector<ReactionElement> products_;
 	};

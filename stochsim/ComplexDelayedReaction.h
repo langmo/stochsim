@@ -21,29 +21,26 @@ public:
 	/// </summary>
 	typedef std::function<void(T& molecule, SimInfo& simInfo)> FireAction;
 
-	ComplexDelayedReaction(std::shared_ptr<ComplexState<T>> state, FireTime fireTime, FireAction fireAction);
-	
-	virtual double NextReactionTime() const override;
-	virtual void Fire(SimInfo& simInfo) override;
+	ComplexDelayedReaction(std::string name, std::shared_ptr<ComplexState<T>> state, FireTime fireTime, FireAction fireAction) : state_(state), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
+	{
+
+	}
+	virtual double NextReactionTime() const override
+	{
+		return state_->Num() > 0 ? fireTime_(state_->Get(0)) : stochsim::inf;
+	}
+	virtual void Fire(SimInfo& simInfo) override
+	{
+		fireAction_(state_->Get(0), simInfo);
+	}
+	virtual std::string Name() const override
+	{
+		return name_;
+	}
 private:
 	FireTime fireTime_;
 	FireAction fireAction_;
 	std::shared_ptr<ComplexState<T>> state_;
+	const std::string name_;
 };
-
-template<class T>
-inline ComplexDelayedReaction<T>::ComplexDelayedReaction(std::shared_ptr<ComplexState<T>> state, FireTime fireTime, FireAction fireAction) : state_(state), fireTime_(fireTime), fireAction_(fireAction)
-{
-}
-
-template<class T>
-inline double ComplexDelayedReaction<T>::NextReactionTime() const
-{
-	return state_->Num() > 0 ? fireTime_(state_->Get(0)) : stochsim::inf;
-}
-template<class T>
-inline void ComplexDelayedReaction<T>::Fire(SimInfo & simInfo)
-{
-	fireAction_(state_->Get(0), simInfo);
-}
 }

@@ -11,7 +11,7 @@ namespace stochsim
 		public LoggerTask
 	{
 	public:
-		ProgressLoggerTask(double runtime) : runtime_(runtime)
+		ProgressLoggerTask() : runtime_(1)
 		{
 		}
 		virtual void WriteLog(double time) override
@@ -19,8 +19,9 @@ namespace stochsim
 			int progress = (int)(time / runtime_ * 100);
 			std::cout << "\b\b\b\b\b\b" << std::setw(5) << std::fixed << std::setprecision(1) << (time / runtime_ * 100) << '%';
 		}
-		virtual void Initialize(std::string baseFolder) override
+		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
 		{
+			runtime_ = simInfo.RunTime();
 			std::cout << "Simulating model:   0.0%";
 		}
 		virtual void Uninitialize() override
@@ -29,7 +30,7 @@ namespace stochsim
 		}
 
 	private:
-		const double runtime_;
+		double runtime_;
 	};
 }
 

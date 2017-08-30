@@ -178,8 +178,8 @@ public:
 	ComplexStateIterator<T>&                  operator-=(const ptrdiff_t& movement) { pos_ -= movement; return (*this); }
 	ComplexStateIterator<T>&                  operator++() { ++pos_; return (*this); }
 	ComplexStateIterator<T>&                  operator--() { --pos_; return (*this); }
-	ComplexStateIterator<T>                   operator++(ptrdiff_t) { auto temp(*this); ++pos_; return temp; }
-	ComplexStateIterator<T>                   operator--(ptrdiff_t) { auto temp(*this); --pos_; return temp; }
+	ComplexStateIterator<T>                   operator++(int) { auto temp(*this); ++pos_; return temp; }
+	ComplexStateIterator<T>                   operator--(int) { auto temp(*this); --pos_; return temp; }
 	ComplexStateIterator<T>                   operator+(const ptrdiff_t& movement) { auto oldPos = pos_; pos_ += movement; auto temp(*this); pos_ = oldPos; return temp; }
 	ComplexStateIterator<T>                   operator-(const ptrdiff_t& movement) { auto oldPos = pos_; pos_ -= movement; auto temp(*this); pos_ = oldPos; return temp; }
 

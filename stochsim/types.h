@@ -26,6 +26,12 @@ namespace stochsim
 		/// <returns>Simulation time, starting at zero.</returns>
 		virtual double SimTime() const = 0;
 		/// <summary>
+		/// Returns the runtime of the simulation, i.e. when the simulation stops.
+		/// Should only be called while a simulation is running.
+		/// </summary>
+		/// <returns></returns>
+		virtual double RunTime() const = 0;
+		/// <summary>
 		/// Generates a uniformly distributed random integer number between the lower and the upper bound. Both bounds are included.
 		/// </summary>
 		/// <param name="lower">lower value which can be generated (included).</param>
@@ -110,6 +116,12 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Simulation context.</param>
 		virtual void Fire(SimInfo& simInfo) = 0;
+
+		/// <summary>
+		/// Returns the name of the reaction.
+		/// </summary>
+		/// <returns>Name of the reaction.</returns>
+		virtual std::string Name() const = 0;
 	};
 
 	/// <summary>
@@ -130,6 +142,11 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Context of the simulation, e.g. the current simulation time.</param>
 		virtual void Fire(SimInfo& simInfo) = 0;
+		/// <summary>
+		/// Returns the name of the reaction.
+		/// </summary>
+		/// <returns>Name of the reaction.</returns>
+		virtual std::string Name() const = 0;
 	};
 
 	/// <summary>
@@ -148,7 +165,8 @@ namespace stochsim
 		/// Called before a new simulation is started.
 		/// </summary>
 		/// <param name="baseFolder">The folder where the results of the simulation should be stored on the disk, if this task actually stores anything on the disk.</param>
-		virtual void Initialize(std::string baseFolder) = 0;
+		/// <param name="simInfo">Simulation context.</param>
+		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) = 0;
 		/// <summary>
 		/// Called after the simulation has finished. Perfect place to release e.g. file handles.
 		/// </summary>

@@ -81,6 +81,19 @@ namespace stochsim
 		/// </summary>
 		/// <param name="reaction">State to add.</param>
 		void AddState(std::shared_ptr<State> state);
+		/// <summary>
+		/// Returns the state with the given name, or nullptr if a state with the name is not yet defined in the simulation.
+		/// </summary>
+		/// <param name="name">name of state</param>
+		/// <returns></returns>
+		std::shared_ptr<State> GetState(const std::string& name);
+
+		/// <summary>
+		/// Returns the propensity reaction with the given name, or nullptr if a propensity reaction with the name is not yet defined in the simulation.
+		/// </summary>
+		/// <param name="name">name of reaction</param>
+		/// <returns></returns>
+		std::shared_ptr<PropensityReaction> GetPropensityReaction(const std::string& name);
 
 	private:
 		// Make this object be non-copyable
@@ -105,15 +118,35 @@ namespace stochsim
 		/// <summary>
 		/// Sets the time period of logging. Default = 0.1.
 		/// </summary>
-		/// <param name="logPeriod"></param>
+		/// <param name="logPeriod">Log period in simulation time units</param>
 		virtual void SetLogPeriod(double logPeriod) = 0;
 		/// <summary>
-		/// Sets the folder under which the results of the simulation should be saved. An additional sub-folder is created
-		/// with the name indicating the current date and time to prevent overwriting old simulation results.
+		/// Returns the time period of logging. Default = 0.1.
 		/// </summary>
-		/// <param name="baseFolder"></param>
+		/// <returns>Log period in simulation time units<returns>
+		virtual double GetLogPeriod() const = 0;
+		/// <summary>
+		/// Sets the folder under which the results of the simulation should be saved. An additional sub-folder is created
+		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
+		/// </summary>
+		/// <param name="baseFolder">Base folder where simulation results are saved.</param>
 		virtual void SetBaseFolder(std::string baseFolder) = 0;
-
+		/// <summary>
+		/// Returns the folder under which the results of the simulation should be saved. An additional sub-folder is created
+		/// with the name indicating the current date and time to prevent overwriting old simulation results if IsUniqueSubfolder()==true.
+		/// </summary>
+		/// <returns>Base folder where simulation results are saved.</returns>
+		virtual std::string GetBaseFolder() const = 0;
+		/// <summary>
+		/// Set to true to create an additional sub-folder under the base folder with the name indicating the current date and time to prevent overwriting old simulation results.
+		/// </summary>
+		/// <param name="uniqueSubFolder">True if sub-folder should be created, false if results should be saved directly in the base folder.</param>
+		virtual void SetUniqueSubfolder(bool uniqueSubFolder) = 0;
+		/// <summary>
+		/// Returns true if an additional sub-folder under the base folder is created with the name indicating the current date and time to prevent overwriting old simulation results.
+		/// </summary>
+		/// <returns>True if sub-folder is created, false if results are saved directly in the base folder.</returns>
+		virtual bool IsUniqueSubfolder() const = 0;
 		/// <summary>
 		/// Creates a logging task and adds it to this logger. Same as
 		/// <code>

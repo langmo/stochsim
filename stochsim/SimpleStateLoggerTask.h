@@ -47,7 +47,7 @@ namespace stochsim
 			AddState(state);
 			AddState(others...);
 		}
-		virtual void Initialize(std::string baseFolder) override
+		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
 		{
 			if (file_)
 			{

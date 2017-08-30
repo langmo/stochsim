@@ -20,31 +20,52 @@ namespace stochsim
 	class SimulationLogger : public Logger
 	{
 	public:
-		SimulationLogger() : logPeriod_(0.1), baseFolder_("simulations")
+		SimulationLogger() : logPeriod_(0.1), baseFolder_("simulations"), uniqueSubFolder_(true)
 		{
 		}
+		virtual void SetUniqueSubfolder(bool uniqueSubFolder) override
+		{
+			uniqueSubFolder_ = uniqueSubFolder;
+		}
+		virtual bool IsUniqueSubfolder() const override
+		{
+			return uniqueSubFolder_;
+		}
+		virtual double GetLogPeriod() const override
+		{
+			return logPeriod_;
+		}
+		virtual std::string GetBaseFolder() const  override
+		{
+			return baseFolder_;
+		}
+
 		virtual void AddTask(std::shared_ptr<LoggerTask> task) override
 		{
 			tasks_.push_back(std::move(task));
 		}
-		void Initialize(double time)
+		void Initialize(double time, SimInfo& simInfo)
 		{
 			time_t t = std::time(0);   // get time now
 			struct tm * now = localtime(&t);
 			std::stringstream buffer;
-			buffer << baseFolder_ << "/"
-				<< (now->tm_year + 1900) << '-'
-				<< (now->tm_mon + 1) << '-'
-				<< now->tm_mday << '_'
-				<< now->tm_hour << '-'
-				<< now->tm_min << '-'
-				<< now->tm_sec << '/';
+			buffer << baseFolder_;
+			if (uniqueSubFolder_)
+			{
+				buffer << "/"
+					<< (now->tm_year + 1900) << '-'
+					<< (now->tm_mon + 1) << '-'
+					<< now->tm_mday << '_'
+					<< now->tm_hour << '-'
+					<< now->tm_min << '-'
+					<< now->tm_sec << '/';
+			}
 			std::string folder = buffer.str();
 			folder = CreatePathRecursively(folder);
 
 			for (auto& task : tasks_)
 			{
-				task->Initialize(folder);
+				task->Initialize(folder, simInfo);
 			}
 			WriteLog(time);
 			lastLogTime_ = time;
@@ -88,21 +109,24 @@ namespace stochsim
 		double lastLogTime_;
 		double logPeriod_;
 		std::string baseFolder_;
+		bool uniqueSubFolder_;
 	};
 	
 	class Simulation::Impl : public SimInfo
 	{
 	public:
-		Impl() : randomEngine_(std::random_device{}()) {}
+		Impl() : randomEngine_(std::random_device{}()), time_(0), runtime_(0)
+		{
+		}
 		~Impl() {}
-		void Run(double maxTime)
+		void Run(double runtime)
 		{
 			/**
 			** Run a modified version of Gillespies algorithm. The base algorithm is implemented as outlined in
 			** Gillespie, Daniel T. "Exact stochastic simulation of coupled chemical reactions." The journal of physical chemistry 81.25 (1977): 2340-2361.
 			** What we added is the support of fixed time delays, modelled roughly as reactions which fire at a specific time, instead of having a continuous propensity.
 			**/
-
+			runtime_ = runtime;
 			time_ = 0;
 
 			// Initialize
@@ -110,13 +134,13 @@ namespace stochsim
 			{
 				state->Initialize(*this);
 			}
-			logger_.Initialize(time_);
+			logger_.Initialize(time_, *this);
 
 			// propensities of reactions
 			std::vector<double> ai(propensityReactions_.size());
 
 			// iterate
-			while (time_ <= maxTime)
+			while (time_ <= runtime)
 			{
 				// Calculate aggregated reaction probability
 				double a0 = 0;
@@ -156,9 +180,9 @@ namespace stochsim
 				{
 					// Fire a propensity reaction
 					time_ += tau;
-					if (time_ > maxTime)
+					if (time_ > runtime)
 					{
-						time_ = maxTime;
+						time_ = runtime;
 						break;
 					}
 
@@ -182,9 +206,9 @@ namespace stochsim
 				else
 				{
 					time_ = nextDelayedT;
-					if (time_ > maxTime)
+					if (time_ > runtime)
 					{
-						time_ = maxTime;
+						time_ = runtime;
 						break;
 					}
 					// notify logger about the time of the next reaction event
@@ -205,7 +229,10 @@ namespace stochsim
 		{
 			return time_;
 		}
-		
+		virtual double RunTime() const override
+		{
+			return runtime_;
+		}
 		virtual unsigned long Rand(unsigned long lower, unsigned long upper) override
 		{
 			std::uniform_int_distribution<unsigned long> randomIndex(lower, upper);
@@ -235,11 +262,31 @@ namespace stochsim
 			states_.push_back(std::move(state));
 		}
 
+		std::shared_ptr<State> GetState(const std::string & name)
+		{
+			for (std::shared_ptr<State>& state : states_)
+			{
+				if (state->Name() == name)
+					return state;
+			}
+			return nullptr;
+		}
+		std::shared_ptr<PropensityReaction> GetPropensityReaction(const std::string & name)
+		{
+			for (std::shared_ptr<PropensityReaction>& propensityReaction : propensityReactions_)
+			{
+				if (propensityReaction->Name() == name)
+					return propensityReaction;
+			}
+			return nullptr;
+		}
+
 	private:
 		std::vector<std::shared_ptr<PropensityReaction>> propensityReactions_;
 		std::vector<std::shared_ptr<DelayedReaction>> delayedReactions_;
 		std::vector<std::shared_ptr<State>> states_;
 		double time_;
+		double runtime_;
 		SimulationLogger logger_;
 		std::default_random_engine randomEngine_;
 		// function to generate uniformly distributed random numbers in [0,1)
@@ -268,6 +315,16 @@ namespace stochsim
 	void Simulation::AddState(std::shared_ptr<State> state)
 	{
 		impl_->AddState(std::move(state));
+	}
+
+	std::shared_ptr<State> Simulation::GetState(const std::string & name)
+	{
+		return impl_->GetState(name);
+	}
+
+	std::shared_ptr<PropensityReaction> Simulation::GetPropensityReaction(const std::string & name)
+	{
+		return impl_->GetPropensityReaction(name);
 	}
 
 	void Simulation::Run(double maxTime)
