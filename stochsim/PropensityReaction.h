@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "stochsim_interfaces.h"
 #include <vector>
 #include <memory>
 namespace stochsim
@@ -10,8 +10,8 @@ namespace stochsim
 	/// However, when a reactant is flagged (its modifier is true), its concentration is not decreased when the reaction fires, which allows to implement e.g. enzymes catalyzing a reaction.
 	/// In contrary, when a product is flagged (its modifier is true), its concentration is also not increased when the reaction is fired, but instead the modify function is called on the respective state.
 	/// </summary>
-	class SimpleReaction :
-		public PropensityReaction
+	class PropensityReaction :
+		public IPropensityReaction
 	{
 	private:
 		/// <summary>
@@ -20,15 +20,15 @@ namespace stochsim
 		struct ReactionElement
 		{
 		public:
-			const long stochiometry_;
-			const std::shared_ptr<State> state_;
+			const Stochiometry stochiometry_;
+			const std::shared_ptr<IState> state_;
 			const bool modifier_;
-			ReactionElement(std::shared_ptr<State> state, long stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
+			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
 			{
 			}
 		};
 	public:
-		SimpleReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant)
+		PropensityReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}
 		/// <summary>
@@ -38,7 +38,7 @@ namespace stochsim
 		/// <param name="state">Species to add as a reactant.</param>
 		/// <param name="stochiometry">Number of molecules of the reactant taking part in a reaction.</param>
 		/// <param name="modifier">If false, the concentration of the species is decreased when the reaction fires according to the stochiometry. If true, the concentration is not modified (e.g. enzymes).</param>
-		void AddReactant(std::shared_ptr<State> state, long stochiometry = 1, bool modifier = false)
+		void AddReactant(std::shared_ptr<IState> state, long stochiometry = 1, bool modifier = false)
 		{
 			reactants_.emplace_back(state, stochiometry, modifier);
 		}
@@ -50,11 +50,11 @@ namespace stochsim
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
 		/// <param name="modifier">If false, the concentration of the species is increased when the reaction fires according to the stochiometry. If true, the concentration is not modified, but instead State::Modify() is called.</param>
-		void AddProduct(std::shared_ptr<State> state, long stochiometry = 1, bool modifier = false)
+		void AddProduct(std::shared_ptr<IState> state, long stochiometry = 1, bool modifier = false)
 		{
 			products_.emplace_back(state, stochiometry, modifier);
 		}
-		virtual void Fire(SimInfo& simInfo) override
+		virtual void Fire(ISimInfo& simInfo) override
 		{
 			for (const auto& product : products_)
 			{
@@ -81,8 +81,8 @@ namespace stochsim
 			for (const auto& reactant : reactants_)
 			{
 				const long stoch = reactant.stochiometry_;
-				const unsigned long num = reactant.state_->Num();
-				for (int s = 0; s < stoch; s++)
+				const size_t num = reactant.state_->Num();
+				for (size_t s = 0; s < stoch; s++)
 				{
 					rate *= num - s;
 				}

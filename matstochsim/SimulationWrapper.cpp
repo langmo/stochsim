@@ -1,12 +1,14 @@
 #include "SimulationWrapper.h"
 #include <sstream> 
-#include "types.h"
-#include "SimpleState.h"
-#include "SimpleReaction.h"
+#include "stochsim_interfaces.h"
+#include "State.h"
+#include "ComposedState.h"
+#include "DelayedReaction.h"
+#include "PropensityReaction.h"
 #include <iomanip>
 
 class MatlabProgressLoggerTask :
-	public stochsim::LoggerTask
+	public stochsim::ILogger
 {
 public:
 	MatlabProgressLoggerTask() : runtime_(1)
@@ -19,7 +21,7 @@ public:
 		message << "\b\b\b\b\b\b" << std::setw(5) << std::fixed << std::setprecision(1) << (time / runtime_ * 100) << "%%";
 		::mexPrintf(message.str().c_str());
 	}
-	virtual void Initialize(std::string baseFolder, stochsim::SimInfo& simInfo) override
+	virtual void Initialize(std::string baseFolder, stochsim::ISimInfo& simInfo) override
 	{
 		runtime_ = simInfo.RunTime();
 		::mexPrintf("Simulating model:   0.0%");
@@ -35,54 +37,93 @@ private:
 
 void SimulationWrapper::parseSimulationCommand(const std::string & methodName, MatlabParams& params)
 {
-	if (methodName == "CreateSimpleState")
+	if (methodName == "CreateState")
 	{
-		std::string name = params.GetString(0);
-		unsigned long initialCondition = params.GetNumber<unsigned long>(1);
-		auto state = CreateState<stochsim::SimpleState>(name, initialCondition);
+		std::string name = params.Get<std::string>(0);
+		unsigned long initialCondition = params.Get<unsigned long>(1);
+		auto state = CreateState<stochsim::State>(name, initialCondition);
 		stateLogger_->AddState(state);
 		params.Set(0, name);
 	}
-	else if (methodName == "CreateSimpleReaction")
+	else if (methodName == "CreateComposedState")
 	{
-		std::string name = params.GetString(0);
-		double rateConstant = params.GetDouble(1);
-		auto state = CreateReaction<stochsim::SimpleReaction>(name, rateConstant);
+		std::string name = params.Get<std::string>(0);
+		unsigned long initialCondition = params.Get<unsigned long>(1);
+		std::shared_ptr<stochsim::ComposedState<stochsim::Molecule>> state;
+		if (params.NumParams() >= 3)
+		{
+			unsigned long capacity = params.Get<unsigned long>(2);
+			state = CreateState<stochsim::ComposedState<stochsim::Molecule>>(name, initialCondition, capacity);
+		}
+		else
+			state = CreateState<stochsim::ComposedState<stochsim::Molecule>>(name, initialCondition);
+		stateLogger_->AddState(state);
+		params.Set(0, name);
+	}
+	else if (methodName == "CreatePropensityReaction")
+	{
+		std::string name = params.Get<std::string>(0);
+		double rateConstant = params.Get<double>(1);
+		auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateConstant);
+		params.Set(0, name);
+	}
+	else if (methodName == "CreateDelayReaction")
+	{
+		std::string name = params.Get<std::string>(0);
+
+		std::string stateName = params.Get<std::string>(1);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		auto composedState = std::static_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		if (!composedState)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " is not a composed state. Only composed states can be set as reactants to delayed reactions.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+
+		double delay = params.Get<double>(2);
+		auto reaction = CreateReaction<stochsim::DelayedReaction<stochsim::Molecule>>(name, composedState, delay);
 		params.Set(0, name);
 	}
 	else if (methodName == "Run")
 	{
-		double runtime = params.GetDouble(0);
+		double runtime = params.Get<double>(0);
 		Run(runtime);
 	}
 	else if (methodName == "SetLogPeriod")
 	{
-		double logPeriod = params.GetDouble(0);
-		GetLogger().SetLogPeriod(logPeriod);
+		double logPeriod = params.Get<double>(0);
+		SetLogPeriod(logPeriod);
 	}
 	else if (methodName == "GetLogPeriod")
 	{
-		double logPeriod = GetLogger().GetLogPeriod();
+		double logPeriod = GetLogPeriod();
 		params.Set(0, logPeriod);
 	}
 	else if (methodName == "SetBaseFolder")
 	{
-		std::string baseFolder = params.GetString(0);
-		GetLogger().SetBaseFolder(baseFolder);
+		std::string baseFolder = params.Get<std::string>(0);
+		SetBaseFolder(baseFolder);
 	}
 	else if (methodName == "GetBaseFolder")
 	{
-		std::string baseFolder = GetLogger().GetBaseFolder();
+		std::string baseFolder = GetBaseFolder();
 		params.Set(0, baseFolder);
 	}
 	else if (methodName == "SetUniqueSubfolder")
 	{
-		bool uniqueSubFolder = params.GetBool(0);
-		GetLogger().SetUniqueSubfolder(uniqueSubFolder);
+		bool uniqueSubFolder = params.Get<bool>(0);
+		SetUniqueSubfolder(uniqueSubFolder);
 	}
 	else if (methodName == "IsUniqueSubfolder")
 	{
-		bool uniqueSubFolder = GetLogger().IsUniqueSubfolder();
+		bool uniqueSubFolder = IsUniqueSubfolder();
 		params.Set(0, uniqueSubFolder);
 	}
 	else
@@ -93,7 +134,7 @@ void SimulationWrapper::parseSimulationCommand(const std::string & methodName, M
 	}
 }
 
-void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::State>& state, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::IState>& state, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "InitialCondition")
 	{
@@ -111,7 +152,7 @@ void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::State>& stat
 	}
 }
 
-void SimulationWrapper::parseSimpleReactionCommand(std::shared_ptr<stochsim::SimpleReaction>& simpleReaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::parsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
@@ -119,8 +160,8 @@ void SimulationWrapper::parseSimpleReactionCommand(std::shared_ptr<stochsim::Sim
 	}
 	else if (methodName == "AddReactant")
 	{
-		std::string stateName = params.GetString(0);
-		std::shared_ptr<stochsim::State> state = GetState(stateName);
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
 		if (!state)
 		{
 			std::stringstream errorMessage;
@@ -129,20 +170,20 @@ void SimulationWrapper::parseSimpleReactionCommand(std::shared_ptr<stochsim::Sim
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
-			stochiometry = params.GetNumber<unsigned int>(1);
+			stochiometry = params.Get<unsigned int>(1);
 		else
 			stochiometry = 1;
 		bool modifier;
 		if (params.NumParams() > 2)
-			modifier = params.GetNumber<bool>(2);
+			modifier = params.Get<bool>(2);
 		else
 			modifier = false;
 		simpleReaction->AddReactant(state, stochiometry, modifier);
 	}
 	else if (methodName == "AddProduct")
 	{
-		std::string stateName = params.GetString(0);
-		std::shared_ptr<stochsim::State> state = GetState(stateName);
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
 		if (!state)
 		{
 			std::stringstream errorMessage;
@@ -151,12 +192,12 @@ void SimulationWrapper::parseSimpleReactionCommand(std::shared_ptr<stochsim::Sim
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
-			stochiometry = params.GetNumber<unsigned int>(1);
+			stochiometry = params.Get<unsigned int>(1);
 		else
 			stochiometry = 1;
 		bool modifier;
 		if (params.NumParams() > 2)
-			modifier = params.GetNumber<bool>(2);
+			modifier = params.Get<bool>(2);
 		else
 			modifier = false;
 		simpleReaction->AddProduct(state, stochiometry, modifier);
@@ -169,10 +210,46 @@ void SimulationWrapper::parseSimpleReactionCommand(std::shared_ptr<stochsim::Sim
 	}
 }
 
+void SimulationWrapper::parseDelayReactionCommand(std::shared_ptr<stochsim::DelayedReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
+{
+	if (methodName == "Name")
+	{
+		params.Set(0, reaction->Name());
+	}
+	else if (methodName == "AddProduct")
+	{
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		unsigned int stochiometry;
+		if (params.NumParams() > 1)
+			stochiometry = params.Get<unsigned int>(1);
+		else
+			stochiometry = 1;
+		bool modifier;
+		if (params.NumParams() > 2)
+			modifier = params.Get<bool>(2);
+		else
+			modifier = false;
+		reaction->AddProduct(state, stochiometry, modifier);
+	}
+	else
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Method " << methodName << " not known for class " << delayReactionPrefix_ << ".";
+		throw std::exception(errorMessage.str().c_str());
+	}
+}
+
 SimulationWrapper::SimulationWrapper()
 {
-	GetLogger().CreateTask<MatlabProgressLoggerTask>();
-	stateLogger_ = GetLogger().CreateTask<stochsim::SimpleStateLoggerTask>(stateLoggerFile_);
+	CreateLogger<MatlabProgressLoggerTask>();
+	stateLogger_ = CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
 }
 
 
@@ -207,8 +284,8 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 	}
 	else if (className == statePrefix_)
 	{
-		std::string stateName = params.GetString(0);
-		std::shared_ptr<stochsim::State> state = GetState(stateName);
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
 		if (!state)
 		{
 			std::stringstream errorMessage;
@@ -219,22 +296,41 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 	}
 	else if (className == simpleReactionPrefix_)
 	{
-		std::string reactionName = params.GetString(0);
-		std::shared_ptr<stochsim::PropensityReaction> reaction = GetPropensityReaction(reactionName);
+		std::string reactionName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IPropensityReaction> reaction = GetPropensityReaction(reactionName);
 		if (!reaction)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto simpleReaction = std::static_pointer_cast<stochsim::SimpleReaction>(reaction);
+		auto simpleReaction = std::static_pointer_cast<stochsim::PropensityReaction>(reaction);
 		if (!simpleReaction)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " is not a simple reaction.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		parseSimpleReactionCommand(simpleReaction, methodName, params.ShiftInputs(1));
+		parsePropensityReactionCommand(simpleReaction, methodName, params.ShiftInputs(1));
+	}
+	else if (className == delayReactionPrefix_)
+	{
+		std::string reactionName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IDelayedReaction> reaction = GetDelayedReaction(reactionName);
+		if (!reaction)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Delay reaction with name " << reactionName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		auto composedReaction = std::static_pointer_cast<stochsim::DelayedReaction<stochsim::Molecule>>(reaction);
+		if (!composedReaction)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Delay reaction with name " << reactionName << " is not a delayed reaction.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		parseDelayReactionCommand(composedReaction, methodName, params.ShiftInputs(1));
 	}
 	else
 	{

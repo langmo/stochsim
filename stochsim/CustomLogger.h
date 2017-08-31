@@ -1,12 +1,12 @@
 #pragma once
-#include "types.h"
+#include "stochsim_interfaces.h"
 #include <functional>
 #include <memory>
 #include <fstream>
 namespace stochsim
 {
 	class CustomLogger :
-		public Logger
+		public ILogger
 	{
 	public:
 		typedef std::function<void(std::ostream& out)> HeaderFunc;
@@ -28,7 +28,7 @@ namespace stochsim
 		{
 			logFunc_(*file_, time);
 		}
-		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
+		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
 		{
 			if (file_)
 			{

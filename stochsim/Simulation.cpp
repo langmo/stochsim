@@ -23,28 +23,28 @@ namespace stochsim
 		LogManager() : logPeriod_(0.1), baseFolder_("simulations"), uniqueSubFolder_(true)
 		{
 		}
-		virtual void SetUniqueSubfolder(bool uniqueSubFolder)
+		void SetUniqueSubfolder(bool uniqueSubFolder)
 		{
 			uniqueSubFolder_ = uniqueSubFolder;
 		}
-		virtual bool IsUniqueSubfolder() const
+		bool IsUniqueSubfolder() const
 		{
 			return uniqueSubFolder_;
 		}
-		virtual double GetLogPeriod() const
+		double GetLogPeriod() const
 		{
 			return logPeriod_;
 		}
-		virtual std::string GetBaseFolder() const 
+		std::string GetBaseFolder() const 
 		{
 			return baseFolder_;
 		}
 
-		virtual void AddTask(std::shared_ptr<Logger> task)
+		void AddTask(std::shared_ptr<ILogger> task)
 		{
 			tasks_.push_back(std::move(task));
 		}
-		void Initialize(double time, SimInfo& simInfo)
+		void Initialize(double time, ISimInfo& simInfo)
 		{
 			time_t t = std::time(0);   // get time now
 			struct tm * now = localtime(&t);
@@ -88,12 +88,12 @@ namespace stochsim
 				WriteLog(lastLogTime_);
 			}
 		}
-		virtual void SetLogPeriod(double logPeriod)
+		void SetLogPeriod(double logPeriod)
 		{
 			assert(logPeriod > 0);
 			logPeriod_ = logPeriod;
 		}
-		virtual void SetBaseFolder(std::string baseFolder)
+		void SetBaseFolder(std::string baseFolder)
 		{
 			baseFolder_ = std::move(baseFolder);
 		}
@@ -105,14 +105,14 @@ namespace stochsim
 				task->WriteLog(time);
 			}
 		}
-		std::vector<std::shared_ptr<Logger>> tasks_;
+		std::vector<std::shared_ptr<ILogger>> tasks_;
 		double lastLogTime_;
 		double logPeriod_;
 		std::string baseFolder_;
 		bool uniqueSubFolder_;
 	};
 	
-	class Simulation::Impl : public SimInfo
+	class Simulation::Impl : public ISimInfo
 	{
 	public:
 		Impl() : randomEngine_(std::random_device{}()), time_(0), runtime_(0)
@@ -233,9 +233,9 @@ namespace stochsim
 		{
 			return runtime_;
 		}
-		virtual unsigned long Rand(unsigned long lower, unsigned long upper) override
+		virtual size_t Rand(size_t lower, size_t upper) override
 		{
-			std::uniform_int_distribution<unsigned long> randomIndex(lower, upper);
+			std::uniform_int_distribution<size_t> randomIndex(lower, upper);
 			return randomIndex(randomEngine_);
 		}
 
@@ -249,40 +249,40 @@ namespace stochsim
 			return logger_;
 		}
 
-		void AddReaction(std::shared_ptr<PropensityReaction> reaction)
+		void AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 		{
 			propensityReactions_.push_back(std::move(reaction));
 		}
-		void AddReaction(std::shared_ptr<DelayedReaction> reaction)
+		void AddReaction(std::shared_ptr<IDelayedReaction> reaction)
 		{
 			delayedReactions_.push_back(std::move(reaction));
 		}
-		void AddState(std::shared_ptr<State> state)
+		void AddState(std::shared_ptr<IState> state)
 		{
 			states_.push_back(std::move(state));
 		}
 
-		std::shared_ptr<State> GetState(const std::string & name)
+		std::shared_ptr<IState> GetState(const std::string & name)
 		{
-			for (std::shared_ptr<State>& state : states_)
+			for (std::shared_ptr<IState>& state : states_)
 			{
 				if (state->Name() == name)
 					return state;
 			}
 			return nullptr;
 		}
-		std::shared_ptr<PropensityReaction> GetPropensityReaction(const std::string & name)
+		std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string & name)
 		{
-			for (std::shared_ptr<PropensityReaction>& propensityReaction : propensityReactions_)
+			for (std::shared_ptr<IPropensityReaction>& propensityReaction : propensityReactions_)
 			{
 				if (propensityReaction->Name() == name)
 					return propensityReaction;
 			}
 			return nullptr;
 		}
-		std::shared_ptr<DelayedReaction> GetDelayedReaction(const std::string& name)
+		std::shared_ptr<IDelayedReaction> GetDelayedReaction(const std::string& name)
 		{
-			for (std::shared_ptr<DelayedReaction>& delayedReaction : delayedReactions_)
+			for (std::shared_ptr<IDelayedReaction>& delayedReaction : delayedReactions_)
 			{
 				if (delayedReaction->Name() == name)
 					return delayedReaction;
@@ -291,9 +291,9 @@ namespace stochsim
 		}
 
 	private:
-		std::vector<std::shared_ptr<PropensityReaction>> propensityReactions_;
-		std::vector<std::shared_ptr<DelayedReaction>> delayedReactions_;
-		std::vector<std::shared_ptr<State>> states_;
+		std::vector<std::shared_ptr<IPropensityReaction>> propensityReactions_;
+		std::vector<std::shared_ptr<IDelayedReaction>> delayedReactions_;
+		std::vector<std::shared_ptr<IState>> states_;
 		double time_;
 		double runtime_;
 		LogManager logger_;
@@ -313,30 +313,30 @@ namespace stochsim
 		impl_ = nullptr;
 	}
 
-	void Simulation::AddReaction(std::shared_ptr<PropensityReaction> reaction)
+	void Simulation::AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 	{
 		impl_->AddReaction(std::move(reaction));
 	}
-	void Simulation::AddReaction(std::shared_ptr<DelayedReaction> reaction)
+	void Simulation::AddReaction(std::shared_ptr<IDelayedReaction> reaction)
 	{
 		impl_->AddReaction(std::move(reaction));
 	}
-	void Simulation::AddState(std::shared_ptr<State> state)
+	void Simulation::AddState(std::shared_ptr<IState> state)
 	{
 		impl_->AddState(std::move(state));
 	}
 
-	std::shared_ptr<State> Simulation::GetState(const std::string & name)
+	std::shared_ptr<IState> Simulation::GetState(const std::string & name)
 	{
 		return impl_->GetState(name);
 	}
 
-	std::shared_ptr<PropensityReaction> Simulation::GetPropensityReaction(const std::string & name)
+	std::shared_ptr<IPropensityReaction> Simulation::GetPropensityReaction(const std::string & name)
 	{
 		return impl_->GetPropensityReaction(name);
 	}
 
-	std::shared_ptr<DelayedReaction> Simulation::GetDelayedReaction(const std::string & name)
+	std::shared_ptr<IDelayedReaction> Simulation::GetDelayedReaction(const std::string & name)
 	{
 		return impl_->GetDelayedReaction(name);
 	}
@@ -346,7 +346,7 @@ namespace stochsim
 		impl_->Run(maxTime);
 	}
 
-	void Simulation::AddLogger(std::shared_ptr<Logger> logger)
+	void Simulation::AddLogger(std::shared_ptr<ILogger> logger)
 	{
 		impl_->GetLogger().AddTask(logger);
 	}

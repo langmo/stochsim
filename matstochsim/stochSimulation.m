@@ -6,7 +6,7 @@ classdef stochSimulation < handle
     properties (Constant,GetAccess=private, Hidden = true)
         Prefix = 'Simulation::';
     end
-    methods (Static,Access = private)
+    methods (Static,Access = private, Hidden = true)
         function qualifiedName = prefix(functionName)
             qualifiedName = [stochSimulation.Prefix, functionName];
         end
@@ -41,12 +41,22 @@ classdef stochSimulation < handle
 
         %% createState - creates a state in the simulation
         function state = createState(this, name, initialCondition)
-			state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateSimpleState'), this.objectHandle, name, initialCondition));
+			state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateState'), this.objectHandle, name, initialCondition));
         end
         
+        function state = createComposedState(this, name, initialCondition, varargin)
+            if nargin < 4
+                state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateComposedState'), this.objectHandle, name, initialCondition));
+            else
+                state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateComposedState'), this.objectHandle, name, initialCondition, varargin{1}));
+            end
+        end
         %% createReaction - creates a reaction in the simulation
-        function reaction = createReaction(this, name, rateConstant)
-			reaction = stochReaction(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateSimpleReaction'), this.objectHandle, name, rateConstant));
+        function reaction = createPropensityReaction(this, name, rateConstant)
+			reaction = stochPropensityReaction(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreatePropensityReaction'), this.objectHandle, name, rateConstant));
+        end
+        function reaction = createDelayReaction(this, name, state, delay)
+			reaction = stochDelayReaction(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateDelayReaction'), this.objectHandle, name, state.getStateHandle(), delay));
         end
         
         %% run - Executes the simulation for the given runtime

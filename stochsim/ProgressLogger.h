@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "stochsim_interfaces.h"
 #include <iostream>
 #include <iomanip>
 namespace stochsim
@@ -8,7 +8,7 @@ namespace stochsim
 	/// Simple logger task which displays the fraction of the simulation which is already finished in the console.
 	/// </summary>
 	class ProgressLogger :
-		public Logger
+		public ILogger
 	{
 	public:
 		ProgressLogger() : runtime_(1)
@@ -16,10 +16,9 @@ namespace stochsim
 		}
 		virtual void WriteLog(double time) override
 		{
-			int progress = (int)(time / runtime_ * 100);
 			std::cout << "\b\b\b\b\b\b" << std::setw(5) << std::fixed << std::setprecision(1) << (time / runtime_ * 100) << '%';
 		}
-		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
+		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
 		{
 			runtime_ = simInfo.RunTime();
 			std::cout << "Simulating model:   0.0%";

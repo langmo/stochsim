@@ -3,15 +3,14 @@
 #include "example1.h"
 #include "Parameters.h"
 
-#include "SimpleState.h"
-#include "ComplexState.h"
-#include "SimpleReaction.h"
+#include "State.h"
+#include "ComposedState.h"
+#include "PropensityReaction.h"
 #include "Simulation.h"
-#include "SimpleStateLoggerTask.h"
-#include "ComplexStateLoggerTask.h"
-#include "ComplexDelayedReaction.h"
-#include "ProgressLoggerTask.h"
-#include "CustomLoggerTask.h"
+#include "StateLogger.h"
+#include "DelayedReaction.h"
+#include "ProgressLogger.h"
+#include "CustomLogger.h"
 #include <iostream>
 // Anonymous namespace to avoid name collisions with other examples.
 namespace
@@ -81,7 +80,7 @@ namespace
 		* STATES *
 		*********/
 		// RM-, non-lysogenic, not infected
-		std::shared_ptr<SimpleState> B0m = sim.CreateState<SimpleState>("B0m", static_cast<unsigned long>(std::round(ic::B0m*V)));
+		std::shared_ptr<State> B0m = sim.CreateState<State>("B0m", static_cast<unsigned long>(std::round(ic::B0m*V)));
 
 		// RM-, non-lysogenic, infected, fate not yet determined
 		auto B0i_initializer = [](InfectedBacterium& bacterium, double time) {
@@ -91,7 +90,7 @@ namespace
 		auto B0i_modifier = [](InfectedBacterium& bacterium, double time) {
 			bacterium.numInfections++;;
 		};
-		std::shared_ptr<ComplexState<InfectedBacterium>> B0i = sim.CreateState<ComplexState<InfectedBacterium>>("B0i", static_cast<unsigned long>(std::round(ic::B0i*V)), B0i_initializer, B0i_modifier, initialCapcity);
+		std::shared_ptr<ComposedState<InfectedBacterium>> B0i = sim.CreateState<ComposedState<InfectedBacterium>>("B0i", static_cast<unsigned long>(std::round(ic::B0i*V)), B0i_initializer, B0i_modifier, initialCapcity);
 		// RM-, non-lysogenic, infected, fate decided to lyse
 		auto B0l_initializer = [](LysingBacterium& bacterium, double time)
 		{
@@ -100,47 +99,47 @@ namespace
 		auto B0l_modifier = [](LysingBacterium& bacterium, double time) {
 			// do nothing
 		};
-		std::shared_ptr<ComplexState<LysingBacterium>> B0l = sim.CreateState<ComplexState<LysingBacterium>>("B0l", static_cast<unsigned long>(std::round(ic::B0l*V)), B0l_initializer, B0l_modifier, initialCapcity);
+		std::shared_ptr<ComposedState<LysingBacterium>> B0l = sim.CreateState<ComposedState<LysingBacterium>>("B0l", static_cast<unsigned long>(std::round(ic::B0l*V)), B0l_initializer, B0l_modifier, initialCapcity);
 
 		// RM-, lysogenic
-		std::shared_ptr<SimpleState> B0p = sim.CreateState<SimpleState>("B0p", static_cast<unsigned long>(std::round(ic::B0p*V)));
+		std::shared_ptr<State> B0p = sim.CreateState<State>("B0p", static_cast<unsigned long>(std::round(ic::B0p*V)));
 
 		// phage, non - modified
-		std::shared_ptr<SimpleState> Pm = sim.CreateState<SimpleState>("Pm", static_cast<unsigned long>(std::round(ic::Pm*V)));
+		std::shared_ptr<State> Pm = sim.CreateState<State>("Pm", static_cast<unsigned long>(std::round(ic::Pm*V)));
 
 		/************
 		* REACTIONS *
 		************/
 		// B0m -> 2 B0m
-		auto B0m_doubling = sim.CreateReaction<SimpleReaction>("B0m -> 2 B0m", p::v_max);
+		auto B0m_doubling = sim.CreateReaction<PropensityReaction>("B0m -> 2 B0m", p::v_max);
 		B0m_doubling->AddReactant(B0m, 1, true);
 		B0m_doubling->AddProduct(B0m);
 			
 		// B0p -> 2 B0p
-		auto B0p_doubling = sim.CreateReaction<SimpleReaction>("B0p -> 2 B0p", p::v_max);
+		auto B0p_doubling = sim.CreateReaction<PropensityReaction>("B0p -> 2 B0p", p::v_max);
 		B0p_doubling->AddReactant(B0p, 1, true);
 		B0p_doubling->AddProduct(B0p);
 			
 
 		// B0m + Pm -> B0i
-		auto B0m_infection = sim.CreateReaction<SimpleReaction>("B0m + Pm -> B0i", p::delta / V);
+		auto B0m_infection = sim.CreateReaction<PropensityReaction>("B0m + Pm -> B0i", p::delta / V);
 		B0m_infection->AddReactant(B0m);
 		B0m_infection->AddReactant(Pm);
 		B0m_infection->AddProduct(B0i);
 
 		// B0i[i] + Pm -> B0i[i+1]
-		auto B0i_infection = sim.CreateReaction<SimpleReaction>("B0i[i] + Pm -> B0i[i+1]", p::delta / V);
+		auto B0i_infection = sim.CreateReaction<PropensityReaction>("B0i[i] + Pm -> B0i[i+1]", p::delta / V);
 		B0i_infection->AddReactant(B0i, 1, true);
 		B0i_infection->AddReactant(Pm);
 		B0i_infection->AddProduct(B0i, 1, true);
 
 		// B0p + Pm -> B0p
-		auto B0p_infection = sim.CreateReaction<SimpleReaction>("B0p + Pm -> B0p", p::delta / V);
+		auto B0p_infection = sim.CreateReaction<PropensityReaction>("B0p + Pm -> B0p", p::delta / V);
 		B0p_infection->AddReactant(B0p, 1, true);
 		B0p_infection->AddReactant(Pm);
 
 		// B0l + Pm -> B0l
-		auto B0l_infection = sim.CreateReaction<SimpleReaction>("B0l + Pm -> B0l", p::delta / V);
+		auto B0l_infection = sim.CreateReaction<PropensityReaction>("B0l + Pm -> B0l", p::delta / V);
 		B0l_infection->AddReactant(B0l, 1, true);
 		B0l_infection->AddReactant(Pm);
 
@@ -150,7 +149,7 @@ namespace
 		{
 			return bacterium.firstInfectionTime + Parameters::moiPeriod;
 		};
-		auto B0i_fate_fireAction = [B0i,B0l,B0p, &mois](InfectedBacterium& bacterium, SimInfo& simInfo)
+		auto B0i_fate_fireAction = [B0i,B0l,B0p, &mois](InfectedBacterium& bacterium, ISimInfo& simInfo)
 		{
 			while (bacterium.numInfections > mois.size())
 			{
@@ -164,34 +163,33 @@ namespace
 			else
 				B0l->Add(simInfo);
 		};
-		auto B0i_fate = sim.CreateReaction<ComplexDelayedReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
+		auto B0i_fate = sim.CreateReaction<DelayedReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
 
 		// B0l -(t_lag-t_moi)-> beta*Pm
 		auto B0l_lysis_fireTime = [](LysingBacterium& bacterium)-> double
 		{
 			return bacterium.fateDecisionTime + Parameters::lysisPeriod;
 		};
-		auto B0l_lysis_fireAction = [B0l,Pm](LysingBacterium& bacterium, SimInfo& simInfo)
+		auto B0l_lysis_fireAction = [B0l,Pm](LysingBacterium& bacterium, ISimInfo& simInfo)
 		{
 			B0l->Remove(simInfo);
 			Pm->Add(simInfo, Parameters::beta);
 		};
-		auto B0l_lysis = sim.CreateReaction<ComplexDelayedReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
+		auto B0l_lysis = sim.CreateReaction<DelayedReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
 
 		// B0p -> B0l
-		auto B0p_fate = sim.CreateReaction<SimpleReaction>("B0p -> B0l", p::xi);
+		auto B0p_fate = sim.CreateReaction<PropensityReaction>("B0p -> B0l", p::xi);
 		B0p_fate->AddReactant(B0p);
 		B0p_fate->AddProduct(B0l);
 
 		/**********
 		* LOGGING *
 		**********/
-		Logger& logger = sim.GetLogger();
-		logger.SetBaseFolder(folder);
-		logger.SetLogPeriod(logPeriod);
+		sim.SetBaseFolder(folder);
+		sim.SetLogPeriod(logPeriod);
 			
 		// Logging state values
-		logger.CreateTask<SimpleStateLoggerTask>("states.csv", B0m, B0i, B0l, B0p, Pm);
+		sim.CreateLogger<StateLogger>("states.csv", B0m, B0i, B0l, B0p, Pm);
 
 		// Logging MOI
 		auto MOI_logFunc = [&mois](std::ostream& out, double time)
@@ -214,10 +212,10 @@ namespace
 			}
 			out << std::endl;
 		};
-		logger.CreateTask<CustomLoggerTask>("mois.csv", MOI_headerFunc, MOI_logFunc);
+		sim.CreateLogger<CustomLogger>("mois.csv", MOI_headerFunc, MOI_logFunc);
 			
-		// Logging progress
-		logger.CreateTask<ProgressLoggerTask>();
+		// Display simulation progress in console
+		sim.CreateLogger<ProgressLogger>();
 
 		sim.Run(runtime);
 	}

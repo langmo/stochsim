@@ -1,39 +1,39 @@
 #pragma once
-#include "types.h"
+#include "stochsim_interfaces.h"
 namespace stochsim
 {
 	/// <summary>
 	/// The simplest and most common implementation of a state. The number of elements in a SimpleState are simply represented by an integer, realizing the case when molecules represented by this state
 	/// cannot be distinguished. As a consequence, these molecules cannot be modified, neither (SimpleState::Modify does nothing).
 	/// </summary>
-	class SimpleState :
-		public State
+	class State :
+		public IState
 	{
 	public:
-		SimpleState(std::string name, long initialCondition) : num_(0), name_(name), initialCondition_(initialCondition)
+		State(std::string name, size_t initialCondition) : num_(0), name_(name), initialCondition_(initialCondition)
 		{
 		}
-		virtual unsigned long Num() const override
+		virtual size_t Num() const override
 		{
 			return num_;
 		}
-		virtual void Add(SimInfo& simInfo, unsigned long num = 1) override
+		virtual void Add(ISimInfo& simInfo, size_t num = 1) override
 		{
 			num_ += num;
 		}
-		virtual void Remove(SimInfo& simInfo, unsigned long num = 1) override
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1) override
 		{
 			num_ -= num;
 		}
-		virtual void Modify(SimInfo& simInfo) override
+		virtual void Modify(ISimInfo& simInfo) override
 		{
 			// do nothing, simple states are not counting...
 		}
-		virtual void Initialize(SimInfo& simInfo) override
+		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			num_ = InitialCondition();
 		}
-		virtual void Uninitialize(SimInfo& simInfo) override
+		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			num_ = 0;
 		}
@@ -41,13 +41,13 @@ namespace stochsim
 		{
 			return name_;
 		}
-		virtual unsigned long InitialCondition() const override
+		virtual size_t InitialCondition() const override
 		{
 			return initialCondition_;
 		}
 	private:
-		unsigned long num_;
+		size_t num_;
 		const std::string name_;
-		const unsigned long initialCondition_;
+		const size_t initialCondition_;
 	};
 }

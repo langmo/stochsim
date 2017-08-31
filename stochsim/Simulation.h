@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include <random>
-#include "types.h"
+#include "stochsim_interfaces.h"
 namespace stochsim
 {
 	/// <summary>
@@ -62,44 +62,44 @@ namespace stochsim
 		/// Only reactions managed by the simulation will fire when the simulation runs. Also, all states belonging to the reaction must also be managed by the simulation.
 		/// </summary>
 		/// <param name="reaction">Reaction to add.</param>
-		void AddReaction(std::shared_ptr<PropensityReaction> reaction);
+		void AddReaction(std::shared_ptr<IPropensityReaction> reaction);
 		/// <summary>
 		/// Adds a delayed reaction externally created (i.e. not with Simulation::CreateReaction) to be managed by the simulation.
 		/// Only reactions managed by the simulation will fire when the simulation runs. Also, all states belonging to the reaction must also be managed by the simulation.
 		/// </summary>
 		/// <param name="reaction">Reaction to add.</param>
-		void AddReaction(std::shared_ptr<DelayedReaction> reaction);
+		void AddReaction(std::shared_ptr<IDelayedReaction> reaction);
 		/// <summary>
 		/// Adds a state externally created (i.e. not with Simulation::CreateState) to be managed by the simulation. Every state modified by any reaction in the simulation must also be managed by the simulation.
 		/// </summary>
 		/// <param name="reaction">State to add.</param>
-		void AddState(std::shared_ptr<State> state);
+		void AddState(std::shared_ptr<IState> state);
 		/// <summary>
 		/// Returns the state with the given name, or nullptr if a state with the name is not yet defined in the simulation.
 		/// </summary>
 		/// <param name="name">name of state</param>
 		/// <returns></returns>
-		std::shared_ptr<State> GetState(const std::string& name);
+		std::shared_ptr<IState> GetState(const std::string& name);
 
 		/// <summary>
 		/// Returns the propensity reaction with the given name, or nullptr if a propensity reaction with the name is not yet defined in the simulation.
 		/// </summary>
 		/// <param name="name">name of reaction</param>
 		/// <returns></returns>
-		std::shared_ptr<PropensityReaction> GetPropensityReaction(const std::string& name);
+		std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string& name);
 
 		/// <summary>
 		/// Returns the delayed reaction with the given name, or nullptr if a delayed reaction with the name is not yet defined in the simulation.
 		/// </summary>
 		/// <param name="name">name of reaction</param>
 		/// <returns></returns>
-		std::shared_ptr<DelayedReaction> GetDelayedReaction(const std::string& name);
+		std::shared_ptr<IDelayedReaction> GetDelayedReaction(const std::string& name);
 
 		/// <summary>
 		/// Adds a logger to the simulation monitoring the progress of a simulation and e.g. writing it to a file. This logger is called every time the simulation time exceeds the log period.
 		/// </summary>
 		/// <param name="task">Logger to add.</param>
-		void AddLogger(std::shared_ptr<Logger> logger);
+		void AddLogger(std::shared_ptr<ILogger> logger);
 		/// <summary>
 		/// Sets the time period of logging. Default = 0.1.
 		/// </summary>

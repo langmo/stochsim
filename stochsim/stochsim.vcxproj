@@ -149,17 +149,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ComplexDelayedReaction.h" />
-    <ClInclude Include="ComplexState.h" />
-    <ClInclude Include="ComposedDelayedReaction.h" />
+    <ClInclude Include="CircularBuffer.h" />
+    <ClInclude Include="DelayedReaction.h" />
     <ClInclude Include="ComposedState.h" />
     <ClInclude Include="CustomLogger.h" />
     <ClInclude Include="ProgressLogger.h" />
-    <ClInclude Include="SimpleReaction.h" />
-    <ClInclude Include="SimpleState.h" />
+    <ClInclude Include="PropensityReaction.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="StateLogger.h" />
     <ClInclude Include="Simulation.h" />
-    <ClInclude Include="types.h" />
+    <ClInclude Include="stochsim_interfaces.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp" />

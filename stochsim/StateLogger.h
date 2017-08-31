@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "types.h"
+#include "stochsim_interfaces.h"
 #include <fstream>
 namespace stochsim
 {
@@ -9,13 +9,13 @@ namespace stochsim
 	/// A logger task which writes the concentration of all its supplied states to the disk in form of a table.
 	/// </summary>
 	class StateLogger :
-		public Logger
+		public ILogger
 	{
 	public:
 		StateLogger(std::string fileName) : fileName_(fileName)
 		{
 		}
-		template <typename... T> StateLogger(std::string fileName, std::shared_ptr<State> state, T... others) : StateLogger(fileName)
+		template <typename... T> StateLogger(std::string fileName, std::shared_ptr<IState> state, T... others) : StateLogger(fileName)
 		{
 			AddState(state, others...);
 		}
@@ -38,16 +38,16 @@ namespace stochsim
 			(*file_) << std::endl;
 		}
 
-		void AddState(std::shared_ptr<State> state)
+		void AddState(std::shared_ptr<IState> state)
 		{
 			states_.push_back(std::move(state));
 		}
-		template <typename... T> void AddState(std::shared_ptr<State> state, T... others)
+		template <typename... T> void AddState(std::shared_ptr<IState> state, T... others)
 		{
 			AddState(state);
 			AddState(others...);
 		}
-		virtual void Initialize(std::string baseFolder, SimInfo& simInfo) override
+		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
 		{
 			if (file_)
 			{
@@ -84,7 +84,7 @@ namespace stochsim
 		}
 
 	private:
-		std::vector<std::shared_ptr<State>> states_;
+		std::vector<std::shared_ptr<IState>> states_;
 		std::unique_ptr<std::ofstream> file_;
 		std::string fileName_;
 	};

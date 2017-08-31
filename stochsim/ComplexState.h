@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "stochsim_interfaces.h"
 #include <string>
 #include <functional>
 #include <vector>
@@ -14,7 +14,7 @@ template<class T> class ComplexStateIterator;
 /// class represents something like a meta-state.
 /// </summary>
 template<class T> class ComplexState :
-	public State
+	public IState
 {
 public:
 	typedef ComplexStateIterator<T> iterator;

@@ -12,7 +12,7 @@ classdef stochState < handle
             qualifiedName = [stochState.Prefix, functionName];
         end
     end
-    methods (Access = {?stochReaction}, Hidden = true)
+    methods (Access = {?stochSimulation, ?stochPropensityReaction, ?stochDelayReaction}, Hidden = true)
         function stateHandle = getStateHandle(this)
             stateHandle = this.stateHandle;
         end
