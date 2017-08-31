@@ -36,13 +36,16 @@
     <ClInclude Include="State.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DelayedReaction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PropensityReaction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DelayReaction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComposedStateLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

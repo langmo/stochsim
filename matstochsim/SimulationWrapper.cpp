@@ -3,9 +3,11 @@
 #include "stochsim_interfaces.h"
 #include "State.h"
 #include "ComposedState.h"
-#include "DelayedReaction.h"
+#include "DelayReaction.h"
 #include "PropensityReaction.h"
+#include "ComposedStateLogger.h"
 #include <iomanip>
+#include <functional>
 
 class MatlabProgressLoggerTask :
 	public stochsim::ILogger
@@ -88,7 +90,7 @@ void SimulationWrapper::parseSimulationCommand(const std::string & methodName, M
 		}
 
 		double delay = params.Get<double>(2);
-		auto reaction = CreateReaction<stochsim::DelayedReaction<stochsim::Molecule>>(name, composedState, delay);
+		auto reaction = CreateReaction<stochsim::DelayReaction<stochsim::Molecule>>(name, composedState, delay);
 		params.Set(0, name);
 	}
 	else if (methodName == "Run")
@@ -143,6 +145,24 @@ void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	else if (methodName == "Name")
 	{
 		params.Set(0, state->Name());
+	}
+	else if (methodName == "SaveFinalNumModificationsToFile")
+	{
+		auto composedState = std::static_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		if (!composedState)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State " << state->Name() << " is not a ComposedState.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		std::string fileName = params.Get<std::string>(0);
+		size_t initialMaxModified;
+		if (params.NumParams() > 1)
+			initialMaxModified = params.Get<size_t>(1);
+		else
+			initialMaxModified = 20;
+		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, initialMaxModified);
+		composedState->AddRemoveListener(std::bind(&stochsim::ComposedStateLogger::RemoveListener, logger, std::placeholders::_1, std::placeholders::_2));
 	}
 	else
 	{
@@ -210,7 +230,7 @@ void SimulationWrapper::parsePropensityReactionCommand(std::shared_ptr<stochsim:
 	}
 }
 
-void SimulationWrapper::parseDelayReactionCommand(std::shared_ptr<stochsim::DelayedReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::parseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
@@ -323,7 +343,7 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Delay reaction with name " << reactionName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto composedReaction = std::static_pointer_cast<stochsim::DelayedReaction<stochsim::Molecule>>(reaction);
+		auto composedReaction = std::static_pointer_cast<stochsim::DelayReaction<stochsim::Molecule>>(reaction);
 		if (!composedReaction)
 		{
 			std::stringstream errorMessage;

@@ -8,7 +8,7 @@
 #include "PropensityReaction.h"
 #include "Simulation.h"
 #include "StateLogger.h"
-#include "DelayedReaction.h"
+#include "DelayReaction.h"
 #include "ProgressLogger.h"
 #include "CustomLogger.h"
 #include <iostream>
@@ -163,7 +163,7 @@ namespace
 			else
 				B0l->Add(simInfo);
 		};
-		auto B0i_fate = sim.CreateReaction<DelayedReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
+		auto B0i_fate = sim.CreateReaction<DelayReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
 
 		// B0l -(t_lag-t_moi)-> beta*Pm
 		auto B0l_lysis_fireTime = [](LysingBacterium& bacterium)-> double
@@ -175,7 +175,7 @@ namespace
 			B0l->Remove(simInfo);
 			Pm->Add(simInfo, Parameters::beta);
 		};
-		auto B0l_lysis = sim.CreateReaction<DelayedReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
+		auto B0l_lysis = sim.CreateReaction<DelayReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
 
 		// B0p -> B0l
 		auto B0p_fate = sim.CreateReaction<PropensityReaction>("B0p -> B0l", p::xi);

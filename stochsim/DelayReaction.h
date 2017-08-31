@@ -2,14 +2,14 @@
 #include "ComposedState.h"
 #include <memory>
 #include "stochsim_interfaces.h"
-
+#include <vector>
 namespace stochsim
 {
 	/// <summary>
 	/// A reaction which fires at a specific time (instead of having a propensity), with the time when the reaction fires next being determined by the properties of the first molecule of a ComplexState.
 	/// Since the first molecule of a complex state is also the oldest molecule, this type of reaction typically represents a reaction firing a fixed delay after a molecule of a given species was created.
 	/// </summary>
-	template<class T> class DelayedReaction : public IDelayedReaction
+	template<class T> class DelayReaction : public IDelayedReaction
 	{
 	public:
 		/// <summary>
@@ -21,7 +21,7 @@ namespace stochsim
 		/// </summary>
 		typedef std::function<void(T& molecule, ISimInfo& simInfo)> FireAction;
 
-		DelayedReaction(std::string name, std::shared_ptr<ComposedState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
+		DelayReaction(std::string name, std::shared_ptr<ComposedState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
 		{
 
 		}
@@ -44,7 +44,7 @@ namespace stochsim
 		const std::string name_;
 	};
 
-	template<> class DelayedReaction<Molecule> : public IDelayedReaction
+	template<> class DelayReaction<Molecule> : public IDelayedReaction
 	{
 	private:
 		/// <summary>
@@ -61,7 +61,7 @@ namespace stochsim
 			}
 		};
 	public:
-		DelayedReaction(std::string name, std::shared_ptr<ComposedState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
+		DelayReaction(std::string name, std::shared_ptr<ComposedState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
 		{
 
 		}

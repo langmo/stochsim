@@ -3,7 +3,7 @@
 #include "mex.h"
 #include "MatlabParams.h"
 #include "PropensityReaction.h"
-#include "DelayedReaction.h"
+#include "DelayReaction.h"
 #include "stochsim_interfaces.h"
 #include <string>
 #include "StateLogger.h"
@@ -20,7 +20,7 @@ private:
 	void parseSimulationCommand(const std::string& methodName, MatlabParams& params);
 	void parseStateCommand(std::shared_ptr<stochsim::IState>& state, const std::string& methodName, MatlabParams& params);
 	void parsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string& methodName, MatlabParams& params); 
-	void parseDelayReactionCommand(std::shared_ptr<stochsim::DelayedReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params);
+	void parseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params);
 public:
 	SimulationWrapper();
 	virtual ~SimulationWrapper();

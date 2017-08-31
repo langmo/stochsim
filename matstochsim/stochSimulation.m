@@ -3,12 +3,10 @@ classdef stochSimulation < handle
     properties (SetAccess = private, GetAccess=private, Hidden = true)
         objectHandle; % Handle to the underlying C++ class instance
     end
-    properties (Constant,GetAccess=private, Hidden = true)
-        Prefix = 'Simulation::';
-    end
-    methods (Static,Access = private, Hidden = true)
-        function qualifiedName = prefix(functionName)
-            qualifiedName = [stochSimulation.Prefix, functionName];
+    methods (Access = private, Hidden = true)
+        function varargout = call(this, functionName, varargin)
+            assert(this.check(), 'Invalid object.');
+            [varargout{1:nargout}] = matstochsim(['Simulation::', functionName], this.objectHandle, varargin{:});
         end
     end
     methods
@@ -38,55 +36,58 @@ classdef stochSimulation < handle
 			matstochsim('delete', this.objectHandle);
 			this.objectHandle = 0;
         end
-
+        %% Checks if valid
+        function valid = check(this)
+            valid = isvalid(this);
+        end
         %% createState - creates a state in the simulation
         function state = createState(this, name, initialCondition)
-			state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateState'), this.objectHandle, name, initialCondition));
+			state = stochState(this.objectHandle, this, this.call('CreateState', name, initialCondition));
         end
         
         function state = createComposedState(this, name, initialCondition, varargin)
             if nargin < 4
-                state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateComposedState'), this.objectHandle, name, initialCondition));
+                state = stochComposedState(this.objectHandle, this, this.call('CreateComposedState', name, initialCondition));
             else
-                state = stochState(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateComposedState'), this.objectHandle, name, initialCondition, varargin{1}));
+                state = stochComposedState(this.objectHandle, this, this.call('CreateComposedState', name, initialCondition, varargin{1}));
             end
         end
         %% createReaction - creates a reaction in the simulation
         function reaction = createPropensityReaction(this, name, rateConstant)
-			reaction = stochPropensityReaction(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreatePropensityReaction'), this.objectHandle, name, rateConstant));
+			reaction = stochPropensityReaction(this.objectHandle, this, this.call('CreatePropensityReaction', name, rateConstant));
         end
         function reaction = createDelayReaction(this, name, state, delay)
-			reaction = stochDelayReaction(this.objectHandle, this, matstochsim(stochSimulation.prefix('CreateDelayReaction'), this.objectHandle, name, state.getStateHandle(), delay));
+			reaction = stochDelayReaction(this.objectHandle, this, this.call('CreateDelayReaction', name, state.getStateHandle(), delay));
         end
         
         %% run - Executes the simulation for the given runtime
         function run(this, runtime)
-			matstochsim(stochSimulation.prefix('Run'), this.objectHandle, runtime);
+			this.call('Run', runtime);
         end
         
         %% Configure save settings
         function setLogPeriod(this, logPeriod)
-            matstochsim(stochSimulation.prefix('SetLogPeriod'), this.objectHandle, logPeriod);
+            this.call('SetLogPeriod', logPeriod);
         end
         
         function logPeriod = getLogPeriod(this)
-            logPeriod = matstochsim(stochSimulation.prefix('GetLogPeriod'), this.objectHandle);
+            logPeriod = this.call('GetLogPeriod');
         end
         
         function setBaseFolder(this, baseFolder)
-            matstochsim(stochSimulation.prefix('SetBaseFolder'), this.objectHandle, baseFolder);
+            this.call('SetBaseFolder', baseFolder);
         end
         
         function baseFolder = getBaseFolder(this)
-            baseFolder = matstochsim(stochSimulation.prefix('GetBaseFolder'), this.objectHandle);
+            baseFolder = this.call('GetBaseFolder');
         end
         
         function setUniqueSubfolder(this, uniqueSubfolder)
-            matstochsim(stochSimulation.prefix('SetUniqueSubfolder'), this.objectHandle, uniqueSubfolder);
+            this.call('SetUniqueSubfolder', uniqueSubfolder);
         end
         
         function uniqueSubfolder = isUniqueSubfolder(this)
-            uniqueSubfolder = matstochsim(stochSimulation.prefix('IsUniqueSubfolder'), this.objectHandle);
+            uniqueSubfolder = this.call('IsUniqueSubfolder');
         end
         
     end

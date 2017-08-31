@@ -4,12 +4,10 @@ classdef stochState < handle
         simulationHandle; % Handle to simulation object to which this state belongs. Used for checking if the object handle is still valid.
         stateHandle; % Handle to the state this object represents
     end
-    properties (Constant,GetAccess=private, Hidden = true)
-        Prefix = 'State::';
-    end
-    methods (Static,Access = private)
-        function qualifiedName = prefix(functionName)
-            qualifiedName = [stochState.Prefix, functionName];
+    methods (Access = protected, Hidden = true)
+        function varargout = call(this, functionName, varargin)
+            assert(this.check(), 'Invalid object.');
+            [varargout{1:nargout}] = matstochsim(['State::', functionName], this.objectHandle, this.stateHandle, varargin{:});
         end
     end
     methods (Access = {?stochSimulation, ?stochPropensityReaction, ?stochDelayReaction}, Hidden = true)
@@ -33,14 +31,12 @@ classdef stochState < handle
         end
         %% Returns initial condition
         function ic = initialCondition(this)
-            assert(this.check(), 'Invalid object.');
-            ic = matstochsim(stochState.prefix('InitialCondition'), this.objectHandle, this.stateHandle);
+            ic = this.call('InitialCondition');
         end
         
         %% Returns name
         function name = name(this)
-            assert(this.check(), 'Invalid object.');
-            name = matstochsim(stochState.prefix('Name'), this.objectHandle, this.stateHandle);
+            name = this.call('Name');
         end
     end
 end

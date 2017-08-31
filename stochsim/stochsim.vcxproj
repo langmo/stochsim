@@ -150,9 +150,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h" />
-    <ClInclude Include="DelayedReaction.h" />
+    <ClInclude Include="DelayReaction.h" />
     <ClInclude Include="ComposedState.h" />
     <ClInclude Include="CustomLogger.h" />
+    <ClInclude Include="ComposedStateLogger.h" />
     <ClInclude Include="ProgressLogger.h" />
     <ClInclude Include="PropensityReaction.h" />
     <ClInclude Include="State.h" />

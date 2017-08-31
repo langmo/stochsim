@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 #include <string>
 #include <memory>
 #include <functional>
@@ -25,6 +26,10 @@ namespace stochsim
 		public IState
 	{
 	public:
+		/// <summary>
+		/// Typedef for listener which gets called when a molecule is removed from this state.
+		/// </summary>
+		typedef std::function<void(T& molecule, double time)> RemoveListener;
 		/// <summary>
 		/// Type of the function which has to be supplied to a complex state to initilize the properties of a molecule whenever a new molecule of the species represented by this state is produced.
 		/// </summary>
@@ -76,6 +81,15 @@ namespace stochsim
 		{
 			for (size_t i = 0; i < num; i++)
 			{
+				if (!removeListeners_.empty())
+				{
+					T& molecule = buffer_[0];
+					double time = simInfo.SimTime();
+					for (auto& removeListener : removeListeners_)
+					{
+						removeListener(molecule, time);
+					}
+				}
 				buffer_.PopTop();
 			}
 		}
@@ -101,12 +115,16 @@ namespace stochsim
 		{
 			return initialCondition_;
 		}
+		inline void AddRemoveListener(RemoveListener fireListener)
+		{
+			removeListeners_.push_back(std::move(fireListener));
+		}
 	private:
 		Initializer initializer_;
 		Modifier modifier_;
 
 		CircularBuffer<T> buffer_;
-
+		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
 		const size_t initialCondition_;
 	};
@@ -115,6 +133,11 @@ namespace stochsim
 		public IState
 	{
 	public:
+		/// <summary>
+		/// Typedef for listener which gets called when a molecule is removed from this state.
+		/// </summary>
+		typedef std::function<void(Molecule& molecule, double time)> RemoveListener;
+
 		/// <summary>
 		/// Constructor.
 		/// </summary>
@@ -146,6 +169,10 @@ namespace stochsim
 		{
 			return buffer_.Size();
 		}
+		inline void AddRemoveListener(RemoveListener fireListener)
+		{
+			removeListeners_.push_back(std::move(fireListener));
+		}
 		virtual void Add(ISimInfo& simInfo, size_t num = 1) override
 		{
 			for (size_t i = 0; i < num; i++)
@@ -160,6 +187,15 @@ namespace stochsim
 		{
 			for (size_t i = 0; i < num; i++)
 			{
+				if (!removeListeners_.empty())
+				{
+					Molecule& molecule = buffer_[0];
+					double time = simInfo.SimTime();
+					for (auto& removeListener : removeListeners_)
+					{
+						removeListener(molecule, time);
+					}
+				}
 				buffer_.PopTop();
 			}
 		}
@@ -187,7 +223,7 @@ namespace stochsim
 		}
 	private:
 		CircularBuffer<Molecule> buffer_;
-
+		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
 		const size_t initialCondition_;
 	};
