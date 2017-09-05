@@ -9,35 +9,7 @@
 #include <iomanip>
 #include <functional>
 
-class MatlabProgressLoggerTask :
-	public stochsim::ILogger
-{
-public:
-	MatlabProgressLoggerTask() : runtime_(1)
-	{
-	}
-	virtual void WriteLog(double time) override
-	{
-		int progress = (int)(time / runtime_ * 100);
-		std::stringstream message;
-		message << "\b\b\b\b\b\b" << std::setw(5) << std::fixed << std::setprecision(1) << (time / runtime_ * 100) << "%%";
-		::mexPrintf(message.str().c_str());
-	}
-	virtual void Initialize(std::string baseFolder, stochsim::ISimInfo& simInfo) override
-	{
-		runtime_ = simInfo.RunTime();
-		::mexPrintf("Simulating model:   0.0%");
-	}
-	virtual void Uninitialize() override
-	{
-		::mexPrintf("\b\b\b\b\b\b Finished!\n");
-	}
-
-private:
-	double runtime_;
-};
-
-void SimulationWrapper::parseSimulationCommand(const std::string & methodName, MatlabParams& params)
+void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, MatlabParams& params)
 {
 	if (methodName == "CreateState")
 	{
@@ -128,6 +100,16 @@ void SimulationWrapper::parseSimulationCommand(const std::string & methodName, M
 		bool uniqueSubFolder = IsUniqueSubfolder();
 		params.Set(0, uniqueSubFolder);
 	}
+	else if (methodName == "SetLogConsole")
+	{
+		bool logConsole = params.Get<bool>(0);
+		progressLogger_->SetShouldLog(logConsole);
+	}
+	else if (methodName == "IsLogConsole")
+	{
+		bool logConsole = progressLogger_->IsShouldLog();
+		params.Set(0, logConsole);
+	}
 	else
 	{
 		std::stringstream errorMessage;
@@ -136,7 +118,7 @@ void SimulationWrapper::parseSimulationCommand(const std::string & methodName, M
 	}
 }
 
-void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::IState>& state, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& state, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "InitialCondition")
 	{
@@ -172,7 +154,7 @@ void SimulationWrapper::parseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	}
 }
 
-void SimulationWrapper::parsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
@@ -230,7 +212,7 @@ void SimulationWrapper::parsePropensityReactionCommand(std::shared_ptr<stochsim:
 	}
 }
 
-void SimulationWrapper::parseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
@@ -268,7 +250,7 @@ void SimulationWrapper::parseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 
 SimulationWrapper::SimulationWrapper()
 {
-	CreateLogger<MatlabProgressLoggerTask>();
+	progressLogger_ = CreateLogger<MatlabProgressLogger>();
 	stateLogger_ = CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
 }
 
@@ -277,7 +259,7 @@ SimulationWrapper::~SimulationWrapper()
 {
 }
 
-void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& params)
+void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& params)
 {
 	std::string::size_type prefixEnd = command.find(prefixSeparator_);
 	if (prefixEnd == std::string::npos)
@@ -299,7 +281,7 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 	// Switch between supported classes
 	if (className == simulationPrefix_)
 	{
-		parseSimulationCommand(methodName, params);
+		ParseSimulationCommand(methodName, params);
 		return;
 	}
 	else if (className == statePrefix_)
@@ -312,7 +294,7 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		parseStateCommand(state, methodName, params.ShiftInputs(1));
+		ParseStateCommand(state, methodName, params.ShiftInputs(1));
 	}
 	else if (className == simpleReactionPrefix_)
 	{
@@ -331,7 +313,7 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Reaction with name " << reactionName << " is not a simple reaction.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		parsePropensityReactionCommand(simpleReaction, methodName, params.ShiftInputs(1));
+		ParsePropensityReactionCommand(simpleReaction, methodName, params.ShiftInputs(1));
 	}
 	else if (className == delayReactionPrefix_)
 	{
@@ -350,7 +332,7 @@ void SimulationWrapper::parseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Delay reaction with name " << reactionName << " is not a delayed reaction.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		parseDelayReactionCommand(composedReaction, methodName, params.ShiftInputs(1));
+		ParseDelayReactionCommand(composedReaction, methodName, params.ShiftInputs(1));
 	}
 	else
 	{

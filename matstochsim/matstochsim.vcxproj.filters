@@ -27,6 +27,9 @@
     <ClInclude Include="MatlabParams.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MatlabProgressLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="matstochsim.def">
@@ -50,6 +53,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SimulationWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MatlabProgressLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

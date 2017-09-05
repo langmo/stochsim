@@ -90,5 +90,13 @@ classdef stochSimulation < handle
             uniqueSubfolder = this.call('IsUniqueSubfolder');
         end
         
+        function setLogConsole(this, logConsole)
+            this.call('SetLogConsole', logConsole);
+        end
+        
+        function logConsole = isLogConsole(this)
+            logConsole = this.call('IsLogConsole');
+        end
+        
     end
 end

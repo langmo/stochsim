@@ -159,12 +159,14 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MatlabProgressLogger.cpp" />
     <ClCompile Include="matstochsim.cpp" />
     <ClCompile Include="SimulationWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="communicationhelper.h" />
     <ClInclude Include="MatlabParams.h" />
+    <ClInclude Include="MatlabProgressLogger.h" />
     <ClInclude Include="SimulationWrapper.h" />
   </ItemGroup>
   <ItemGroup>

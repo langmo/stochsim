@@ -55,7 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	SimulationWrapper* simulation = convertMat2Ptr<SimulationWrapper>(prhs[1]);
 	try
 	{
-		simulation->parseCommand(command, MatlabParams(nlhs, plhs, nrhs-2, prhs+2));
+		simulation->ParseCommand(command, MatlabParams(nlhs, plhs, nrhs-2, prhs+2));
 	}
 	catch (const std::runtime_error& re)
 	{

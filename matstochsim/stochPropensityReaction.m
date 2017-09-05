@@ -31,11 +31,17 @@ classdef stochPropensityReaction < handle
         end
         
         function addProduct(this, state, varargin)
-            this.call('AddProduct', state.getStateHandle(), varargin{:});
+            if ~ischar(state)
+                state = state.getStateHandle();
+            end
+            this.call('AddProduct', state, varargin{:});
         end
         
         function addReactant(this, state, varargin)
-            this.call('AddReactant', state.getStateHandle(), varargin{:});
+            if ~ischar(state)
+                state = state.getStateHandle();
+            end
+            this.call('AddReactant', state, varargin{:});
         end
     end
 end
