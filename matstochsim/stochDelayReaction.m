@@ -30,6 +30,12 @@ classdef stochDelayReaction < handle
             name = this.call('Name');
         end
         
+        function delay = getDelay(this)
+            delay = this.call('GetDelay');
+        end
+        function setDelay(this, delay)
+            this.call('SetDelay', delay);
+        end
         function addProduct(this, state, varargin)
             if ~ischar(state)
                 state = state.getStateHandle();

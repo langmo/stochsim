@@ -10,7 +10,7 @@ classdef stochState < handle
             [varargout{1:nargout}] = matstochsim(['State::', functionName], this.objectHandle, this.stateHandle, varargin{:});
         end
     end
-    methods (Access = {?stochSimulation, ?stochPropensityReaction, ?stochDelayReaction}, Hidden = true)
+    methods (Access = {?stochSimulation, ?stochPropensityReaction, ?stochDelayReaction, ?stochTimerReaction}, Hidden = true)
         function stateHandle = getStateHandle(this)
             stateHandle = this.stateHandle;
         end

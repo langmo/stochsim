@@ -160,6 +160,7 @@
     <ClInclude Include="StateLogger.h" />
     <ClInclude Include="Simulation.h" />
     <ClInclude Include="stochsim_interfaces.h" />
+    <ClInclude Include="TimerReaction.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp" />

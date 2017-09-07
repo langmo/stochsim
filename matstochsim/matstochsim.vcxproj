@@ -153,13 +153,24 @@
       <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>copy $(ProjectDir)\*.m $(OutDir)</Command>
+      <Command>copy $(ProjectDir)*.m $(OutDir)
+mkdir $(OutDir)toolbox
+copy $(ProjectDir)*.m $(OutDir)toolbox\
+mkdir $(OutDir)toolbox\src
+mkdir $(OutDir)toolbox\src\matstochsim
+copy $(ProjectDir)*.h $(OutDir)toolbox\src\matstochsim
+copy $(ProjectDir)*.cpp $(OutDir)toolbox\src\matstochsim
+mkdir $(OutDir)toolbox\src\stochsim
+copy $(SolutionDir)stochsim\*.cpp $(OutDir)toolbox\src\stochsim
+copy $(SolutionDir)stochsim\*.h $(OutDir)toolbox\src\stochsim
+copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetExt)</Command>
       <Message>Copying Matlab files</Message>
       <Outputs>$(OutDir)\*.m</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MatlabProgressLogger.cpp" />
+    <ClCompile Include="MatlabStateLogger.cpp" />
     <ClCompile Include="matstochsim.cpp" />
     <ClCompile Include="SimulationWrapper.cpp" />
   </ItemGroup>
@@ -167,14 +178,20 @@
     <ClInclude Include="communicationhelper.h" />
     <ClInclude Include="MatlabParams.h" />
     <ClInclude Include="MatlabProgressLogger.h" />
+    <ClInclude Include="MatlabStateLogger.h" />
     <ClInclude Include="SimulationWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="batchinfect.m" />
+    <None Include="install.m" />
     <None Include="matstochsim.def" />
-    <None Include="stochReaction.m" />
+    <None Include="stochComposedState.m" />
+    <None Include="stochDelayReaction.m" />
+    <None Include="stochParseModel.m" />
+    <None Include="stochPropensityReaction.m" />
     <None Include="stochSimulation.m" />
     <None Include="stochState.m" />
+    <None Include="stochTimerReaction.m" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\stochsim\stochsim.vcxproj">

@@ -2,9 +2,12 @@
 #include "mex.h"
 #include <string>
 #include <sstream>
+#include <functional>
 class MatlabParams
 {
 public:
+
+	typedef std::unique_ptr<mxArray, std::function<void(mxArray*)>> MatlabVariable;
 
 	MatlabParams(int nlhs, mxArray* plhs[], int nrhs, const mxArray *prhs[], unsigned int shift=0) : shift_(shift), nlhs_(nlhs), plhs_(plhs), nrhs_(nrhs), prhs_(prhs)
 	{
@@ -18,43 +21,62 @@ public:
 	{
 		return nrhs_ - shift_;
 	}
-
-	/*std::string GetString(int index)
+	unsigned int NumReturns()
 	{
-		index += shift_;
-		AssertParamIndex(index);
-
-		if (mxGetString(prhs_[index], buffer_, sizeof(buffer_)))
+		return nlhs_;
+	}
+	static MatlabVariable CreateDoubleMatrix(mwSize rows, mwSize columns)
+	{
+		return MatlabVariable(::mxCreateDoubleMatrix(rows, columns, ::mxREAL), [](mxArray* content) {::mxDestroyArray(content); });
+	}
+	static MatlabVariable CreateCell(mwSize rows, mwSize columns)
+	{
+		mwSize dims[2];
+		dims[0] = rows;
+		dims[1] = columns;
+		return MatlabVariable(::mxCreateCellArray(2, dims), [](mxArray* content) {::mxDestroyArray(content); });
+	}
+	static void AssignArrayElement(mxArray& array, mwIndex row, mwIndex column, double value)
+	{
+		if (!::mxIsDouble(&array))
 		{
 			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a string less than " << (sizeof(buffer_)-1) << " characters long.";
+			errorMessage << "Matlab array is not a double array, it's a "<< mxGetClassName(&array) << " array.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		return std::string(buffer_);
+		if (::mxGetNumberOfDimensions(&array) != 2)
+			throw std::exception("Only 2D cell arrays can be assigned to.");
+		const mwSize* size = ::mxGetDimensions(&array);
+		if (row < 0 || row >= size[0])
+			throw std::exception("Invalid row index.");
+		if (column < 0 || column >= size[1])
+			throw std::exception("Invalid column index.");
+		mwIndex dim[] = { row,  column };
+		mwIndex index = ::mxCalcSingleSubscript(&array, 2, dim);
+		double* content = mxGetPr(&array);
+		if (content == NULL)
+			throw std::exception("Matlab array is not a double array");
+		content[index] = value;
 	}
-	double GetDouble(int index)
+	static void AssignCellElement(mxArray& cell, mwIndex row, mwIndex column, std::string value)
 	{
-		index += shift_;
-		AssertParamIndex(index);
-		const mxArray* elem = prhs_[index];
-		size_t mrows = mxGetM(elem);
-		size_t ncols = mxGetN(elem);
-		if (mxGetM(elem) != 1 || mxGetN(elem) != 1 || !(mxIsNumeric(elem)|| mxIsLogical(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
+		if (!::mxIsCell(&cell))
 		{
 			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number.";
+			errorMessage << "Matlab array is not a cell array, it's a " << mxGetClassName(&cell) << " array.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		return mxGetScalar(elem);
+		if (::mxGetNumberOfDimensions(&cell) != 2)
+			throw std::exception("Only 2D cell arrays can be assigned to.");
+		const mwSize* size = ::mxGetDimensions(&cell);
+		if (row < 0 || row >= size[0])
+			throw std::exception("Invalid row index.");
+		if (column < 0 || column >= size[1])
+			throw std::exception("Invalid column index.");
+		mwIndex dim[] =  {row,  column};
+		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
+		::mxSetCell(&cell, index, ::mxCreateString(value.c_str()));
 	}
-	bool GetBool(int index)
-	{
-		return GetDouble(index) != 0;
-	}
-	template<typename T> T GetNumber(int index)
-	{
-		return static_cast<T>(GetDouble(index) + 0.5);
-	}*/
 
 	template<typename T> T Get(int index)
 	{
@@ -105,6 +127,18 @@ public:
 		if (index >= nlhs_)
 			return;
 		plhs_[index] = ::mxCreateDoubleScalar(static_cast<double>(value));
+	}
+	template<> void Set<MatlabVariable>(int index, MatlabVariable&& value)
+	{
+		if (index >= nlhs_)
+			return;
+		plhs_[index] = value.release();
+	}
+	template<> void Set<MatlabVariable&>(int index, MatlabVariable& value)
+	{
+		if (index >= nlhs_)
+			return;
+		plhs_[index] = value.release();
 	}
 	template<> void Set<std::string>(int index, std::string&& value)
 	{

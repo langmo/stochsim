@@ -25,7 +25,7 @@ namespace stochsim
 		{
 
 		}
-		virtual double NextReactionTime() const override
+		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
 			return state_->Num() > 0 ? fireTime_((*state_)[0]) : stochsim::inf;
 		}
@@ -63,9 +63,8 @@ namespace stochsim
 	public:
 		DelayReaction(std::string name, std::shared_ptr<ComposedState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
 		{
-
 		}
-		virtual double NextReactionTime() const override
+		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
 			return state_->Num() > 0 ? (*state_)[0].creationTime + delay_ : stochsim::inf;
 		}
@@ -90,6 +89,24 @@ namespace stochsim
 		}
 
 		/// <summary>
+		/// Returns the current delay of the reaction
+		/// </summary>
+		/// <returns>Current delay in simulation time units.</returns>
+		double GetDelay() const
+		{
+			return delay_;
+		}
+		/// <summary>
+		/// Sets the delay of the reaction.
+		/// </summary>
+		/// <param name="delay">Delay in simulation time units.</param>
+		void SetDelay(double delay)
+		{
+			delay_ = delay;
+		}
+
+
+		/// <summary>
 		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry, except when the modifier is true.
 		/// In this case, its concentration is neither increased nor decreased, but instead the State::Modify function is called on the respective state. Useful to e.g. count how often a given molecule takes
 		/// part in a reaction where the molecule acts as a modifier.
@@ -102,7 +119,7 @@ namespace stochsim
 			products_.emplace_back(state, stochiometry, modifier);
 		}
 	private:
-		const double delay_;
+		double delay_;
 		std::shared_ptr<ComposedState<Molecule>> state_;
 		const std::string name_;
 		std::vector<ReactionElement> products_;

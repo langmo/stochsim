@@ -167,7 +167,7 @@ namespace stochsim
 				double nextDelayedT = stochsim::inf;
 				for (size_t i = 0; i < delayedReactions_.size(); i++)
 				{
-					double temp = delayedReactions_[i]->NextReactionTime();
+					double temp = delayedReactions_[i]->NextReactionTime(*this);
 					if (temp < nextDelayedT)
 					{
 						nextDelayedT = temp;
@@ -229,6 +229,10 @@ namespace stochsim
 		{
 			return time_;
 		}
+		virtual double LogPeriod() const override
+		{
+			return logger_.GetLogPeriod();
+		}
 		virtual double RunTime() const override
 		{
 			return runtime_;
@@ -251,14 +255,32 @@ namespace stochsim
 
 		void AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 		{
+			if (GetPropensityReaction(reaction->Name()))
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Propensity reaction with name " << reaction->Name() << " already exists in simulation.";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			propensityReactions_.push_back(std::move(reaction));
 		}
 		void AddReaction(std::shared_ptr<IDelayedReaction> reaction)
 		{
+			if (GetDelayedReaction(reaction->Name()))
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Delayed reaction with name "<<reaction->Name()<< " already exists in simulation.";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			delayedReactions_.push_back(std::move(reaction));
 		}
 		void AddState(std::shared_ptr<IState> state)
 		{
+			if (GetState(state->Name()))
+			{
+				std::stringstream errorMessage;
+				errorMessage << "State with name " << state->Name() << " already exists in simulation.";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			states_.push_back(std::move(state));
 		}
 

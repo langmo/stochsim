@@ -1,4 +1,4 @@
-classdef stochPropensityReaction < handle
+classdef stochTimerReaction < handle
     properties (SetAccess = private, GetAccess=private, Hidden = true)
         objectHandle; % Handle to the underlying C++ class instance
         simulationHandle; % Handle to simulation object to which this state belongs. Used for checking if the object handle is still valid.
@@ -7,13 +7,13 @@ classdef stochPropensityReaction < handle
     methods (Access = private, Hidden = true)
         function varargout = call(this, functionName, varargin)
             assert(this.check(), 'Invalid object.');
-            [varargout{1:nargout}] = matstochsim(['PropensityReaction::', functionName], this.objectHandle, this.reactionHandle, varargin{:});
+            [varargout{1:nargout}] = matstochsim(['TimerReaction::', functionName], this.objectHandle, this.reactionHandle, varargin{:});
         end
     end
     methods
-        %% Constructor - Create a new stochsim State
+        %% Constructor - Create a new timer reaction
         % Should only be called from stochSimulation class
-        function this = stochPropensityReaction(objectHandle, simulationHandle, reactionHandle)
+        function this = stochTimerReaction(objectHandle, simulationHandle, reactionHandle)
             this.objectHandle = objectHandle;
             this.simulationHandle = simulationHandle;
             this.reactionHandle = reactionHandle;
@@ -29,24 +29,17 @@ classdef stochPropensityReaction < handle
         function name = name(this)
             name = this.call('Name');
         end
-        function rateConstant = getRateConstant(this)
-            rateConstant = this.call('GetRateConstant');
+        function fireTime = getFireTime(this)
+            fireTime = this.call('GetFireTime');
         end
-        function setRateConstant(this, rateConstant)
-            this.call('SetRateConstant', rateConstant);
+        function setFireTime(this, fireTime)
+            this.call('SetFireTime', fireTime);
         end
         function addProduct(this, state, varargin)
             if ~ischar(state)
                 state = state.getStateHandle();
             end
             this.call('AddProduct', state, varargin{:});
-        end
-        
-        function addReactant(this, state, varargin)
-            if ~ischar(state)
-                state = state.getStateHandle();
-            end
-            this.call('AddReactant', state, varargin{:});
-        end
+        end        
     end
 end

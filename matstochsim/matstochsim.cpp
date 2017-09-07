@@ -3,20 +3,6 @@
 #include <string>
 #include "SimulationWrapper.h"
 #include "MatlabParams.h"
-// The class that we are interfacing to
-class dummy
-{
-public:
-    void train() 
-	{
-		::mexPrintf("Training");
-	};
-    void test() 
-	{
-		::mexPrintf("Testing");
-	};
-private:
-};
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {	
 	// Get the command string

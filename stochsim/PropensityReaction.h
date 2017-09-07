@@ -2,6 +2,7 @@
 #include "stochsim_interfaces.h"
 #include <vector>
 #include <memory>
+#include <sstream>
 namespace stochsim
 {
 	/// <summary>
@@ -94,8 +95,24 @@ namespace stochsim
 		{
 			return name_;
 		}
+		/// <summary>
+		/// Returns the rate constant of this reaction.
+		/// </summary>
+		/// <returns>Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants.</returns>
+		double GetRateConstant() const
+		{
+			return rateConstant_;
+		}
+		/// <summary>
+		/// Sets the rate constant of this reaction.
+		/// </summary>
+		/// <param name="rateConstant">Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants</param>
+		void SetRateConstant(double rateConstant)
+		{
+			rateConstant_ = rateConstant;
+		}
 	private:
-		const double rateConstant_;
+		double rateConstant_;
 		const std::string name_;
 		std::vector<ReactionElement> reactants_;
 		std::vector<ReactionElement> products_;

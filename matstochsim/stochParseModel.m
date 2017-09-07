@@ -1,4 +1,4 @@
-function sim = stochParseModel( fileName )
+function sim = stochParseModel(fileName, externalParameters)
 %parseModel Parses the model saved in fileName (usually a CMDL file) and
 %creates a simulation object in stochsim which can be run.
 
@@ -6,7 +6,14 @@ function sim = stochParseModel( fileName )
 parseTree = struct();
 % Struct p holds all declared parameters
 parseTree.p = struct();
+% hold all state names which we already initialized
 parseTree.states = cell(1,0);
+% externally provided parameters
+if exist('externalParameters', 'var') && isstruct(externalParameters)
+    parseTree.p_ext = externalParameters;
+else
+    parseTree.p_ext = struct();
+end
 
 % Create simulation object
 sim = stochSimulation('sim_results', 1, false);
@@ -20,8 +27,9 @@ while ischar(line)
     try
         [sim, parseTree] = parseLine(line, sim, parseTree);
     catch e
-        error(e.identifier, '%s\n\tin file %s, line %g:\n\t%s', e.message, fileName, lineID, line);
-        %rethrow(e);
+        ME = MException(e.identifier, '%s\n\tin file %s, line %g:\n\t%s', e.message, fileName, lineID, line);
+        ME=ME.addCause(e);
+        throw(ME);
     end
     %% Read in next line
     line = fgetl(fid);
@@ -69,6 +77,21 @@ end
 error('stochsim:notAssignmentNotReaction', 'Line is neither an assignment, nor a reaction!');
 end
 
+%% Get a parameter value
+function value = getParameter(parseTree, name)
+    if isfield(parseTree.p_ext, name)
+        value = parseTree.p_ext.(name);
+    elseif isfield(parseTree.p, name)
+        value = parseTree.p.(name);
+    else
+        error('stochsim:parameterUndefined', 'Parameter %s not defined. Set a parameter e.g. by "%s = 0;"!', name, name);
+    end
+end
+
+function parseTree = setParameter(parseTree, name, value)
+   parseTree.p.(name) = value;
+end
+
 %% Parse assignment
 function [sim, parseTree] = parseAssignment(assignment, sim, parseTree)
 idx = strfind(assignment, '=');
@@ -87,7 +110,7 @@ catch e
     error('stochsim:parseError', 'Could not parse value string "%s"!', valueStr);
 end
 % set value
-parseTree.p.(name) = value;
+parseTree = setParameter(parseTree, name, value);
 end
 
 %% Parse reaction
@@ -120,10 +143,7 @@ for speciesNameCell = [lhs_speciesNames,rhs_speciesNames]
     speciesName = speciesNameCell{1};
     if ~any(cellfun(@(x)strcmp(x, speciesName), parseTree.states))
         parseTree.states{end+1} = speciesName;
-        if ~isfield(parseTree.p, speciesName)
-            error('stochsim:noIC', 'Initial condition for state "%s" not set. Set IC for states in the same way as parameters, e.g. "%s = 0;"!', speciesName, speciesName);
-        end
-        sim.createState(speciesName, parseTree.p.(speciesName));
+        sim.createState(speciesName, getParameter(parseTree, speciesName));
     end
 end
 
@@ -138,7 +158,7 @@ end
 end
  %% extendParameterExpression
 function parameterExpression = extendParameterExpression(parameterExpression)
-    parameterExpression = regexprep(parameterExpression, '([a-zA-Z_]\w*)', 'parseTree.p.$1');
+    parameterExpression = regexprep(parameterExpression, '([a-zA-Z_]\w*)', 'getParameter(parseTree, ''$1'')');%'parseTree.p.$1');
 end
 %% parseReactants
 function [speciesNames, stochiometries] = parseReactants(reactantsStr)

@@ -30,6 +30,9 @@
     <ClInclude Include="MatlabProgressLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MatlabStateLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="matstochsim.def">
@@ -41,10 +44,25 @@
     <None Include="stochState.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochReaction.m">
+    <None Include="batchinfect.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="batchinfect.m">
+    <None Include="stochComposedState.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="stochDelayReaction.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="stochParseModel.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="stochPropensityReaction.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="stochTimerReaction.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="install.m">
       <Filter>Matlab Files</Filter>
     </None>
   </ItemGroup>
@@ -56,6 +74,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MatlabProgressLogger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MatlabStateLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

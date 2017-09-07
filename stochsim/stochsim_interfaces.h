@@ -29,8 +29,13 @@ namespace stochsim
 		/// Returns the runtime of the simulation, i.e. when the simulation stops.
 		/// Should only be called while a simulation is running.
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>Total runtime of simulation, in simulation time units.</returns>
 		virtual double RunTime() const = 0;
+		/// <summary>
+		/// Returns the period for logging, e.g. "1.0" if every 1 units of simulation the current state is logged.
+		/// </summary>
+		/// <returns>Period of logging in simulation time units</returns>
+		virtual double LogPeriod() const = 0;
 		/// <summary>
 		/// Generates a uniformly distributed random integer number between the lower and the upper bound. Both bounds are included.
 		/// </summary>
@@ -135,8 +140,9 @@ namespace stochsim
 		/// <summary>
 		/// Returns the simulation time when the reaction will fire next, or DelayedReaction::inf_ if the delayed reaction won't fire anymore, given the current simulation state.
 		/// </summary>
+		/// <param name="simInfo">Context of the simulation, e.g. the current simulation time.</param>
 		/// <returns>Time when the reaction will fire next.</returns>
-		virtual double NextReactionTime() const = 0;
+		virtual double NextReactionTime(ISimInfo& simInfo) const = 0;
 		/// <summary>
 		/// Called by the simulation when this reaction is due to fire.
 		/// </summary>

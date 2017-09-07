@@ -57,12 +57,18 @@ classdef stochSimulation < handle
 			reaction = stochPropensityReaction(this.objectHandle, this, this.call('CreatePropensityReaction', name, rateConstant));
         end
         function reaction = createDelayReaction(this, name, state, delay)
-			reaction = stochDelayReaction(this.objectHandle, this, this.call('CreateDelayReaction', name, state.getStateHandle(), delay));
+            if ~ischar(state)
+                state = state.getStateHandle();
+            end
+			reaction = stochDelayReaction(this.objectHandle, this, this.call('CreateDelayReaction', name, state, delay));
+        end
+        function reaction = createTimerReaction(this, name, fireTime)
+			reaction = stochTimerReaction(this.objectHandle, this, this.call('CreateTimerReaction', name, fireTime));
         end
         
         %% run - Executes the simulation for the given runtime
-        function run(this, runtime)
-			this.call('Run', runtime);
+        function varargout = run(this, runtime)
+			[varargout{1:nargout}] = this.call('Run', runtime);
         end
         
         %% Configure save settings

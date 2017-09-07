@@ -48,6 +48,9 @@
     <ClInclude Include="ComposedStateLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TimerReaction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp">

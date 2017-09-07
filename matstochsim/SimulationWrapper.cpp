@@ -17,6 +17,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		unsigned long initialCondition = params.Get<unsigned long>(1);
 		auto state = CreateState<stochsim::State>(name, initialCondition);
 		stateLogger_->AddState(state);
+		resultLogger_->AddState(state);
 		params.Set(0, name);
 	}
 	else if (methodName == "CreateComposedState")
@@ -32,6 +33,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		else
 			state = CreateState<stochsim::ComposedState<stochsim::Molecule>>(name, initialCondition);
 		stateLogger_->AddState(state);
+		resultLogger_->AddState(state);
 		params.Set(0, name);
 	}
 	else if (methodName == "CreatePropensityReaction")
@@ -53,7 +55,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto composedState = std::static_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
 		if (!composedState)
 		{
 			std::stringstream errorMessage;
@@ -65,10 +67,27 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		auto reaction = CreateReaction<stochsim::DelayReaction<stochsim::Molecule>>(name, composedState, delay);
 		params.Set(0, name);
 	}
+	else if (methodName == "CreateTimerReaction")
+	{
+		std::string name = params.Get<std::string>(0);
+		double fireTime = params.Get<double>(1);
+		auto reaction = CreateReaction<stochsim::TimerReaction>(name, fireTime);
+		params.Set(0, name);
+	}
 	else if (methodName == "Run")
 	{
+		resultLogger_->SetShouldLog(params.NumReturns() > 0);
 		double runtime = params.Get<double>(0);
 		Run(runtime);
+		if (params.NumReturns() >= 2)
+		{
+			params.Set(0, resultLogger_->GetHeaders());
+			params.Set(1, resultLogger_->GetResults());
+		}
+		else if (params.NumReturns() == 1)
+		{
+			params.Set(0, resultLogger_->GetResults());
+		}
 	}
 	else if (methodName == "SetLogPeriod")
 	{
@@ -130,7 +149,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	}
 	else if (methodName == "SaveFinalNumModificationsToFile")
 	{
-		auto composedState = std::static_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
 		if (!composedState)
 		{
 			std::stringstream errorMessage;
@@ -154,11 +173,11 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	}
 }
 
-void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& reaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
-		params.Set(0, simpleReaction->Name());
+		params.Set(0, reaction->Name());
 	}
 	else if (methodName == "AddReactant")
 	{
@@ -180,7 +199,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			modifier = params.Get<bool>(2);
 		else
 			modifier = false;
-		simpleReaction->AddReactant(state, stochiometry, modifier);
+		reaction->AddReactant(state, stochiometry, modifier);
 	}
 	else if (methodName == "AddProduct")
 	{
@@ -202,7 +221,17 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			modifier = params.Get<bool>(2);
 		else
 			modifier = false;
-		simpleReaction->AddProduct(state, stochiometry, modifier);
+		reaction->AddProduct(state, stochiometry, modifier);
+	}
+	else if (methodName == "SetRateConstant")
+	{
+		double rateConstant = params.Get<double>(0);
+		reaction->SetRateConstant(rateConstant);
+	}
+	else if (methodName == "GetRateConstant")
+	{
+		double rateConstant = reaction->GetRateConstant();
+		params.Set(0, rateConstant);
 	}
 	else
 	{
@@ -240,6 +269,58 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 			modifier = false;
 		reaction->AddProduct(state, stochiometry, modifier);
 	}
+	else if (methodName == "SetDelay")
+	{
+		double delay = params.Get<double>(0);
+		reaction->SetDelay(delay);
+	}
+	else if (methodName == "GetDelay")
+	{
+		double delay = reaction->GetDelay();
+		params.Set(0, delay);
+	}
+	else
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Method " << methodName << " not known for class " << delayReactionPrefix_ << ".";
+		throw std::exception(errorMessage.str().c_str());
+	}
+}
+
+void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::TimerReaction>& reaction, const std::string & methodName, MatlabParams & params)
+{
+	if (methodName == "Name")
+	{
+		params.Set(0, reaction->Name());
+	}
+	else if (methodName == "AddProduct")
+	{
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		unsigned int stochiometry;
+		if (params.NumParams() > 1)
+			stochiometry = params.Get<unsigned int>(1);
+		else
+			stochiometry = 1;
+
+		reaction->AddProduct(state, stochiometry);
+	}
+	else if (methodName == "SetFireTime")
+	{
+		double fireTime = params.Get<double>(0);
+		reaction->SetFireTime(fireTime);
+	}
+	else if (methodName == "GetFireTime")
+	{
+		double fireTime = reaction->GetFireTime();
+		params.Set(0, fireTime);
+	}
 	else
 	{
 		std::stringstream errorMessage;
@@ -251,7 +332,8 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 SimulationWrapper::SimulationWrapper()
 {
 	progressLogger_ = CreateLogger<MatlabProgressLogger>();
-	stateLogger_ = CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
+	stateLogger_ = std::make_shared<stochsim::StateLogger>(stateLoggerFile_); //CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
+	resultLogger_ = CreateLogger<MatlabStateLogger>();
 }
 
 
@@ -278,11 +360,11 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 	{
 		throw std::exception("Provided method name is empty.");
 	}
+
 	// Switch between supported classes
 	if (className == simulationPrefix_)
 	{
 		ParseSimulationCommand(methodName, params);
-		return;
 	}
 	else if (className == statePrefix_)
 	{
@@ -306,7 +388,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Reaction with name " << reactionName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto simpleReaction = std::static_pointer_cast<stochsim::PropensityReaction>(reaction);
+		auto simpleReaction = std::dynamic_pointer_cast<stochsim::PropensityReaction>(reaction);
 		if (!simpleReaction)
 		{
 			std::stringstream errorMessage;
@@ -325,14 +407,33 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Delay reaction with name " << reactionName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto composedReaction = std::static_pointer_cast<stochsim::DelayReaction<stochsim::Molecule>>(reaction);
+		auto composedReaction = std::dynamic_pointer_cast<stochsim::DelayReaction<stochsim::Molecule>>(reaction);
 		if (!composedReaction)
 		{
 			std::stringstream errorMessage;
-			errorMessage << "Delay reaction with name " << reactionName << " is not a delayed reaction.";
+			errorMessage << "Reaction with name " << reactionName << " is not a delayed reaction.";
 			throw std::exception(errorMessage.str().c_str());
 		}
 		ParseDelayReactionCommand(composedReaction, methodName, params.ShiftInputs(1));
+	}
+	else if (className == timerReactionPrefix_)
+	{
+		std::string reactionName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IDelayedReaction> reaction = GetDelayedReaction(reactionName);
+		if (!reaction)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Timer reaction with name " << reactionName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		auto timerReaction = std::dynamic_pointer_cast<stochsim::TimerReaction>(reaction);
+		if (!timerReaction)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Reaction with name " << reactionName << " is not a timer reaction.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		ParseTimerReactionCommand(timerReaction, methodName, params.ShiftInputs(1));
 	}
 	else
 	{
