@@ -23,6 +23,10 @@ namespace stochsim
 				file_.reset();
 			}
 		}
+		virtual bool WritesToDisk() const override
+		{
+			return true;
+		}
 		void RemoveListener(Molecule& molecule, double time)
 		{
 			while (molecule.numModified > modificationCounter_.size())

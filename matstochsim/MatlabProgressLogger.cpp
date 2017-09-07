@@ -38,3 +38,8 @@ bool MatlabProgressLogger::IsShouldLog()
 {
 	return shouldLog_;
 }
+
+bool MatlabProgressLogger::WritesToDisk() const
+{
+	return false;
+}

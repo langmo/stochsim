@@ -87,6 +87,14 @@ classdef stochSimulation < handle
         function baseFolder = getBaseFolder(this)
             baseFolder = this.call('GetBaseFolder');
         end
+        % Set to empty string to not save results in file.
+        function setResultFile(this, resultFile)
+            this.call('SetResultFile', resultFile);
+        end
+        % Returns empty string if not saving in file.
+        function resultFile = getResultFile(this)
+            resultFile = this.call('GetResultFile');
+        end
         
         function setUniqueSubfolder(this, uniqueSubfolder)
             this.call('SetUniqueSubfolder', uniqueSubfolder);

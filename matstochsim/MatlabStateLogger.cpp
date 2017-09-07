@@ -51,6 +51,10 @@ bool MatlabStateLogger::IsShouldLog()
 {
 	return shouldLog_;
 }
+bool MatlabStateLogger::WritesToDisk() const
+{
+	return false;
+}
 void MatlabStateLogger::Uninitialize()
 {
 }

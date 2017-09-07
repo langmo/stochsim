@@ -27,7 +27,10 @@ namespace stochsim
 		{
 			std::cout << "\b\b\b\b\b\b Finished!" << std::endl;
 		}
-
+		virtual bool WritesToDisk() const override
+		{
+			return false;
+		}
 	private:
 		double runtime_;
 	};

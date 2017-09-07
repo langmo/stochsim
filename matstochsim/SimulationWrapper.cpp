@@ -109,6 +109,28 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		std::string baseFolder = GetBaseFolder();
 		params.Set(0, baseFolder);
 	}
+	else if (methodName == "SetResultFile")
+	{
+		std::string resultFile = params.Get<std::string>(0);
+		if (resultFile.empty())
+		{
+			stateLogger_->SetShouldLog(false);
+		}
+		else
+		{
+			stateLogger_->SetShouldLog(true);
+			stateLogger_->SetFileName(resultFile);
+		}
+	}
+	else if (methodName == "GetResultFile")
+	{
+		std::string resultFile;
+		if (stateLogger_->IsShouldLog())
+			resultFile = stateLogger_->GetFileName();
+		else
+			resultFile = "";
+		params.Set(0, resultFile);
+	}
 	else if (methodName == "SetUniqueSubfolder")
 	{
 		bool uniqueSubFolder = params.Get<bool>(0);
@@ -332,7 +354,8 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 SimulationWrapper::SimulationWrapper()
 {
 	progressLogger_ = CreateLogger<MatlabProgressLogger>();
-	stateLogger_ = std::make_shared<stochsim::StateLogger>(stateLoggerFile_); //CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
+	stateLogger_ = CreateLogger<stochsim::StateLogger>(stateLoggerFile_);
+	stateLogger_->SetShouldLog(false);
 	resultLogger_ = CreateLogger<MatlabStateLogger>();
 }
 

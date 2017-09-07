@@ -20,7 +20,7 @@ namespace stochsim
 	class LogManager
 	{
 	public:
-		LogManager() : logPeriod_(0.1), baseFolder_("simulations"), uniqueSubFolder_(true)
+		LogManager() : logPeriod_(1.0), baseFolder_("simulations"), uniqueSubFolder_(true)
 		{
 		}
 		void SetUniqueSubfolder(bool uniqueSubFolder)
@@ -46,22 +46,38 @@ namespace stochsim
 		}
 		void Initialize(double time, ISimInfo& simInfo)
 		{
-			time_t t = std::time(0);   // get time now
-			struct tm * now = localtime(&t);
-			std::stringstream buffer;
-			buffer << baseFolder_;
-			if (uniqueSubFolder_)
+			// Test if any logger is writing anything to the disk, i.e. if we have to create a results folder at all...
+			bool shouldCreate = false;
+			for (auto& task : tasks_)
 			{
-				buffer << "/"
-					<< (now->tm_year + 1900) << '-'
-					<< (now->tm_mon + 1) << '-'
-					<< now->tm_mday << '_'
-					<< now->tm_hour << '-'
-					<< now->tm_min << '-'
-					<< now->tm_sec << '/';
+				if (task->WritesToDisk())
+				{
+					shouldCreate = true;
+					break;
+				}
 			}
-			std::string folder = buffer.str();
-			folder = CreatePathRecursively(folder);
+			std::string folder;
+			if (shouldCreate)
+			{
+				time_t t = std::time(0);
+				struct tm * now = localtime(&t);
+				std::stringstream buffer;
+				buffer << baseFolder_;
+				if (uniqueSubFolder_)
+				{
+					buffer << "/"
+						<< (now->tm_year + 1900) << '-'
+						<< (now->tm_mon + 1) << '-'
+						<< now->tm_mday << '_'
+						<< now->tm_hour << '-'
+						<< now->tm_min << '-'
+						<< now->tm_sec << '/';
+				}
+				folder = buffer.str();
+				folder = CreatePathRecursively(folder);
+			}
+			else
+				folder = "";
 
 			for (auto& task : tasks_)
 			{

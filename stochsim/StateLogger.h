@@ -12,7 +12,7 @@ namespace stochsim
 		public ILogger
 	{
 	public:
-		StateLogger(std::string fileName) : fileName_(fileName)
+		StateLogger(std::string fileName) : fileName_(fileName), shouldLog_(true)
 		{
 		}
 		template <typename... T> StateLogger(std::string fileName, std::shared_ptr<IState> state, T... others) : StateLogger(fileName)
@@ -27,15 +27,40 @@ namespace stochsim
 				file_.reset();
 			}
 		}
-		
+		virtual bool WritesToDisk() const override
+		{
+			return shouldLog_;
+		}
 		virtual void WriteLog(double time) override
 		{
+			if (!shouldLog_)
+				return;
 			(*file_) << time;
 			for (const auto& state : states_)
 			{
 				(*file_) << "," << state->Num();
 			}
 			(*file_) << std::endl;
+		}
+
+		void SetShouldLog(bool shouldLog)
+		{
+			shouldLog_ = shouldLog;
+		}
+
+		bool IsShouldLog() const
+		{
+			return shouldLog_;
+		}
+
+		void SetFileName(std::string filename)
+		{
+			fileName_ = std::move(filename);
+		}
+
+		std::string GetFileName() const
+		{
+			return fileName_;
 		}
 
 		void AddState(std::shared_ptr<IState> state)
@@ -49,6 +74,8 @@ namespace stochsim
 		}
 		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
 		{
+			if (!shouldLog_)
+				return;
 			if (file_)
 			{
 				file_->close();
@@ -87,5 +114,6 @@ namespace stochsim
 		std::vector<std::shared_ptr<IState>> states_;
 		std::unique_ptr<std::ofstream> file_;
 		std::string fileName_;
+		bool shouldLog_;
 	};
 }

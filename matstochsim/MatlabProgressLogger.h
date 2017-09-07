@@ -10,6 +10,8 @@ public:
 	virtual void Uninitialize() override;
 	void SetShouldLog(bool shouldLog);
 	bool IsShouldLog();
+
+	virtual bool WritesToDisk() const override;
 private:
 	double runtime_;
 	bool shouldLog_;

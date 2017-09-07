@@ -16,7 +16,7 @@ else
 end
 
 % Create simulation object
-sim = stochSimulation('sim_results', 1, false);
+sim = stochSimulation();
 
 %% Iterate over model lines
 fid = fopen(fileName);

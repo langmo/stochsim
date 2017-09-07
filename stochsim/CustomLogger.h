@@ -23,7 +23,10 @@ namespace stochsim
 				file_.reset();
 			}
 		}
-
+		virtual bool WritesToDisk() const override
+		{
+			return true;
+		}
 		virtual void WriteLog(double time) override
 		{
 			logFunc_(*file_, time);

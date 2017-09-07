@@ -177,5 +177,10 @@ namespace stochsim
 		/// Called after the simulation has finished. Perfect place to release e.g. file handles.
 		/// </summary>
 		virtual void Uninitialize() = 0;
+		/// <summary>
+		/// Should return true if the logger, in its current configuration, will write anything to the disk/file system, and false otherwise.
+		/// </summary>
+		/// <returns>True if anything is written to the disk.</returns>
+		virtual bool WritesToDisk() const  = 0;
 	};
 }

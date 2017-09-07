@@ -22,6 +22,7 @@ public:
 
 	void SetShouldLog(bool shouldLog);
 	bool IsShouldLog();
+	virtual bool WritesToDisk() const override;
 private:
 	MatlabParams::MatlabVariable result_;
 	MatlabParams::MatlabVariable headers_;
