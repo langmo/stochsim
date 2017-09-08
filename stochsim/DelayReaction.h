@@ -37,6 +37,14 @@ namespace stochsim
 		{
 			return name_;
 		}
+		virtual void Initialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
+		}
+		virtual void Uninitialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
+		}
 	private:
 		FireTime fireTime_;
 		FireAction fireAction_;
@@ -86,6 +94,14 @@ namespace stochsim
 		virtual std::string Name() const override
 		{
 			return name_;
+		}
+		virtual void Initialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
+		}
+		virtual void Uninitialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
 		}
 
 		/// <summary>

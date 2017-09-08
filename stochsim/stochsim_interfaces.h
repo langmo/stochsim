@@ -112,10 +112,21 @@ namespace stochsim
 	public:
 		virtual ~IPropensityReaction() {};
 		/// <summary>
+		/// Called by the simulation before the simulation starts. Should ensure that the reaction is at a consistent state.
+		/// </summary>
+		/// <param name="simInfo">Simulation context</param>
+		virtual void Initialize(ISimInfo& simInfo) = 0;
+		/// <summary>
+		/// Called by the simulation after the simulation finished. Can be used for cleanup.
+		/// </summary>
+		/// <param name="simInfo">Simulation context.</param>
+		virtual void Uninitialize(ISimInfo& simInfo) = 0;
+		/// <summary>
 		/// Returns the current propensity/rate with which the reaction fires.
 		/// </summary>
+		/// <param name="simInfo">Simulation context.</param>
 		/// <returns>Current rate/propensity.</returns>
-		virtual double ComputeRate() const = 0;
+		virtual double ComputeRate(ISimInfo& simInfo) const = 0;
 		/// <summary>
 		/// Called by the simulation when this reaction is chosen to fire next. Should modify the concentrations of all involved species according to their stochiometries.
 		/// </summary>
@@ -137,6 +148,16 @@ namespace stochsim
 	{
 	public:
 		virtual ~IDelayedReaction() {}
+		/// <summary>
+		/// Called by the simulation before the simulation starts. Should ensure that the reaction is at a consistent state.
+		/// </summary>
+		/// <param name="simInfo">Simulation context</param>
+		virtual void Initialize(ISimInfo& simInfo) = 0;
+		/// <summary>
+		/// Called by the simulation after the simulation finished. Can be used for cleanup.
+		/// </summary>
+		/// <param name="simInfo">Simulation context.</param>
+		virtual void Uninitialize(ISimInfo& simInfo) = 0;
 		/// <summary>
 		/// Returns the simulation time when the reaction will fire next, or DelayedReaction::inf_ if the delayed reaction won't fire anymore, given the current simulation state.
 		/// </summary>

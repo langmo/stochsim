@@ -76,7 +76,7 @@ namespace stochsim
 				}
 			}
 		}
-		virtual double ComputeRate() const override
+		virtual double ComputeRate(ISimInfo& simInfo) const override
 		{
 			double rate = rateConstant_;
 			for (const auto& reactant : reactants_)
@@ -94,6 +94,14 @@ namespace stochsim
 		virtual std::string Name() const override
 		{
 			return name_;
+		}
+		virtual void Initialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
+		}
+		virtual void Uninitialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
 		}
 		/// <summary>
 		/// Returns the rate constant of this reaction.

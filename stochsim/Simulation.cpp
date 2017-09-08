@@ -150,6 +150,14 @@ namespace stochsim
 			{
 				state->Initialize(*this);
 			}
+			for (auto& reaction : propensityReactions_)
+			{
+				reaction->Initialize(*this);
+			}
+			for (auto& reaction : delayedReactions_)
+			{
+				reaction->Initialize(*this);
+			}
 			logger_.Initialize(time_, *this);
 
 			// propensities of reactions
@@ -162,7 +170,7 @@ namespace stochsim
 				double a0 = 0;
 				for (size_t i = 0; i < propensityReactions_.size(); i++)
 				{
-					ai[i] = propensityReactions_[i]->ComputeRate();
+					ai[i] = propensityReactions_[i]->ComputeRate(*this);
 					a0 += ai[i];
 				}
 

@@ -25,12 +25,12 @@ namespace stochsim
 			}
 		};
 	public:
-		TimerReaction(std::string name, double fireTime_) : fireTime_(fireTime_), name_(std::move(name))
+		TimerReaction(std::string name, double fireTime_) : fireTime_(fireTime_), name_(std::move(name)), hasFired_(false)
 		{
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
-			return simInfo.SimTime() < fireTime_ ? fireTime_ : stochsim::inf;
+			return !hasFired_ ? fireTime_ : stochsim::inf;
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
@@ -38,10 +38,19 @@ namespace stochsim
 			{
 				product.state_->Add(simInfo, product.stochiometry_);
 			}
+			hasFired_ = true;
 		}
 		virtual std::string Name() const override
 		{
 			return name_;
+		}
+		virtual void Initialize(ISimInfo& simInfo) override
+		{
+			hasFired_ = false;
+		}
+		virtual void Uninitialize(ISimInfo& simInfo) override
+		{
+			// do nothing.
 		}
 
 		/// <summary>
@@ -71,6 +80,7 @@ namespace stochsim
 			products_.emplace_back(state, stochiometry);
 		}
 	private:
+		bool hasFired_;
 		double fireTime_;
 		const std::string name_;
 		std::vector<ReactionElement> products_;
