@@ -75,12 +75,12 @@ namespace stochsim
 		/// <param name="num">Number by which the value of the state is decreased. Must be &gt;0. </param>
 		virtual void Remove(ISimInfo& simInfo, size_t num = 1) = 0;
 		/// <summary>
-		/// Called when, as the result of a reaction, the number of molecules represented by this state should not increase or decrease, but instead some molecule should be modified.
-		/// It is assumed that each molecule represented by the state is equally likely to get modified, i.e. the molecule which is actually modified should be chosen randomly.
-		/// What exactly a modification could be is implementation dependent. For states which cannot be modified, this function can simply do nothing.
+		/// Called when, as the result of a reaction, the number of molecules represented by this state should not increase or decrease, but instead some molecule should be transformed in some way.
+		/// It is assumed that each molecule represented by the state is equally likely to get transformed, i.e. the molecule which is actually transformed should be chosen randomly.
+		/// What exactly a transformation could be is implementation dependent. For states which cannot be transformed, this function can simply do nothing.
 		/// </summary>
-		/// <param name="simInfo">Object providing context under which situation (e.g. when) the modification takes place.</param>
-		virtual void Modify(ISimInfo& simInfo) = 0;
+		/// <param name="simInfo">Simulation context.</param>
+		virtual void Transform(ISimInfo& simInfo) = 0;
 		/// <summary>
 		/// Called by the simulation before the simulation starts. Should ensure that e.g. the current value of the state equals the initial condition.
 		/// </summary>

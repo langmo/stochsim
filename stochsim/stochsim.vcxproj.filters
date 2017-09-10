@@ -51,6 +51,9 @@
     <ClInclude Include="TimerReaction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ReactionRate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp">

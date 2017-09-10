@@ -112,12 +112,12 @@ namespace
 		************/
 		// B0m -> 2 B0m
 		auto B0m_doubling = sim.CreateReaction<PropensityReaction>("B0m -> 2 B0m", p::v_max);
-		B0m_doubling->AddReactant(B0m, 1, true);
+		B0m_doubling->AddModifier(B0m);
 		B0m_doubling->AddProduct(B0m);
 			
 		// B0p -> 2 B0p
 		auto B0p_doubling = sim.CreateReaction<PropensityReaction>("B0p -> 2 B0p", p::v_max);
-		B0p_doubling->AddReactant(B0p, 1, true);
+		B0p_doubling->AddModifier(B0p, 1);
 		B0p_doubling->AddProduct(B0p);
 			
 
@@ -129,18 +129,17 @@ namespace
 
 		// B0i[i] + Pm -> B0i[i+1]
 		auto B0i_infection = sim.CreateReaction<PropensityReaction>("B0i[i] + Pm -> B0i[i+1]", p::delta / V);
-		B0i_infection->AddReactant(B0i, 1, true);
+		B0i_infection->AddTransformee(B0i);
 		B0i_infection->AddReactant(Pm);
-		B0i_infection->AddProduct(B0i, 1, true);
-
+		
 		// B0p + Pm -> B0p
 		auto B0p_infection = sim.CreateReaction<PropensityReaction>("B0p + Pm -> B0p", p::delta / V);
-		B0p_infection->AddReactant(B0p, 1, true);
+		B0p_infection->AddModifier(B0p);
 		B0p_infection->AddReactant(Pm);
 
 		// B0l + Pm -> B0l
 		auto B0l_infection = sim.CreateReaction<PropensityReaction>("B0l + Pm -> B0l", p::delta / V);
-		B0l_infection->AddReactant(B0l, 1, true);
+		B0l_infection->AddModifier(B0l);
 		B0l_infection->AddReactant(Pm);
 
 		// B0i -(t_moi)-> B0p||B0l

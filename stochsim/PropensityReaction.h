@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <sstream>
+#include "ReactionRate.h"
 namespace stochsim
 {
 	/// <summary>
@@ -21,7 +22,7 @@ namespace stochsim
 		struct ReactionElement
 		{
 		public:
-			const Stochiometry stochiometry_;
+			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
 			const bool modifier_;
 			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
@@ -29,31 +30,134 @@ namespace stochsim
 			}
 		};
 	public:
-		PropensityReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant)
+		PropensityReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant), rateEquation_("")
+		{
+		}
+		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(-1), rateEquation_(rateEquation)
 		{
 		}
 		/// <summary>
-		/// Adds a species as a reactant of the reaction. When the reaction fires, its concentration is decreased according to its stochiometry, except when the modifier is true, which
-		/// indicates species who should modify the propensity of the reaction, but not change their concentration  (e.g. enzymes catalyzing the reaction).
+		/// Adds a species as a reactant of the reaction. When the reaction fires, its concentration is decreased according to its stochiometry.
 		/// </summary>
 		/// <param name="state">Species to add as a reactant.</param>
 		/// <param name="stochiometry">Number of molecules of the reactant taking part in a reaction.</param>
-		/// <param name="modifier">If false, the concentration of the species is decreased when the reaction fires according to the stochiometry. If true, the concentration is not modified (e.g. enzymes).</param>
-		void AddReactant(std::shared_ptr<IState> state, long stochiometry = 1, bool modifier = false)
+		void AddReactant(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
 		{
-			reactants_.emplace_back(state, stochiometry, modifier);
+			for (auto& reactant : reactants_)
+			{
+				if (state == reactant.state_)
+				{
+					if (reactant.modifier_)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State "<<state->Name()<<" cannot take part in reaction "<<Name()<<" both as a modifier/transformee and as a normal reactant.";
+						throw std::exception(errorMessage.str().c_str());
+					}
+					else
+					{
+						reactant.stochiometry_ += stochiometry;
+						return;
+					}
+				}
+			}
+			reactants_.emplace_back(state, stochiometry, false);
 		}
 		/// <summary>
-		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry, except when the modifier is true.
-		/// In this case, its concentration is neither increased nor decreased, but instead the State::Modify function is called on the respective state. Useful to e.g. count how often a given molecule takes
-		/// part in a reaction where the molecule acts as a modifier.
+		/// Adds a species as a modifier of the reaction. Different to a reactant, when the reaction fires, its concentration does not decreased. However, a modifier still changes the rate at which a reaction takes place (e.g. enzymes catalyzing the reaction).
+		/// </summary>
+		/// <param name="state">Species to add as a modifier.</param>
+		/// <param name="stochiometry">Number of molecules of the modifier taking part in a reaction.</param>
+		void AddModifier(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		{
+			for (auto& reactant : reactants_)
+			{
+				if (state == reactant.state_)
+				{
+					if (!reactant.modifier_)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a modifier/transformee and as a normal reactant.";
+						throw std::exception(errorMessage.str().c_str());
+					}
+					else
+					{
+						reactant.stochiometry_ += stochiometry;
+						return;
+					}
+				}
+			}
+			reactants_.emplace_back(state, stochiometry, true);
+		}
+		/// <summary>
+		/// Adds a species as a transformee of the reaction. Similar to a modifier, the concentration of a transformee is not changed when the reaction fires, but it still changes the propensity of the reaction.
+		/// However, a transformee is additionally transformed by the rection (its method IState.Transform is called).
+		/// </summary>
+		/// <param name="state">Species to add as a transformee.</param>
+		/// <param name="stochiometry">Number of molecules of the transformee taking part in a reaction.</param>
+		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		{
+			for (auto& reactant : reactants_)
+			{
+				if (state == reactant.state_)
+				{
+					if (!reactant.modifier_)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a modifier/transformee and as a normal reactant.";
+						throw std::exception(errorMessage.str().c_str());
+					}
+					else
+					{
+						reactant.stochiometry_ += stochiometry;
+						return;
+					}
+				}
+			}
+			for (auto& product : products_)
+			{
+				if (state == product.state_)
+				{
+					if (!product.modifier_)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a transformee and as a normal product.";
+						throw std::exception(errorMessage.str().c_str());
+					}
+					else
+					{
+						product.stochiometry_ += stochiometry;
+						return;
+					}
+				}
+			}
+			reactants_.emplace_back(state, stochiometry, true);
+			products_.emplace_back(state, stochiometry, true);
+		}
+		/// <summary>
+		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		/// <param name="modifier">If false, the concentration of the species is increased when the reaction fires according to the stochiometry. If true, the concentration is not modified, but instead State::Modify() is called.</param>
-		void AddProduct(std::shared_ptr<IState> state, long stochiometry = 1, bool modifier = false)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
 		{
-			products_.emplace_back(state, stochiometry, modifier);
+			for (auto& product : products_)
+			{
+				if (state == product.state_)
+				{
+					if (product.modifier_)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a transformee and as a normal product.";
+						throw std::exception(errorMessage.str().c_str());
+					}
+					else
+					{
+						product.stochiometry_ += stochiometry;
+						return;
+					}
+				}
+			}
+			products_.emplace_back(state, stochiometry, false);
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
@@ -61,7 +165,7 @@ namespace stochsim
 			{
 				if (product.modifier_)
 				{
-					product.state_->Modify(simInfo);
+					product.state_->Transform(simInfo);
 				}
 				else
 				{
@@ -78,18 +182,22 @@ namespace stochsim
 		}
 		virtual double ComputeRate(ISimInfo& simInfo) const override
 		{
-			double rate = rateConstant_;
-			for (const auto& reactant : reactants_)
+			if (rateEquation_.empty())
 			{
-				const long stoch = reactant.stochiometry_;
-				const size_t num = reactant.state_->Num();
-				for (size_t s = 0; s < stoch; s++)
+				double rate = rateConstant_;
+				for (const auto& reactant : reactants_)
 				{
-					rate *= num - s;
-				}
+					const long stoch = reactant.stochiometry_;
+					const size_t num = reactant.state_->Num();
+					for (size_t s = 0; s < stoch; s++)
+					{
+						rate *= num - s;
+					}
 
+				}
+				return rate;
 			}
-			return rate;
+
 		}
 		virtual std::string Name() const override
 		{
@@ -97,19 +205,26 @@ namespace stochsim
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			// do nothing.
+			if (rateEquation_.empty())
+				return;
+			std::vector<const std::shared_ptr<IState>> reactantStates;
+			std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantStates), [](ReactionElement& element) -> const std::shared_ptr<IState>& {return element.state_; });
+			reactionRate_ = ReactionRate(rateEquation_, reactantStates);
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			// do nothing.
 		}
 		/// <summary>
-		/// Returns the rate constant of this reaction.
+		/// Returns the rate constant of this reaction. If this reaction depends on a custom rate instead of a rate constant, returns -1.
 		/// </summary>
 		/// <returns>Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants.</returns>
 		double GetRateConstant() const
 		{
-			return rateConstant_;
+			if (rateEquation_.empty())
+				return rateConstant_;
+			else
+				return -1;
 		}
 		/// <summary>
 		/// Sets the rate constant of this reaction.
@@ -117,11 +232,14 @@ namespace stochsim
 		/// <param name="rateConstant">Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants</param>
 		void SetRateConstant(double rateConstant)
 		{
+			rateEquation_ = "";
 			rateConstant_ = rateConstant;
 		}
 	private:
+		ReactionRate reactionRate_;
 		double rateConstant_;
 		const std::string name_;
+		std::string rateEquation_;
 		std::vector<ReactionElement> reactants_;
 		std::vector<ReactionElement> products_;
 	};

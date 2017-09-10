@@ -216,12 +216,41 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			stochiometry = params.Get<unsigned int>(1);
 		else
 			stochiometry = 1;
-		bool modifier;
-		if (params.NumParams() > 2)
-			modifier = params.Get<bool>(2);
+		reaction->AddReactant(state, stochiometry);
+	}
+	else if (methodName == "AddModifier")
+	{
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		unsigned int stochiometry;
+		if (params.NumParams() > 1)
+			stochiometry = params.Get<unsigned int>(1);
 		else
-			modifier = false;
-		reaction->AddReactant(state, stochiometry, modifier);
+			stochiometry = 1;
+		reaction->AddModifier(state, stochiometry);
+	}
+	else if (methodName == "AddTransformee")
+	{
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		unsigned int stochiometry;
+		if (params.NumParams() > 1)
+			stochiometry = params.Get<unsigned int>(1);
+		else
+			stochiometry = 1;
+		reaction->AddTransformee(state, stochiometry);
 	}
 	else if (methodName == "AddProduct")
 	{
@@ -238,12 +267,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			stochiometry = params.Get<unsigned int>(1);
 		else
 			stochiometry = 1;
-		bool modifier;
-		if (params.NumParams() > 2)
-			modifier = params.Get<bool>(2);
-		else
-			modifier = false;
-		reaction->AddProduct(state, stochiometry, modifier);
+		reaction->AddProduct(state, stochiometry);
 	}
 	else if (methodName == "SetRateConstant")
 	{
@@ -284,12 +308,7 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 			stochiometry = params.Get<unsigned int>(1);
 		else
 			stochiometry = 1;
-		bool modifier;
-		if (params.NumParams() > 2)
-			modifier = params.Get<bool>(2);
-		else
-			modifier = false;
-		reaction->AddProduct(state, stochiometry, modifier);
+		reaction->AddProduct(state, stochiometry);
 	}
 	else if (methodName == "SetDelay")
 	{
