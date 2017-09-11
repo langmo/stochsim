@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <sstream>
+#include <algorithm>
 #include "ReactionRate.h"
 namespace stochsim
 {
@@ -33,7 +34,7 @@ namespace stochsim
 		PropensityReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant), rateEquation_("")
 		{
 		}
-		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(-1), rateEquation_(rateEquation)
+		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(0), rateEquation_(rateEquation)
 		{
 		}
 		/// <summary>
@@ -165,7 +166,7 @@ namespace stochsim
 			{
 				if (product.modifier_)
 				{
-					product.state_->Transform(simInfo);
+					product.state_->Transform(simInfo, product.stochiometry_);
 				}
 				else
 				{
@@ -197,7 +198,8 @@ namespace stochsim
 				}
 				return rate;
 			}
-
+			else
+				return reactionRate_.CalculateRate(simInfo);
 		}
 		virtual std::string Name() const override
 		{
@@ -207,16 +209,16 @@ namespace stochsim
 		{
 			if (rateEquation_.empty())
 				return;
-			std::vector<const std::shared_ptr<IState>> reactantStates;
+			std::vector<std::shared_ptr<IState>> reactantStates;
 			std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantStates), [](ReactionElement& element) -> const std::shared_ptr<IState>& {return element.state_; });
-			reactionRate_ = ReactionRate(rateEquation_, reactantStates);
+			reactionRate_.Initialize(rateEquation_, reactantStates);
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			// do nothing.
 		}
 		/// <summary>
-		/// Returns the rate constant of this reaction. If this reaction depends on a custom rate instead of a rate constant, returns -1.
+		/// Returns the rate constant of this reaction. If this reaction depends on a custom rate equation instead of a rate constant, returns -1.
 		/// </summary>
 		/// <returns>Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants.</returns>
 		double GetRateConstant() const
@@ -227,13 +229,34 @@ namespace stochsim
 				return -1;
 		}
 		/// <summary>
-		/// Sets the rate constant of this reaction.
+		/// Sets the rate constant of this reaction. Resets any custom rate equation if defined.
 		/// </summary>
 		/// <param name="rateConstant">Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants</param>
 		void SetRateConstant(double rateConstant)
 		{
 			rateEquation_ = "";
 			rateConstant_ = rateConstant;
+		}
+
+		/// <summary>
+		/// Returns the rate equation of this reaction. If this reaction does not have a custom rate equation but instead follows standard mass action kinetics, returns an empty string.
+		/// </summary>
+		/// <returns>Custom rate equation of reaction. Unit is one divided by simulation time.</returns>
+		std::string GetRateEquation() const
+		{
+			return rateEquation_;
+		}
+		/// <summary>
+		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
+		/// Instead, the rate is dynamically calculated by solving the mathematical formula provided as an argument. This formula can contain standard math functions like
+		/// min, sin and similar, as well as variables having the name of the reactants of this reaction, which are dynamically replaced by the molcular numbers of these reactants
+		/// during evaluation. To deactivate the usage of a custom rate equation again, simply define a rate constant for this reaction (i.e. call SetRateConstant(...)).
+		/// </summary>
+		/// <param name="rateEquation">Custom reaction rate equation.</param>
+		void SetRateEquation(std::string rateEquation)
+		{
+			rateConstant_ = 0;
+			rateEquation_ = std::move(rateEquation);
 		}
 	private:
 		ReactionRate reactionRate_;

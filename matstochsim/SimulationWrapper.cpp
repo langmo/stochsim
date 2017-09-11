@@ -39,8 +39,16 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 	else if (methodName == "CreatePropensityReaction")
 	{
 		std::string name = params.Get<std::string>(0);
-		double rateConstant = params.Get<double>(1);
-		auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateConstant);
+		if (params.IsString(1))
+		{
+			std::string rateEquation = params.Get<std::string>(1);
+			auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateEquation);
+		}
+		else
+		{
+			double rateConstant = params.Get<double>(1);
+			auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateConstant);
+		}
 		params.Set(0, name);
 	}
 	else if (methodName == "CreateDelayReaction")

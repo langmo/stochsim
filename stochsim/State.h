@@ -25,7 +25,7 @@ namespace stochsim
 		{
 			num_ -= num;
 		}
-		virtual void Transform(ISimInfo& simInfo) override
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1) override
 		{
 			// do nothing, simple states are not counting...
 		}

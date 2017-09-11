@@ -154,6 +154,16 @@
     <ClInclude Include="ComposedState.h" />
     <ClInclude Include="CustomLogger.h" />
     <ClInclude Include="ComposedStateLogger.h" />
+    <ClInclude Include="muParser.h" />
+    <ClInclude Include="muParserBase.h" />
+    <ClInclude Include="muParserBytecode.h" />
+    <ClInclude Include="muParserCallback.h" />
+    <ClInclude Include="muParserDef.h" />
+    <ClInclude Include="muParserError.h" />
+    <ClInclude Include="muParserFixes.h" />
+    <ClInclude Include="muParserStack.h" />
+    <ClInclude Include="muParserTemplateMagic.h" />
+    <ClInclude Include="muParserToken.h" />
     <ClInclude Include="ProgressLogger.h" />
     <ClInclude Include="PropensityReaction.h" />
     <ClInclude Include="ReactionRate.h" />
@@ -164,6 +174,12 @@
     <ClInclude Include="TimerReaction.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="muParser.cpp" />
+    <ClCompile Include="muParserBase.cpp" />
+    <ClCompile Include="muParserBytecode.cpp" />
+    <ClCompile Include="muParserCallback.cpp" />
+    <ClCompile Include="muParserError.cpp" />
+    <ClCompile Include="muParserTokenReader.cpp" />
     <ClCompile Include="Simulation.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

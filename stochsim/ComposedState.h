@@ -93,9 +93,12 @@ namespace stochsim
 				buffer_.PopTop();
 			}
 		}
-		virtual inline void Transform(ISimInfo& simInfo) override
+		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1) override
 		{
-			modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.SimTime());
+			for (size_t i = 0; i < num; i++)
+			{
+				modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.SimTime());
+			}
 		}
 		/// <summary>
 		/// Returns the pos^th element/molecule represented by this state. 
@@ -199,9 +202,12 @@ namespace stochsim
 				buffer_.PopTop();
 			}
 		}
-		virtual inline void Transform(ISimInfo& simInfo) override
+		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1) override
 		{
-			buffer_[simInfo.Rand(0, buffer_.Size() - 1)].numModified++;
+			for (size_t i = 0; i < num; i++)
+			{
+				buffer_[simInfo.Rand(0, buffer_.Size() - 1)].numModified++;
+			}
 		}
 		/// <summary>
 		/// Returns the pos^th element/molecule represented by this state. 

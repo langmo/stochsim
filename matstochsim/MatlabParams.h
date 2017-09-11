@@ -115,6 +115,12 @@ public:
 		return std::string(buffer_);
 	}
 
+	bool IsString(int index)
+	{
+		index += shift_;
+		AssertParamIndex(index);
+		return ::mxIsChar(prhs_[index]);
+	}
 
 	MatlabParams ShiftInputs(int shift)
 	{

@@ -80,7 +80,8 @@ namespace stochsim
 		/// What exactly a transformation could be is implementation dependent. For states which cannot be transformed, this function can simply do nothing.
 		/// </summary>
 		/// <param name="simInfo">Simulation context.</param>
-		virtual void Transform(ISimInfo& simInfo) = 0;
+		/// <param name="num">Number of molecules which should be modified. Must be &gt;0. </param>
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1) = 0;
 		/// <summary>
 		/// Called by the simulation before the simulation starts. Should ensure that e.g. the current value of the state equals the initial condition.
 		/// </summary>

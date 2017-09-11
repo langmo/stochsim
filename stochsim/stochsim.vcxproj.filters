@@ -54,9 +54,57 @@
     <ClInclude Include="ReactionRate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="muParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserBytecode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserCallback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserFixes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserStack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserTemplateMagic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="muParserToken.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParserBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParserBytecode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParserCallback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParserError.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="muParserTokenReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
