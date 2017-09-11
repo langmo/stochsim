@@ -18,7 +18,8 @@ void MatlabStateLogger::WriteLog(double time)
 	if (!shouldLog_)
 		return;
 	if (currentRow_ >= rows_)
-		throw std::exception("Cannot add row to simulation results since array holding simulation results is already full.");
+		return;
+		//throw std::exception("Cannot add row to simulation results since array holding simulation results is already full.");
 	MatlabParams::AssignArrayElement(*result_, currentRow_, 0, time);
 	for (size_t i = 0; i < states_.size(); i++)
 	{

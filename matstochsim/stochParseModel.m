@@ -97,15 +97,15 @@ for i=1:length(parseTree.reactions)
     if isfield(parseTree.reactions{i}, 'rateConstant')
         reaction = sim.createPropensityReaction(parseTree.reactions{i}.name, parseTree.reactions{i}.rateConstant);
         for j=1:length(parseTree.reactions{i}.lhs_states)
-            reaction.addReactant(parseTree.reactions{i}.lhs_states{j}, parseTree.reactions{i}.lhs_stochiometries(j));
+            reaction.addReactant(parseTree.reactions{i}.lhs_states{j}, parseTree.reactions{i}.lhs_stochiometries(j), parseTree.reactions{i}.lhs_modifiers(j));
         end
         for j=1:length(parseTree.reactions{i}.rhs_states)
-            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j));
+            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j), parseTree.reactions{i}.rhs_modifiers(j));
         end
     else
-        reaction = createDelayReaction(parseTree.reactions{i}.name, parseTree.reactions{i}.lhs_state, parseTree.reactions{i}.delay);
+        reaction = sim.createDelayReaction(parseTree.reactions{i}.name, parseTree.reactions{i}.lhs_state, parseTree.reactions{i}.delay);
         for j=1:length(parseTree.reactions{i}.rhs_states)
-            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j));
+            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j), parseTree.reactions{i}.rhs_modifiers(j));
         end
     end
 end
@@ -150,24 +150,27 @@ end
 end
 
 %% Set a reaction
-function parseTree = setPropensityReaction(parseTree, name, lhs_states, lhs_stochiometries, rhs_states, rhs_stochiometries, rateConstant)
+function parseTree = setPropensityReaction(parseTree, name, lhs_states, lhs_stochiometries, lhs_modifiers, rhs_states, rhs_stochiometries, rhs_modifiers, rateConstant)
 reaction = struct();
 reaction.name = name;
 reaction.lhs_states = lhs_states;
 reaction.lhs_stochiometries = lhs_stochiometries;
+reaction.lhs_modifiers = lhs_modifiers;
 reaction.rhs_states = rhs_states;
 reaction.rhs_stochiometries = rhs_stochiometries;
+reaction.rhs_modifiers = rhs_modifiers;
 reaction.rateConstant = rateConstant;
 
 parseTree.reactions{end+1} = reaction;
 end
 
-function parseTree = setDelayReaction(parseTree, name, lhs_state, rhs_states, rhs_stochiometries, delay)
+function parseTree = setDelayReaction(parseTree, name, lhs_state, rhs_states, rhs_stochiometries, rhs_modifiers, delay)
 reaction = struct();
 reaction.name = name;
 reaction.lhs_state = lhs_state;
 reaction.rhs_states = rhs_states;
 reaction.rhs_stochiometries = rhs_stochiometries;
+reaction.rhs_modifiers = rhs_modifiers;
 reaction.delay = delay;
 
 parseTree.reactions{end+1} = reaction;
@@ -205,8 +208,8 @@ rateStr = strtrim(rhs(idx+1:end));
 rhs = strtrim(rhs(1:idx-1));
 
 % Reactants and products
-[lhs_states, lhs_stochiometries] = parseReactants(lhs);
-[rhs_states, rhs_stochiometries] = parseReactants(rhs);
+[lhs_states, lhs_stochiometries, lhs_modifiers] = parseReactants(parseTree,lhs);
+[rhs_states, rhs_stochiometries, rhs_modifiers] = parseReactants(parseTree,rhs);
 
 % get rate constant
 if ~isempty(strfind(rateStr, 'delay:'))
@@ -217,12 +220,15 @@ if ~isempty(strfind(rateStr, 'delay:'))
     if lhs_stochiometries(1) ~= 1
         error('stochsim:delayReactionRequiresReactantStochiometryOne', 'The stochiometry of the reactant of a delay reaction must be one!');
     end
+    if lhs_modifiers(1)
+        error('stochsim:delayReactionRequiresReactantNotModified', 'The reactant of a delay reaction must not be modified ("[]" not allowed)!');
+    end
     % find out length of delay
     idx = strfind(rateStr, 'delay:');
     if idx ~= 1
         error('stochsim:delayReactionMustOnlyContainDelay', 'After the comma in a delayed reaction and before the "delay:" identifier, nothing else must occur!');
     end
-    rateStr = strtrim(rateStr(7));
+    rateStr = strtrim(rateStr(7:end));
     delay = getValueOfExpression(parseTree, rateStr);
     % Create states which occur in reaction.
     parseTree = setState(parseTree, lhs_states{1}, true);
@@ -231,7 +237,7 @@ if ~isempty(strfind(rateStr, 'delay:'))
     end
     
     % Create reaction
-    parseTree = setDelayReaction(parseTree, reactionStr, lhs_states{1}, rhs_states, rhs_stochiometries, delay);
+    parseTree = setDelayReaction(parseTree, reactionStr, lhs_states{1}, rhs_states, rhs_stochiometries, rhs_modifiers, delay);
 else
     %% Create a propensity reaction
     % read in reaction rate constant
@@ -246,8 +252,8 @@ else
     
     % Create reaction
     parseTree = setPropensityReaction(parseTree, reactionStr, ...
-        lhs_states, lhs_stochiometries, ...
-        rhs_states, rhs_stochiometries, ...
+        lhs_states, lhs_stochiometries, lhs_modifiers,...
+        rhs_states, rhs_stochiometries, rhs_modifiers,...
         rateConstant);
 end
 end
@@ -257,26 +263,33 @@ extExpression = regexprep(expression, '([a-zA-Z_]\w*)', 'getParameter(parseTree,
 try
     value = eval(extExpression);
 catch e
-    error('stochsim:parseError', 'Could not parse value of expression "%s"!', extExpression);
+    ME = MException('stochsim:parseError', 'Could not parse value of expression "%s"!', expression);
+    ME=ME.addCause(e);
+    throw(ME);
 end
 end
 %% parseReactants
-function [speciesNames, stochiometries] = parseReactants(reactantsStr)
+function [speciesNames, stochiometries, modifiers] = parseReactants(parseTree, reactantsStr)
 
 if isempty(reactantsStr)
     speciesNames = cell(1, 0);
     stochiometries = ones(1, 0);
+    modifiers = false(1, 0);
     return;
 end
 elements = strsplit(reactantsStr, '+');
 speciesNames = cell(1, length(elements));
 stochiometries = ones(1, length(elements));
+modifiers = false(1, length(elements));
 for i=1:length(elements)
     element=strtrim(elements{i});
-    [tokens,~] = regexp(element,'(\d)?\s*\*?\s*([a-zA-Z]\w*)','tokens','match');
+    [tokens,~] = regexp(element,'(\<\w+\>)?\s*\*?\s*(\<[a-zA-Z]\w*\>)(\[\])?','tokens','match');
     if ~isempty(tokens{1}{1})
-        stochiometries(i) = str2double(tokens{1}{1});
+        stochiometries(i) = getValueOfExpression(parseTree, tokens{1}{1});
     end
     speciesNames{i} = tokens{1}{2};
+    if ~isempty(tokens{1}{3})
+        modifiers(i) = true;
+    end
 end
 end

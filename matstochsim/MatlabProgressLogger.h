@@ -15,5 +15,6 @@ public:
 private:
 	double runtime_;
 	bool shouldLog_;
+	int lastProgressPermille;
 };
 
