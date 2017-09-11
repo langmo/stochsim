@@ -93,7 +93,7 @@ namespace stochsim
 				buffer_.PopTop();
 			}
 		}
-		virtual inline void Modify(ISimInfo& simInfo) override
+		virtual inline void Transform(ISimInfo& simInfo) override
 		{
 			modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.SimTime());
 		}
@@ -199,7 +199,7 @@ namespace stochsim
 				buffer_.PopTop();
 			}
 		}
-		virtual inline void Modify(ISimInfo& simInfo) override
+		virtual inline void Transform(ISimInfo& simInfo) override
 		{
 			buffer_[simInfo.Rand(0, buffer_.Size() - 1)].numModified++;
 		}

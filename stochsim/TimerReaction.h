@@ -18,7 +18,7 @@ namespace stochsim
 		struct ReactionElement
 		{
 		public:
-			const Stochiometry stochiometry_;
+			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
 			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
 			{
@@ -77,6 +77,14 @@ namespace stochsim
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
 		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
 		{
+			for (auto& product : products_)
+			{
+				if (state == product.state_)
+				{
+					product.stochiometry_ += stochiometry;
+					return;
+				}
+			}
 			products_.emplace_back(state, stochiometry);
 		}
 	private:

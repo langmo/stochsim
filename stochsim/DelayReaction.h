@@ -61,10 +61,9 @@ namespace stochsim
 		struct ReactionElement
 		{
 		public:
-			const Stochiometry stochiometry_;
+			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			const bool modifier_;
-			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
+			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
 			{
 			}
 		};
@@ -80,14 +79,7 @@ namespace stochsim
 		{
 			for (const auto& product : products_)
 			{
-				if (product.modifier_)
-				{
-					product.state_->Modify(simInfo);
-				}
-				else
-				{
-					product.state_->Add(simInfo, product.stochiometry_);
-				}
+				product.state_->Add(simInfo, product.stochiometry_);
 			}
 			state_->Remove(simInfo);
 		}
@@ -123,16 +115,21 @@ namespace stochsim
 
 
 		/// <summary>
-		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry, except when the modifier is true.
-		/// In this case, its concentration is neither increased nor decreased, but instead the State::Modify function is called on the respective state. Useful to e.g. count how often a given molecule takes
-		/// part in a reaction where the molecule acts as a modifier.
+		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		/// <param name="modifier">If false, the concentration of the species is increased when the reaction fires according to the stochiometry. If true, the concentration is not modified, but instead State::Modify() is called.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, bool modifier = false)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
 		{
-			products_.emplace_back(state, stochiometry, modifier);
+			for (auto& product : products_)
+			{
+				if (state == product.state_)
+				{
+					product.stochiometry_ += stochiometry;
+					return;
+				}
+			}
+			products_.emplace_back(state, stochiometry);
 		}
 	private:
 		double delay_;

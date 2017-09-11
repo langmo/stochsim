@@ -156,6 +156,7 @@
     <ClInclude Include="ComposedStateLogger.h" />
     <ClInclude Include="ProgressLogger.h" />
     <ClInclude Include="PropensityReaction.h" />
+    <ClInclude Include="ReactionRate.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="StateLogger.h" />
     <ClInclude Include="Simulation.h" />
