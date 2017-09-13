@@ -40,7 +40,7 @@ namespace stochsim
 			}
 			hasFired_ = true;
 		}
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}

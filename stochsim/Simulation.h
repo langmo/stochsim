@@ -12,6 +12,8 @@ namespace stochsim
 	class Simulation
 	{
 	public:
+		template <class T> using Collection = std::vector<T>;
+
 		explicit Simulation();
 		~Simulation();
 		/// <summary>
@@ -80,6 +82,8 @@ namespace stochsim
 		/// <param name="name">name of state</param>
 		/// <returns></returns>
 		std::shared_ptr<IState> GetState(const std::string& name);
+
+		const Collection<std::shared_ptr<IState>>& GetStates();
 
 		/// <summary>
 		/// Returns the propensity reaction with the given name, or nullptr if a propensity reaction with the name is not yet defined in the simulation.

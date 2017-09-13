@@ -18,6 +18,8 @@ private:
 	static constexpr char prefixSeparator_[] = "::";
 	static constexpr char simulationPrefix_[] = "Simulation";
 	static constexpr char statePrefix_[] = "State";
+	static constexpr char composedStatePrefix_[] = "ComposedState";
+	static constexpr char unknownPrefix_[] = "Unknown";
 	static constexpr char simpleReactionPrefix_[] = "PropensityReaction";
 	static constexpr char delayReactionPrefix_[] = "DelayReaction";
 	static constexpr char timerReactionPrefix_[] = "TimerReaction";
@@ -26,6 +28,8 @@ private:
 	void ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string& methodName, MatlabParams& params); 
 	void ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params);
 	void ParseTimerReactionCommand(std::shared_ptr<stochsim::TimerReaction>& reaction, const std::string & methodName, MatlabParams & params);
+
+	std::string GetStateReference(const std::shared_ptr<stochsim::IState>& state);
 public:
 	SimulationWrapper();
 	virtual ~SimulationWrapper();

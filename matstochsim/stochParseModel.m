@@ -79,7 +79,7 @@ end
 error('stochsim:notAssignmentNotReaction', 'Line is neither an assignment, nor a reaction!');
 end
 
-%% Create the simulatio from the parse tree
+%% Create the simulation from the parse tree
 function sim = createSimulation(parseTree)
 % Create simulation object
 sim = stochSimulation();
@@ -94,18 +94,88 @@ for i=1:length(parseTree.states)
 end
 % Create reactions
 for i=1:length(parseTree.reactions)
-    if isfield(parseTree.reactions{i}, 'rateConstant')
-        reaction = sim.createPropensityReaction(parseTree.reactions{i}.name, parseTree.reactions{i}.rateConstant);
-        for j=1:length(parseTree.reactions{i}.lhs_states)
-            reaction.addReactant(parseTree.reactions{i}.lhs_states{j}, parseTree.reactions{i}.lhs_stochiometries(j), parseTree.reactions{i}.lhs_modifiers(j));
+    def = parseTree.reactions{i};
+    % Fuse multiply defined LHS states by simply adding up their
+    % stochiometry.
+    [reactants,idx_unique,idx] = unique(def.lhs_states);
+    reactants_modified = def.lhs_modifiers(idx_unique);
+    reactants_stochiometries = zeros(size(reactants));
+    for k=1:length(idx)
+        if def.lhs_modifiers(k) ~= reactants_modified(idx(k))
+            error('stochsim:inconsistentReactants', 'State %s cannot take part in the reaction both as a modifier/transformee and as a normal reactant.', def.lhs_states{k});
         end
-        for j=1:length(parseTree.reactions{i}.rhs_states)
-            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j), parseTree.reactions{i}.rhs_modifiers(j));
+        reactants_stochiometries(idx(k)) = reactants_stochiometries(idx(k)) + def.lhs_stochiometries(k);
+    end
+    % Fuse multiply defined RHS states by simply adding up their
+    % stochiometry.
+    [products,idx_unique,idx] = unique(def.rhs_states);
+    products_modified = def.rhs_modifiers(idx_unique);
+    products_stochiometries = zeros(size(products));
+    for k=1:length(idx)
+        if def.rhs_modifiers(k) ~= products_modified(idx(k))
+            error('stochsim:inconsistentProducts', 'State %s cannot take part in the reaction both as a modifier/transformee and as a normal product.', def.rhs_states{k});
+        end
+        products_stochiometries(idx(k)) = products_stochiometries(idx(k)) + def.rhs_stochiometries(k);
+    end
+
+    % remove LHS states with modifier flags which are also RHS states with
+    % modifier flags, because these states are transformees.
+    for k=1:length(products)
+        if ~products_modified(k)
+            continue;
+        end
+        idx = find(cellfun(@(x)strcmp(x,products{k}), reactants), 1);
+        if isempty(idx)
+            error('stochsim:invalidTransformee', 'State %s appears on the RHS of the reaction as a transformee, but does not appear on the LHS.', products{k});
+        end
+        if ~reactants_modified(idx)
+            error('stochsim:invalidTransformee', 'State %s appears on the RHS of the reaction as a transformee, but as a normal reactant on the LHS.', products{k});
+        end
+        if products_stochiometries(k) > reactants_stochiometries(idx)
+            error('stochsim:invalidTransformee', 'State %s appears on the RHS of the reaction as a transformee with a higher stochiometry than as it appears on the LHS.', products{k});
+        end
+        reactants_stochiometries(idx) = reactants_stochiometries(idx) - products_stochiometries(k);
+    end
+
+    % remove now "empty" states on LHS
+    idx = reactants_stochiometries==0;
+    reactants_stochiometries(idx)=[];
+    reactants_modified(idx)=[];
+    reactants(idx)=[];
+    
+    if isfield(def, 'rateConstant')
+        reaction = sim.createPropensityReaction(def.name, def.rateConstant);
+        for k=1:length(reactants)
+            if reactants_modified(k)
+                reaction.addModifier(reactants{k}, reactants_stochiometries(k));
+            else
+                reaction.addReactant(reactants{k}, reactants_stochiometries(k));
+            end
+        end
+        for k=1:length(products)
+            if products_modified(k)
+                reaction.addTransformee(products{k}, products_stochiometries(k));
+            else
+                reaction.addProduct(products{k}, products_stochiometries(k));
+            end
         end
     else
-        reaction = sim.createDelayReaction(parseTree.reactions{i}.name, parseTree.reactions{i}.lhs_state, parseTree.reactions{i}.delay);
-        for j=1:length(parseTree.reactions{i}.rhs_states)
-            reaction.addProduct(parseTree.reactions{i}.rhs_states{j}, parseTree.reactions{i}.rhs_stochiometries(j), parseTree.reactions{i}.rhs_modifiers(j));
+        if any(reactants_modified)
+            error('stochsim:modifiersNotAllowd', 'Modifiers are not allowed in delay reactions.');
+        end
+        if any(products_modified)
+            error('stochsim:transformeesNotAllowd', 'Transformees are not allowed in delay reactions.');
+        end
+        if length(reactants)~=1
+            error('stochsim:exactlyOneReactant', 'There must be exactly one reactant in delay reactions.');
+        end
+        if reactants_stochiometries(1)~=1
+            error('stochsim:exactlyOneReactant', 'Stochiometry of the only reactant in a delay reaction must be one.');
+        end
+        
+        reaction = sim.createDelayReaction(def.name, reactants{1}, def.delay);
+        for k=1:length(products)
+            reaction.addProduct(products{k}, products_stochiometries(k));
         end
     end
 end
@@ -167,7 +237,9 @@ end
 function parseTree = setDelayReaction(parseTree, name, lhs_state, rhs_states, rhs_stochiometries, rhs_modifiers, delay)
 reaction = struct();
 reaction.name = name;
-reaction.lhs_state = lhs_state;
+reaction.lhs_states = {lhs_state};
+reaction.lhs_stochiometries = 1;
+reaction.lhs_modifiers = false;
 reaction.rhs_states = rhs_states;
 reaction.rhs_stochiometries = rhs_stochiometries;
 reaction.rhs_modifiers = rhs_modifiers;

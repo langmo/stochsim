@@ -97,7 +97,7 @@ namespace stochsim
 			(*file_) << "Time";
 			for (const auto& state : states_)
 			{
-				(*file_) << ',' << state->Name();
+				(*file_) << ',' << state->GetName();
 			}
 			(*file_) << std::endl;
 		}

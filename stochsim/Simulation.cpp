@@ -279,30 +279,30 @@ namespace stochsim
 
 		void AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 		{
-			if (GetPropensityReaction(reaction->Name()))
+			if (GetPropensityReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Propensity reaction with name " << reaction->Name() << " already exists in simulation.";
+				errorMessage << "Propensity reaction with name " << reaction->GetName() << " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
 			propensityReactions_.push_back(std::move(reaction));
 		}
 		void AddReaction(std::shared_ptr<IDelayedReaction> reaction)
 		{
-			if (GetDelayedReaction(reaction->Name()))
+			if (GetDelayedReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Delayed reaction with name "<<reaction->Name()<< " already exists in simulation.";
+				errorMessage << "Delayed reaction with name "<<reaction->GetName()<< " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
 			delayedReactions_.push_back(std::move(reaction));
 		}
 		void AddState(std::shared_ptr<IState> state)
 		{
-			if (GetState(state->Name()))
+			if (GetState(state->GetName()))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "State with name " << state->Name() << " already exists in simulation.";
+				errorMessage << "State with name " << state->GetName() << " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
 			states_.push_back(std::move(state));
@@ -312,16 +312,20 @@ namespace stochsim
 		{
 			for (std::shared_ptr<IState>& state : states_)
 			{
-				if (state->Name() == name)
+				if (state->GetName() == name)
 					return state;
 			}
 			return nullptr;
+		}
+		Simulation::Collection<std::shared_ptr<IState>>&  GetStates()
+		{
+			return states_;
 		}
 		std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string & name)
 		{
 			for (std::shared_ptr<IPropensityReaction>& propensityReaction : propensityReactions_)
 			{
-				if (propensityReaction->Name() == name)
+				if (propensityReaction->GetName() == name)
 					return propensityReaction;
 			}
 			return nullptr;
@@ -330,7 +334,7 @@ namespace stochsim
 		{
 			for (std::shared_ptr<IDelayedReaction>& delayedReaction : delayedReactions_)
 			{
-				if (delayedReaction->Name() == name)
+				if (delayedReaction->GetName() == name)
 					return delayedReaction;
 			}
 			return nullptr;
@@ -375,6 +379,11 @@ namespace stochsim
 	std::shared_ptr<IState> Simulation::GetState(const std::string & name)
 	{
 		return impl_->GetState(name);
+	}
+
+	const Simulation::Collection<std::shared_ptr<IState>>& Simulation::GetStates()
+	{
+		return impl_->GetStates();
 	}
 
 	std::shared_ptr<IPropensityReaction> Simulation::GetPropensityReaction(const std::string & name)

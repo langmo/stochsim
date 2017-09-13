@@ -31,23 +31,31 @@ namespace stochsim
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			num_ = InitialCondition();
+			num_ = GetInitialCondition();
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			num_ = 0;
 		}
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}
-		virtual size_t InitialCondition() const override
+		virtual size_t GetInitialCondition() const override
 		{
 			return initialCondition_;
+		}
+		/// <summary>
+		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <param name="initialCondition">initial condition</param>
+		void SetInitialCondition(size_t initialCondition)
+		{
+			initialCondition_ = initialCondition;
 		}
 	private:
 		size_t num_;
 		const std::string name_;
-		const size_t initialCondition_;
+		size_t initialCondition_;
 	};
 }

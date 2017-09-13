@@ -46,7 +46,7 @@ namespace stochsim
 			molecularNumbers_.resize(reactants_.size());
 			for (std::vector<std::shared_ptr<IState>>::size_type i = 0; i < reactants_.size(); i++)
 			{
-				auto stateName = reactants_[i]->Name();
+				auto stateName = reactants_[i]->GetName();
 				mu::string_type stateNameMu;
 				std::transform(stateName.begin(), stateName.end(), std::back_inserter(stateNameMu), [](std::string::value_type value) {return static_cast<mu::string_type::value_type>(value); });
 				parser_.DefineVar(stateNameMu, &molecularNumbers_[i]);

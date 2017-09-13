@@ -40,7 +40,7 @@ void MatlabStateLogger::Initialize(std::string baseFolder, stochsim::ISimInfo & 
 	MatlabParams::AssignCellElement(*headers_, 0, 0, "Time");
 	for (size_t i = 0; i < states_.size(); i++)
 	{
-		MatlabParams::AssignCellElement(*headers_, 0, i+1, states_[i]->Name());
+		MatlabParams::AssignCellElement(*headers_, 0, i+1, states_[i]->GetName());
 	}
 }
 void MatlabStateLogger::SetShouldLog(bool shouldLog)

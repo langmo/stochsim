@@ -51,7 +51,7 @@ namespace stochsim
 					if (reactant.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State "<<state->Name()<<" cannot take part in reaction "<<Name()<<" both as a modifier/transformee and as a normal reactant.";
+						errorMessage << "State "<<state->GetName()<<" cannot take part in reaction "<< GetName()<<" both as a modifier/transformee and as a normal reactant.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -77,7 +77,7 @@ namespace stochsim
 					if (!reactant.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a modifier/transformee and as a normal reactant.";
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -104,7 +104,7 @@ namespace stochsim
 					if (!reactant.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a modifier/transformee and as a normal reactant.";
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -121,7 +121,7 @@ namespace stochsim
 					if (!product.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a transformee and as a normal product.";
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a transformee and as a normal product.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -148,7 +148,7 @@ namespace stochsim
 					if (product.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State " << state->Name() << " cannot take part in reaction " << Name() << " both as a transformee and as a normal product.";
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a transformee and as a normal product.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -201,7 +201,7 @@ namespace stochsim
 			else
 				return reactionRate_.CalculateRate(simInfo);
 		}
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}

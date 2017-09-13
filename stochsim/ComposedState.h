@@ -56,7 +56,7 @@ namespace stochsim
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			buffer_.Clear();
-			for (size_t i = 0; i < InitialCondition(); i++)
+			for (size_t i = 0; i < GetInitialCondition(); i++)
 			{
 				initializer_(buffer_.PushTail(), simInfo.SimTime());
 			}
@@ -110,13 +110,21 @@ namespace stochsim
 			return buffer_[pos];
 		}
 
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}
-		virtual size_t InitialCondition() const override
+		virtual size_t GetInitialCondition() const override
 		{
 			return initialCondition_;
+		}
+		/// <summary>
+		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <param name="initialCondition">initial condition</param>
+		void SetInitialCondition(size_t initialCondition)
+		{
+			initialCondition_ = initialCondition;
 		}
 		inline void AddRemoveListener(RemoveListener fireListener)
 		{
@@ -129,7 +137,7 @@ namespace stochsim
 		CircularBuffer<T> buffer_;
 		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
-		const size_t initialCondition_;
+		size_t initialCondition_;
 	};
 
 	template<> class ComposedState<Molecule> :
@@ -157,7 +165,7 @@ namespace stochsim
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			buffer_.Clear();
-			for (size_t i = 0; i < InitialCondition(); i++)
+			for (size_t i = 0; i < GetInitialCondition(); i++)
 			{
 				Molecule& molecule = buffer_.PushTail();
 				molecule.numModified = 0;
@@ -219,19 +227,27 @@ namespace stochsim
 			return buffer_[pos];
 		}
 
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}
-		virtual size_t InitialCondition() const override
+		virtual size_t GetInitialCondition() const override
 		{
 			return initialCondition_;
+		}
+		/// <summary>
+		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <param name="initialCondition">initial condition</param>
+		void SetInitialCondition(size_t initialCondition)
+		{
+			initialCondition_ = initialCondition;
 		}
 	private:
 		CircularBuffer<Molecule> buffer_;
 		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
-		const size_t initialCondition_;
+		size_t initialCondition_;
 	};
 
 	

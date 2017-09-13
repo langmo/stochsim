@@ -33,7 +33,7 @@ namespace stochsim
 		{
 			fireAction_((*state_)[0], simInfo);
 		}
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}
@@ -83,7 +83,7 @@ namespace stochsim
 			}
 			state_->Remove(simInfo);
 		}
-		virtual std::string Name() const override
+		virtual std::string GetName() const override
 		{
 			return name_;
 		}

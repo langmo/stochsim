@@ -1,13 +1,21 @@
 classdef stochState < handle
-    properties (SetAccess = private, GetAccess=private, Hidden = true)
-        objectHandle; % Handle to the underlying C++ class instance
-        simulationHandle; % Handle to simulation object to which this state belongs. Used for checking if the object handle is still valid.
+% A state of a stochsim, typically representing the molecular count of some
+% species like proteins, mRNA, genes, inducers or similar.
+% Can only be constructed via a stochSimulation object.
+    
+    properties (Access = private, Hidden = true)
+        simulationHandle; % Handle to simulation object to which this state belongs.
         stateHandle; % Handle to the state this object represents
+    end
+    methods(Static, Hidden = true)
+        function className = getClassName()
+            className = 'State';
+        end
     end
     methods (Access = protected, Hidden = true)
         function varargout = call(this, functionName, varargin)
             assert(this.check(), 'Invalid object.');
-            [varargout{1:nargout}] = matstochsim(['State::', functionName], this.objectHandle, this.stateHandle, varargin{:});
+            [varargout{1:nargout}] = matstochsim([stochState.getClassName(), stochSimulation.getSeparator(), functionName], this.simulationHandle.objectHandle, this.stateHandle, varargin{:});
         end
     end
     methods (Access = {?stochSimulation, ?stochPropensityReaction, ?stochDelayReaction, ?stochTimerReaction}, Hidden = true)
@@ -15,28 +23,47 @@ classdef stochState < handle
             stateHandle = this.stateHandle;
         end
     end
-    methods
-        %% Constructor - Create a new stochsim State
-        % Should only be called from stochSimulation class
-        function this = stochState(objectHandle, simulationHandle, stateHandle)
-            this.objectHandle = objectHandle;
+    properties(Dependent)
+        % Unique name of the state.
+        name;
+        % Initial condition of the state. Must be greater or equal to zero.
+        initialCondition;
+    end
+    methods(Access = {?stochSimulation, ?stochComposedState})
+        %% Constructor
+        function this = stochState(simulationHandle, stateHandle)
+            % Create a new stochsim state.
+            % Should only be called from stochSimulation class.
             this.simulationHandle = simulationHandle;
             this.stateHandle = stateHandle;
             assert(this.check(), 'Invalid object.');
         end
-        
-        %% Checks if the state points to a valid simulation object
+    end
+    methods  
+        %% Validity
         function valid = check(this)
+            % Checks if this state and the simulation are in a valid state.
+            % Usage:
+            %   valid = check(this)
+            % Returns:
+            %   valid - True if this state and the simulation are in a
+            %           valid state and can be run/edited, false otherwise.
             valid = isvalid(this) && isvalid(this.simulationHandle);
         end
-        %% Returns initial condition
-        function ic = initialCondition(this)
-            ic = this.call('InitialCondition');
+        %% Getters and setters for properties
+        function ic = get.initialCondition(this)
+            % Returns the initial condition (in molec) of this state.
+            ic = this.call('GetInitialCondition');
         end
         
-        %% Returns name
-        function name = name(this)
-            name = this.call('Name');
+        function set.initialCondition(this, ic)
+            % Sets the initial condition (in molec) of this state.
+            this.call('SetInitialCondition', ic);
+        end
+        
+        function name = get.name(this)
+            % Returns the unique name of this state.
+            name = this.call('GetName');
         end
     end
 end
