@@ -3,7 +3,7 @@ classdef stochSimulation < handle
     % in stochsim is created by first creating a stochSimulation class, and
     % then configuring this class by adding states and reactions to the
     % simulation, and similar.
-    properties (SetAccess = private, GetAccess={?stochState, ?stochPropensityReaction, ?stochDelayReaction, ?stochTimerReaction}, Hidden = true, Transient=true)
+    properties (SetAccess = private, GetAccess=public, Hidden = true, Transient=true)
         objectHandle; % Handle to the underlying C++ class instance
     end
      methods(Static, Hidden = true)

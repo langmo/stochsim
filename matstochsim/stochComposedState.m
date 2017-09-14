@@ -1,25 +1,51 @@
-classdef stochComposedState < stochState
+classdef stochComposedState < stochSimulationComponent
 % A composed state is a state where each molecule represented by the
 % composed state has an own identity. Specifically, for each molecule it is
 % defined separately when it was created, and how often it was transformed.
 % A composed state can thus be used in e.g. a delay reaction where each
 % molecule should be consumed exactly a given time after it was produced.
 % Can only be constructed via a stochSimulation object.
-    
     methods(Static, Hidden = true)
         function className = getClassName()
+            % Returns a unique name for this type of simulation component,
+            % which is used in the communication with the C++ simulator to
+            % identify the class of the component to which componentHandle is a handle.
             className = 'ComposedState';
         end
     end
-    methods(Access = ?stochSimulation)
+     properties(SetAccess = private, GetAccess=public,Dependent)
+        % Unique name of the state.
+        name;
+    end
+    properties(Dependent)
+        % Initial condition of the state. Must be greater or equal to zero.
+        initialCondition;
+    end
+    methods(Access = {?stochSimulation})
         %% Constructor
         function this = stochComposedState(simulationHandle, stateHandle)
-            % Create a new stochsim ComposedState
-            % Should only be called from stochSimulation class
-            this@stochState(simulationHandle, stateHandle); 
+            % Create a new stochsim composed state.
+            % Should only be called from stochSimulation class.
+            this = this@stochSimulationComponent(simulationHandle, stateHandle);
         end
     end
     methods        
+        %% Getters and setters for properties
+        function ic = get.initialCondition(this)
+            % Returns the initial condition (in molec) of this state.
+            ic = this.call('GetInitialCondition');
+        end
+        
+        function set.initialCondition(this, ic)
+            % Sets the initial condition (in molec) of this state.
+            this.call('SetInitialCondition', ic);
+        end
+        
+        function name = get.name(this)
+            % Returns the unique name of this state.
+            name = this.call('GetName');
+        end
+        %% Methods
         function saveFinalNumModificationsToFile(this, fileName, maxTransformed)
             % Specifies the name of a file where the number of
             % transformations of each molecule represented by this state

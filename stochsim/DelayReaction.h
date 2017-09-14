@@ -9,7 +9,7 @@ namespace stochsim
 	/// A reaction which fires at a specific time (instead of having a propensity), with the time when the reaction fires next being determined by the properties of the first molecule of a ComplexState.
 	/// Since the first molecule of a complex state is also the oldest molecule, this type of reaction typically represents a reaction firing a fixed delay after a molecule of a given species was created.
 	/// </summary>
-	template<class T> class DelayReaction : public IDelayedReaction
+	template<class T> class BasicDelayReaction : public IDelayedReaction
 	{
 	public:
 		/// <summary>
@@ -21,7 +21,7 @@ namespace stochsim
 		/// </summary>
 		typedef std::function<void(T& molecule, ISimInfo& simInfo)> FireAction;
 
-		DelayReaction(std::string name, std::shared_ptr<ComposedState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
+		BasicDelayReaction(std::string name, std::shared_ptr<BasicComposedState<T>> state, FireTime fireTime, FireAction fireAction) : state_(std::move(state)), fireTime_(fireTime), fireAction_(fireAction), name_(std::move(name))
 		{
 
 		}
@@ -48,11 +48,11 @@ namespace stochsim
 	private:
 		FireTime fireTime_;
 		FireAction fireAction_;
-		std::shared_ptr<ComposedState<T>> state_;
+		std::shared_ptr<BasicComposedState<T>> state_;
 		const std::string name_;
 	};
 
-	template<> class DelayReaction<Molecule> : public IDelayedReaction
+	template<> class BasicDelayReaction<Molecule> : public IDelayedReaction
 	{
 	private:
 		/// <summary>
@@ -68,7 +68,7 @@ namespace stochsim
 			}
 		};
 	public:
-		DelayReaction(std::string name, std::shared_ptr<ComposedState<Molecule>> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
+		BasicDelayReaction(std::string name, std::shared_ptr<ComposedState> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
 		{
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
@@ -133,9 +133,11 @@ namespace stochsim
 		}
 	private:
 		double delay_;
-		std::shared_ptr<ComposedState<Molecule>> state_;
+		std::shared_ptr<ComposedState> state_;
 		const std::string name_;
 		std::vector<ReactionElement> products_;
 	};
+
+	typedef BasicDelayReaction<Molecule> DelayReaction;
 }
 

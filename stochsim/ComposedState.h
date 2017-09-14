@@ -22,7 +22,7 @@ namespace stochsim
 	/// A state representing the concentration of a species, where, however, each molecule has its own identiy/properties. That is, the molecules can be distinguished, which means that this
 	/// class represents something like a meta-state.
 	/// </summary>
-	template<class T> class ComposedState :
+	template<class T> class BasicComposedState :
 		public IState
 	{
 	public:
@@ -49,7 +49,7 @@ namespace stochsim
 		/// <param name="initializer">Function which initilize the properties of a molecule whenever a new molecule of the species represented by this state is produced.</param>
 		/// <param name="modifier">Function which modifies the properties of a molecule whenever a molecule of the species represented by this state is modified, i.e.
 		/// when State::Modify is called on this state and a given molecule represented by this state was chosen to be modified.</param>
-		ComposedState(std::string name, size_t initialCondition, Initializer initializer, Modifier modifier, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), initializer_(initializer), modifier_(modifier), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
+		BasicComposedState(std::string name, size_t initialCondition, Initializer initializer, Modifier modifier, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), initializer_(initializer), modifier_(modifier), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
 		{
 		}
 
@@ -114,12 +114,16 @@ namespace stochsim
 		{
 			return name_;
 		}
-		virtual size_t GetInitialCondition() const override
+		/// <summary>
+		///  Returns the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <returns>Initial condition of the state.</returns>
+		size_t GetInitialCondition() const
 		{
 			return initialCondition_;
 		}
 		/// <summary>
-		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// Sets the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
 		/// </summary>
 		/// <param name="initialCondition">initial condition</param>
 		void SetInitialCondition(size_t initialCondition)
@@ -140,7 +144,7 @@ namespace stochsim
 		size_t initialCondition_;
 	};
 
-	template<> class ComposedState<Molecule> :
+	template<> class BasicComposedState<Molecule> :
 		public IState
 	{
 	public:
@@ -158,7 +162,7 @@ namespace stochsim
 		/// <param name="initializer">Function which initilize the properties of a molecule whenever a new molecule of the species represented by this state is produced.</param>
 		/// <param name="modifier">Function which modifies the properties of a molecule whenever a molecule of the species represented by this state is modified, i.e.
 		/// when State::Modify is called on this state and a given molecule represented by this state was chosen to be modified.</param>
-		ComposedState(std::string name, size_t initialCondition, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
+		BasicComposedState(std::string name, size_t initialCondition, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
 		{
 		}
 
@@ -231,12 +235,16 @@ namespace stochsim
 		{
 			return name_;
 		}
-		virtual size_t GetInitialCondition() const override
+		/// <summary>
+		///  Returns the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <returns>Initial condition of the state.</returns>
+		size_t GetInitialCondition() const
 		{
 			return initialCondition_;
 		}
 		/// <summary>
-		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// Sets the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
 		/// </summary>
 		/// <param name="initialCondition">initial condition</param>
 		void SetInitialCondition(size_t initialCondition)
@@ -249,6 +257,5 @@ namespace stochsim
 		const std::string name_;
 		size_t initialCondition_;
 	};
-
-	
+	typedef BasicComposedState<Molecule> ComposedState;	
 }

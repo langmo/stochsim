@@ -41,12 +41,16 @@ namespace stochsim
 		{
 			return name_;
 		}
-		virtual size_t GetInitialCondition() const override
+		/// <summary>
+		///  Returns the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
+		/// </summary>
+		/// <returns>Initial condition of the state.</returns>
+		size_t GetInitialCondition() const
 		{
 			return initialCondition_;
 		}
 		/// <summary>
-		/// Sets the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
+		/// Sets the initial condition of the state. It holds that at t=0, Num()==GetInitialCondition().
 		/// </summary>
 		/// <param name="initialCondition">initial condition</param>
 		void SetInitialCondition(size_t initialCondition)

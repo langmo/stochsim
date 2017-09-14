@@ -1,4 +1,4 @@
-classdef stochDelayReaction < handle
+classdef stochDelayReaction < stochSimulationComponent
 % A reaction which fires exactly after a given time a
 % new molecule of the composed state is produced. Note that
 % such delay reactions require the creation time of every
@@ -7,44 +7,32 @@ classdef stochDelayReaction < handle
 % reactant. When the reaction fires, the respective molecule of
 % the composed state is consumed.
 % Can only be constructed via a stochSimulation object.
-    properties (SetAccess = private, GetAccess=private, Hidden = true)
-        simulationHandle; % Handle to simulation object to which this state belongs. Used for checking if the object handle is still valid.
-        reactionHandle; % Handle to the state this object represents
-    end
-    methods (Access = private, Hidden = true)
-        function varargout = call(this, functionName, varargin)
-            assert(this.check(), 'Invalid object.');
-            [varargout{1:nargout}] = matstochsim(['DelayReaction::', functionName], this.simulationHandle.objectHandle, this.reactionHandle, varargin{:});
+    methods(Static, Hidden = true)
+        function className = getClassName()
+            % Returns a unique name for this type of simulation component,
+            % which is used in the communication with the C++ simulator to
+            % identify the class of the component to which componentHandle is a handle.
+            className = 'DelayReaction';
         end
     end
     methods(Access = ?stochSimulation)
-        %% Constructor - Create a new delay reaction
-        % Should only be called from stochSimulation class
+        %% Constructor
         function this = stochDelayReaction(simulationHandle, reactionHandle)
-            this.simulationHandle = simulationHandle;
-            this.reactionHandle = reactionHandle;
-            assert(this.check(), 'Invalid object.');
+            % Create a new delay reaction.
+            % Should only be called from stochSimulation class.
+            this = this@stochSimulationComponent(simulationHandle, reactionHandle);
         end
     end
-    properties(Dependent)
+     properties(SetAccess = private, GetAccess=public,Dependent)
         % Unique name of the reaction.
         name;
+    end
+    properties(Dependent)
         % The delay after the creation of a molecule of the composed state
         % when this reaction fires.
         delay;
     end
     methods        
-        %% Validity
-        function valid = check(this)
-            % Checks if this reaction and the simulation are in a valid state.
-            % Usage:
-            %   valid = check(this)
-            % Returns:
-            %   valid - True if this reaction and the simulation are in a
-            %           valid state and can be run/edited, false otherwise.
-            valid = isvalid(this) && isvalid(this.simulationHandle);
-        end
-        
         %% Getters and setters for properties
         function name = get.name(this)
             % Returns the unique name of this reaction.

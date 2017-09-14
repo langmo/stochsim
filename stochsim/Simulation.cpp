@@ -279,20 +279,20 @@ namespace stochsim
 
 		void AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 		{
-			if (GetPropensityReaction(reaction->GetName()))
+			if (GetPropensityReaction(reaction->GetName()) || GetDelayedReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Propensity reaction with name " << reaction->GetName() << " already exists in simulation.";
+				errorMessage << "Reaction with name " << reaction->GetName() << " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
 			propensityReactions_.push_back(std::move(reaction));
 		}
 		void AddReaction(std::shared_ptr<IDelayedReaction> reaction)
 		{
-			if (GetDelayedReaction(reaction->GetName()))
+			if (GetPropensityReaction(reaction->GetName()) || GetDelayedReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Delayed reaction with name "<<reaction->GetName()<< " already exists in simulation.";
+				errorMessage << "Reaction with name "<<reaction->GetName()<< " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
 			delayedReactions_.push_back(std::move(reaction));

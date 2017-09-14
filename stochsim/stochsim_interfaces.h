@@ -97,11 +97,11 @@ namespace stochsim
 		/// </summary>
 		/// <returns>Name of the species/state.</returns>
 		virtual std::string GetName() const = 0;
-		/// <summary>
+		/*/// <summary>
 		///  Returns the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
 		/// </summary>
 		/// <returns>Initial condition of the state.</returns>
-		virtual size_t GetInitialCondition() const = 0;
+		virtual size_t GetInitialCondition() const = 0;*/
 	};
 
 	/// <summary>

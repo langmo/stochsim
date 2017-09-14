@@ -1,13 +1,9 @@
 #include "SimulationWrapper.h"
 #include <sstream> 
-#include "stochsim_interfaces.h"
-#include "State.h"
-#include "ComposedState.h"
-#include "DelayReaction.h"
-#include "PropensityReaction.h"
-#include "ComposedStateLogger.h"
 #include <iomanip>
 #include <functional>
+
+#include "ComposedStateLogger.h"
 
 void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, MatlabParams& params)
 {
@@ -24,14 +20,14 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 	{
 		std::string name = params.Get<std::string>(0);
 		unsigned long initialCondition = params.Get<unsigned long>(1);
-		std::shared_ptr<stochsim::ComposedState<stochsim::Molecule>> state;
+		std::shared_ptr<stochsim::ComposedState> state;
 		if (params.NumParams() >= 3)
 		{
 			unsigned long capacity = params.Get<unsigned long>(2);
-			state = CreateState<stochsim::ComposedState<stochsim::Molecule>>(name, initialCondition, capacity);
+			state = CreateState<stochsim::ComposedState>(name, initialCondition, capacity);
 		}
 		else
-			state = CreateState<stochsim::ComposedState<stochsim::Molecule>>(name, initialCondition);
+			state = CreateState<stochsim::ComposedState>(name, initialCondition);
 		stateLogger_->AddState(state);
 		resultLogger_->AddState(state);
 		params.Set(0, GetStateReference(state));
@@ -63,7 +59,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
 		if (!composedState)
 		{
 			std::stringstream errorMessage;
@@ -72,7 +68,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		}
 
 		double delay = params.Get<double>(2);
-		auto reaction = CreateReaction<stochsim::DelayReaction<stochsim::Molecule>>(name, composedState, delay);
+		auto reaction = CreateReaction<stochsim::DelayReaction>(name, composedState, delay);
 		params.Set(0, name);
 	}
 	else if (methodName == "CreateTimerReaction")
@@ -193,8 +189,43 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		throw std::exception(errorMessage.str().c_str());
 	}
 }
-
-void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& state, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::State>& state, const std::string & methodName, MatlabParams & params)
+{
+	if (methodName == "GetInitialCondition")
+	{
+		params.Set(0, state->GetInitialCondition());
+	}
+	else if (methodName == "SetInitialCondition")
+	{
+		unsigned long initialCondition = params.Get<unsigned long>(0);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
+		if (composedState)
+		{
+			composedState->SetInitialCondition(static_cast<size_t>(initialCondition));
+			return;
+		}
+		auto simpleState = std::dynamic_pointer_cast<stochsim::State>(state);
+		if (simpleState)
+		{
+			simpleState->SetInitialCondition(static_cast<size_t>(initialCondition));
+			return;
+		}
+		std::stringstream errorMessage;
+		errorMessage << "State " << state->GetName() << " is not a State nor a ComposedState.";
+		throw std::exception(errorMessage.str().c_str());
+	}
+	else if (methodName == "GetName")
+	{
+		params.Set(0, state->GetName());
+	}
+	else
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Method " << methodName << " not known for class " << statePrefix_ << ".";
+		throw std::exception(errorMessage.str().c_str());
+	}
+}
+void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::ComposedState>& state, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "GetInitialCondition")
 	{
@@ -203,7 +234,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	else if(methodName == "SetInitialCondition")
 	{
 		unsigned long initialCondition = params.Get<unsigned long>(0);
-		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
 		if (composedState)
 		{
 			composedState->SetInitialCondition(static_cast<size_t>(initialCondition));
@@ -225,7 +256,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	}
 	else if (methodName == "SaveFinalNumModificationsToFile")
 	{
-		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState<stochsim::Molecule>>(state);
+		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
 		if (!composedState)
 		{
 			std::stringstream errorMessage;
@@ -244,7 +275,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::IState>& sta
 	else
 	{
 		std::stringstream errorMessage;
-		errorMessage << "Method " << methodName << " not known for class " << statePrefix_ << ".";
+		errorMessage << "Method " << methodName << " not known for class " << composedStatePrefix_ << ".";
 		throw std::exception(errorMessage.str().c_str());
 	}
 }
@@ -341,7 +372,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	}
 }
 
-void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction<stochsim::Molecule>>& reaction, const std::string & methodName, MatlabParams & params)
+void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction>& reaction, const std::string & methodName, MatlabParams & params)
 {
 	if (methodName == "Name")
 	{
@@ -427,7 +458,7 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 std::string SimulationWrapper::GetStateReference(const std::shared_ptr<stochsim::IState>& state)
 {
 	std::string stateRef;
-	if (dynamic_cast<stochsim::ComposedState<stochsim::Molecule>*>(state.get()))
+	if (dynamic_cast<stochsim::ComposedState*>(state.get()))
 	{
 		stateRef = composedStatePrefix_;
 	}
@@ -492,7 +523,33 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		ParseStateCommand(state, methodName, params.ShiftInputs(1));
+		auto stateObj = std::dynamic_pointer_cast<stochsim::State>(state);
+		if (!stateObj)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name "<< stateName << " is not a simple state.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		ParseStateCommand(stateObj, methodName, params.ShiftInputs(1));
+	}
+	else if (className == composedStatePrefix_)
+	{
+		std::string stateName = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::IState> state = GetState(stateName);
+		if (!state)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " not defined in simulation.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		auto stateObj = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
+		if (!stateObj)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "State with name " << stateName << " is not a composed state.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		ParseComposedStateCommand(stateObj, methodName, params.ShiftInputs(1));
 	}
 	else if (className == simpleReactionPrefix_)
 	{
@@ -523,7 +580,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 			errorMessage << "Delay reaction with name " << reactionName << " not defined in simulation.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		auto composedReaction = std::dynamic_pointer_cast<stochsim::DelayReaction<stochsim::Molecule>>(reaction);
+		auto composedReaction = std::dynamic_pointer_cast<stochsim::DelayReaction>(reaction);
 		if (!composedReaction)
 		{
 			std::stringstream errorMessage;
