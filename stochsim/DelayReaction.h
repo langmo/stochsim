@@ -9,7 +9,7 @@ namespace stochsim
 	/// A reaction which fires at a specific time (instead of having a propensity), with the time when the reaction fires next being determined by the properties of the first molecule of a ComplexState.
 	/// Since the first molecule of a complex state is also the oldest molecule, this type of reaction typically represents a reaction firing a fixed delay after a molecule of a given species was created.
 	/// </summary>
-	template<class T> class BasicDelayReaction : public IDelayedReaction
+	template<class T> class BasicDelayReaction : public IEventReaction
 	{
 	public:
 		/// <summary>
@@ -52,18 +52,18 @@ namespace stochsim
 		const std::string name_;
 	};
 
-	template<> class BasicDelayReaction<Molecule> : public IDelayedReaction
+	template<> class BasicDelayReaction<Molecule> : public IEventReaction
 	{
 	private:
 		/// <summary>
 		/// Structure to store the information about the products of a DelayedReaction, as well as their stochiometries.
 		/// </summary>
-		struct ReactionElement
+		struct ReactionElementWithModifiers
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
 			{
 			}
 		};
@@ -131,11 +131,32 @@ namespace stochsim
 			}
 			products_.emplace_back(state, stochiometry);
 		}
+		/// <summary>
+		/// Returns all products of the reaction.
+		/// </summary>
+		/// <returns>Products of the reaction.</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& product : products_)
+			{
+				returnVal.emplace_back(product.state_, product.stochiometry_);
+			}
+			return std::move(returnVal);
+		}
+		/// <summary>
+		/// Returns the reactant of the reaction. A delayed reaction always has exactly one reactant with stochiometry one.
+		/// </summary>
+		/// <returns>Reactant of the reaction.</returns>
+		std::shared_ptr<ComposedState> GetReactant() const
+		{
+			return state_;
+		}
 	private:
 		double delay_;
 		std::shared_ptr<ComposedState> state_;
 		const std::string name_;
-		std::vector<ReactionElement> products_;
+		std::vector<ReactionElementWithModifiers> products_;
 	};
 
 	typedef BasicDelayReaction<Molecule> DelayReaction;

@@ -21,24 +21,23 @@
 class SimulationWrapper :
 	public stochsim::Simulation
 {
-private:
+public:
 	static constexpr char stateLoggerFile_[] = "states.csv";
 	static constexpr char prefixSeparator_[] = "::";
 	static constexpr char simulationPrefix_[] = "Simulation";
 	static constexpr char statePrefix_[] = "State";
 	static constexpr char composedStatePrefix_[] = "ComposedState";
 	static constexpr char unknownPrefix_[] = "Unknown";
-	static constexpr char simpleReactionPrefix_[] = "PropensityReaction";
+	static constexpr char propensityReactionPrefix_[] = "PropensityReaction";
 	static constexpr char delayReactionPrefix_[] = "DelayReaction";
 	static constexpr char timerReactionPrefix_[] = "TimerReaction";
+private:
 	void ParseSimulationCommand(const std::string& methodName, MatlabParams& params);
 	void ParseStateCommand(std::shared_ptr<stochsim::State>& state, const std::string& methodName, MatlabParams& params);
 	void ParseComposedStateCommand(std::shared_ptr<stochsim::ComposedState>& state, const std::string& methodName, MatlabParams& params);
 	void ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string& methodName, MatlabParams& params); 
 	void ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction>& reaction, const std::string & methodName, MatlabParams & params);
 	void ParseTimerReactionCommand(std::shared_ptr<stochsim::TimerReaction>& reaction, const std::string & methodName, MatlabParams & params);
-
-	std::string GetStateReference(const std::shared_ptr<stochsim::IState>& state);
 public:
 	SimulationWrapper();
 	virtual ~SimulationWrapper();

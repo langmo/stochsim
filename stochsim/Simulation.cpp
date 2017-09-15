@@ -140,7 +140,7 @@ namespace stochsim
 			/**
 			** Run a modified version of Gillespies algorithm. The base algorithm is implemented as outlined in
 			** Gillespie, Daniel T. "Exact stochastic simulation of coupled chemical reactions." The journal of physical chemistry 81.25 (1977): 2340-2361.
-			** What we added is the support of fixed time delays, modelled roughly as reactions which fire at a specific time, instead of having a continuous propensity.
+			** What we added is the support of fixed time delays and other events happening at given times instead with continuous propensities.
 			**/
 			runtime_ = runtime;
 			time_ = 0;
@@ -154,7 +154,7 @@ namespace stochsim
 			{
 				reaction->Initialize(*this);
 			}
-			for (auto& reaction : delayedReactions_)
+			for (auto& reaction : eventReactions_)
 			{
 				reaction->Initialize(*this);
 			}
@@ -186,21 +186,21 @@ namespace stochsim
 					tau = stochsim::inf;
 				}
 
-				// Calculate time to next delayed reaction
-				size_t nextDelayedIndex = 0;
-				double nextDelayedT = stochsim::inf;
-				for (size_t i = 0; i < delayedReactions_.size(); i++)
+				// Calculate time to next event reaction
+				size_t nextEventIndex = 0;
+				double nextEventT = stochsim::inf;
+				for (size_t i = 0; i < eventReactions_.size(); i++)
 				{
-					double temp = delayedReactions_[i]->NextReactionTime(*this);
-					if (temp < nextDelayedT)
+					double temp = eventReactions_[i]->NextReactionTime(*this);
+					if (temp < nextEventT)
 					{
-						nextDelayedT = temp;
-						nextDelayedIndex = i;
+						nextEventT = temp;
+						nextEventIndex = i;
 					}
 				}
 
-				// Fire either next delayed or next propensity reaction, whichever is earlier
-				if (nextDelayedT > time_ + tau)
+				// Fire either next event or next propensity reaction, whichever is earlier
+				if (nextEventT > time_ + tau)
 				{
 					// Fire a propensity reaction
 					time_ += tau;
@@ -229,7 +229,7 @@ namespace stochsim
 				}
 				else
 				{
-					time_ = nextDelayedT;
+					time_ = nextEventT;
 					if (time_ > runtime)
 					{
 						time_ = runtime;
@@ -237,7 +237,7 @@ namespace stochsim
 					}
 					// notify logger about the time of the next reaction event
 					logger_.NotifyNextChange(time_);
-					delayedReactions_[nextDelayedIndex]->Fire(*this);
+					eventReactions_[nextEventIndex]->Fire(*this);
 				}
 			}
 
@@ -279,7 +279,7 @@ namespace stochsim
 
 		void AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 		{
-			if (GetPropensityReaction(reaction->GetName()) || GetDelayedReaction(reaction->GetName()))
+			if (GetPropensityReaction(reaction->GetName()) || GetEventReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction with name " << reaction->GetName() << " already exists in simulation.";
@@ -287,15 +287,15 @@ namespace stochsim
 			}
 			propensityReactions_.push_back(std::move(reaction));
 		}
-		void AddReaction(std::shared_ptr<IDelayedReaction> reaction)
+		void AddReaction(std::shared_ptr<IEventReaction> reaction)
 		{
-			if (GetPropensityReaction(reaction->GetName()) || GetDelayedReaction(reaction->GetName()))
+			if (GetPropensityReaction(reaction->GetName()) || GetEventReaction(reaction->GetName()))
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction with name "<<reaction->GetName()<< " already exists in simulation.";
 				throw std::exception(errorMessage.str().c_str());
 			}
-			delayedReactions_.push_back(std::move(reaction));
+			eventReactions_.push_back(std::move(reaction));
 		}
 		void AddState(std::shared_ptr<IState> state)
 		{
@@ -308,41 +308,49 @@ namespace stochsim
 			states_.push_back(std::move(state));
 		}
 
-		std::shared_ptr<IState> GetState(const std::string & name)
+		const std::shared_ptr<IState> GetState(const std::string & name) const
 		{
-			for (std::shared_ptr<IState>& state : states_)
+			for (const std::shared_ptr<IState>& state : states_)
 			{
 				if (state->GetName() == name)
 					return state;
 			}
 			return nullptr;
 		}
-		Simulation::Collection<std::shared_ptr<IState>>&  GetStates()
+		const Collection<std::shared_ptr<IState>>  GetStates() const
 		{
-			return states_;
+			return Collection<std::shared_ptr<IState>>(states_.begin(), states_.end());
 		}
-		std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string & name)
+		const std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string & name) const
 		{
-			for (std::shared_ptr<IPropensityReaction>& propensityReaction : propensityReactions_)
+			for (const std::shared_ptr<IPropensityReaction>& propensityReaction : propensityReactions_)
 			{
 				if (propensityReaction->GetName() == name)
 					return propensityReaction;
 			}
 			return nullptr;
 		}
-		std::shared_ptr<IDelayedReaction> GetDelayedReaction(const std::string& name)
+		const Collection<std::shared_ptr<IPropensityReaction>>  GetPropensityReactions() const
 		{
-			for (std::shared_ptr<IDelayedReaction>& delayedReaction : delayedReactions_)
+			return Collection<std::shared_ptr<IPropensityReaction>>(propensityReactions_.begin(), propensityReactions_.end());
+		}
+		const std::shared_ptr<IEventReaction> GetEventReaction(const std::string& name) const
+		{
+			for (const std::shared_ptr<IEventReaction>& eventReaction : eventReactions_)
 			{
-				if (delayedReaction->GetName() == name)
-					return delayedReaction;
+				if (eventReaction->GetName() == name)
+					return eventReaction;
 			}
 			return nullptr;
+		}
+		const Collection<std::shared_ptr<IEventReaction>>  GetEventReactions() const
+		{
+			return Collection<std::shared_ptr<IEventReaction>>(eventReactions_.begin(), eventReactions_.end());
 		}
 
 	private:
 		std::vector<std::shared_ptr<IPropensityReaction>> propensityReactions_;
-		std::vector<std::shared_ptr<IDelayedReaction>> delayedReactions_;
+		std::vector<std::shared_ptr<IEventReaction>> eventReactions_;
 		std::vector<std::shared_ptr<IState>> states_;
 		double time_;
 		double runtime_;
@@ -360,14 +368,13 @@ namespace stochsim
 	Simulation::~Simulation()
 	{
 		delete impl_;
-		impl_ = nullptr;
 	}
 
 	void Simulation::AddReaction(std::shared_ptr<IPropensityReaction> reaction)
 	{
 		impl_->AddReaction(std::move(reaction));
 	}
-	void Simulation::AddReaction(std::shared_ptr<IDelayedReaction> reaction)
+	void Simulation::AddReaction(std::shared_ptr<IEventReaction> reaction)
 	{
 		impl_->AddReaction(std::move(reaction));
 	}
@@ -376,26 +383,34 @@ namespace stochsim
 		impl_->AddState(std::move(state));
 	}
 
-	std::shared_ptr<IState> Simulation::GetState(const std::string & name)
+	const std::shared_ptr<IState> Simulation::GetState(const std::string & name) const
 	{
 		return impl_->GetState(name);
 	}
 
-	const Simulation::Collection<std::shared_ptr<IState>>& Simulation::GetStates()
+	const Collection<std::shared_ptr<IState>> Simulation::GetStates() const
 	{
-		return impl_->GetStates();
+		return std::move(impl_->GetStates());
 	}
 
-	std::shared_ptr<IPropensityReaction> Simulation::GetPropensityReaction(const std::string & name)
+	const std::shared_ptr<IPropensityReaction> Simulation::GetPropensityReaction(const std::string & name) const
 	{
 		return impl_->GetPropensityReaction(name);
 	}
 
-	std::shared_ptr<IDelayedReaction> Simulation::GetDelayedReaction(const std::string & name)
+	const Collection<std::shared_ptr<IPropensityReaction>> Simulation::GetPropensityReactions() const
 	{
-		return impl_->GetDelayedReaction(name);
+		return std::move(impl_->GetPropensityReactions());
 	}
 
+	const std::shared_ptr<IEventReaction> Simulation::GetEventReaction(const std::string & name) const
+	{
+		return impl_->GetEventReaction(name);
+	}
+	const Collection<std::shared_ptr<IEventReaction>> Simulation::GetEventReactions() const
+	{
+		return std::move(impl_->GetEventReactions());
+	}
 	void Simulation::Run(double maxTime)
 	{
 		impl_->Run(maxTime);

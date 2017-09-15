@@ -1,13 +1,23 @@
 #pragma once
 #include <string>
 #include <limits>
+#include <vector>
+#include <memory>
 namespace stochsim
 {
 	/// <summary>
 	///  Value used to indicate that delayed reaction should not fire at all (=fire at time infinity)
 	/// </summary>
 	constexpr double inf(std::numeric_limits<double>::max());
+	/// <summary>
+	/// Stochiometry of a reaction component. Must be a positive number.
+	/// </summary>
 	typedef unsigned int Stochiometry;
+	/// <summary>
+	/// Collection used to represent sets of states, reactions and similar in public interfaces.
+	/// Note that the way these sets are saved internally can deviate from this definition.
+	/// </summary>
+	template <class T> using Collection = std::vector<T>;
 
 	/// <summary>
 	/// Provides information about the current global state of the simulation, e.g. the current simulation time.
@@ -142,13 +152,13 @@ namespace stochsim
 	};
 
 	/// <summary>
-	/// Base class of all reactions which fire at a given time. Thus, the duration when the reaction fires is not distributed according to a propensity, but the reaction is instead guaranteed to
-	/// fire at a given time.
+	/// Base class of all reactions which fire at a given time. Thus, the time when the reaction fires is not distributed according to a propensity, but the reaction is instead guaranteed to
+	/// fire at a given time. This can be used to realize timers, delays or other kinds of events.
 	/// </summary>
-	class IDelayedReaction
+	class IEventReaction
 	{
 	public:
-		virtual ~IDelayedReaction() {}
+		virtual ~IEventReaction() {}
 		/// <summary>
 		/// Called by the simulation before the simulation starts. Should ensure that the reaction is at a consistent state.
 		/// </summary>
@@ -204,5 +214,29 @@ namespace stochsim
 		/// </summary>
 		/// <returns>True if anything is written to the disk.</returns>
 		virtual bool WritesToDisk() const  = 0;
+	};
+
+	/// <summary>
+	/// A reaction element is a reactant, product or similar of a reaction, together with its stochiometry.
+	/// </summary>
+	struct ReactionElement
+	{
+	public:
+		/// <summary>
+		/// State representing the reactant, product or similar of the reaction element.
+		/// </summary>
+		const std::shared_ptr<IState> state_;
+		/// <summary>
+		/// Stochiometry of the reaction element.
+		/// </summary>
+		const Stochiometry stochiometry_;
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="state">State representing the reactant, product or similar of the reaction element.</param>
+		/// <param name="stochiometry">Stochiometry of the reaction element.</param>
+		ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : state_(std::move(state)), stochiometry_(stochiometry)
+		{
+		}
 	};
 }

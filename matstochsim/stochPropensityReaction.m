@@ -24,11 +24,45 @@ classdef stochPropensityReaction < stochSimulationComponent
      properties(SetAccess = private, GetAccess=public,Dependent)
         % Unique name of the reaction.
         name;
+        % Reactants, that is, species which get consumed by the reaction.
+        reactants;
+        % Stochiometries of reactants.
+        reactantStochiometries;
+        % Products, that is, species which get produced by the reaction.
+        products;
+        % Stochiometries of products.
+        productStochiometries;
+        % Modifiers, that is, species which get neither produced nor
+        % consumed by the reaction, but which modify the reaction rate
+        % according to their stochiometry following mass action kinetics.
+        % An example for modifiers are enzymes catalyzing a reaction.
+        modifiers;
+        % Stochiometries of modifiers.
+        modifierStochiometries;
+        % Transformees, that is, species which get neither produced nor
+        % consumed by the reaction, but which modify the reaction rate
+        % according to their stochiometry following mass action kinetics.
+        % Additionally, when participating in a reaction, a transformee is
+        % transformed. While in principle many ways of getting transformed
+        % are possible, currently the only implemented transformation is a
+        % simple counting of how often the respective molecule took part as
+        % a transformee in a reaction.
+        transformees;
+        % Stochiometries of transformees.
+        transformeeStochiometries;
+        % String representation of the reaction, e.g. A -> 2 B.
+        formula;
     end
     properties(Dependent)
         % The rate constant of the reaction used to calculate the
         % propensity ("rate") of the reaction using mass action kinetics.
+        % Only used to determine the reaction rate if no custom rate
+        % equation is set.
         rateConstant;
+        % A custom rate equation. When a custom rate equation is set, this
+        % equation is used to determine the reaction rate dynamically
+        % instead of calculating the rate using mass action kinetics.
+        rateEquation;
     end
     methods       
         %% Getters and setters for properties
@@ -41,6 +75,83 @@ classdef stochPropensityReaction < stochSimulationComponent
         end
         function set.rateConstant(this, rateConstant)
             this.call('SetRateConstant', rateConstant);
+        end
+        
+        function rateEquation = get.rateEquation(this)
+            rateEquation = this.call('GetRateEquation');
+            if isempty(rateEquation)
+                rateEquation = [];
+            end
+        end
+        function set.rateEquation(this, rateEquation)
+            this.call('SetRateEquation', rateEquation);
+        end
+        
+        function reactants = get.reactants(this)
+            [reactantRefs, ~] = this.call('GetReactants');
+            reactants = cell(size(reactantRefs));
+            for i=1:length(reactantRefs)
+                reactants{i} = this.simulationHandle.getState(reactantRefs{i});
+            end
+        end
+        function reactantStochiometries = get.reactantStochiometries(this)
+            [~, reactantStochiometries] = this.call('GetReactants');
+        end
+        
+        function products = get.products(this)
+            [productRefs, ~] = this.call('GetProducts');
+            products = cell(size(productRefs));
+            for i=1:length(productRefs)
+                products{i} = this.simulationHandle.getState(productRefs{i});
+            end
+        end
+        function productStochiometries = get.productStochiometries(this)
+            [~, productStochiometries] = this.call('GetProducts');
+        end
+        
+        function modifiers = get.modifiers(this)
+            [moifierRefs, ~] = this.call('GetModifiers');
+            modifiers = cell(size(moifierRefs));
+            for i=1:length(moifierRefs)
+                modifiers{i} = this.simulationHandle.getState(moifierRefs{i});
+            end
+        end
+        function modifierStochiometries = get.modifierStochiometries(this)
+            [~, modifierStochiometries] = this.call('GetModifiers');
+        end
+        
+        function transformees = get.transformees(this)
+            [transformeeRefs, ~] = this.call('GetTransformees');
+            transformees = cell(size(transformeeRefs));
+            for i=1:length(transformeeRefs)
+                transformees{i} = this.simulationHandle.getState(transformeeRefs{i});
+            end
+        end
+        function transformeeStochiometries = get.transformeeStochiometries(this)
+            [~, transformeeStochiometries] = this.call('GetTransformees');
+        end
+        
+        function formula = get.formula(this)
+            iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
+            toString = @(state, stoch) ...
+                iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
+                    true   , @()this.simulationHandle.getState(state{1}).name);
+            
+            [reactantRefs, reactantStochiometries] = this.call('GetReactants');
+            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, 'UniformOutput', false);
+            
+            [productRefs, productStochiometries] = this.call('GetProducts');
+            products = arrayfun(toString, productRefs, productStochiometries, 'UniformOutput', false);
+            
+            [modifierRefs, modifierStochiometries] = this.call('GetModifiers');
+            modifiers = arrayfun(toString, modifierRefs, modifierStochiometries, 'UniformOutput', false);
+            modifiers = cellfun(@(string)[string,'[]'], modifiers, 'UniformOutput', false);
+            
+            [transformeeRefs, transformeeStochiometries] = this.call('GetTransformees');
+            transformees = arrayfun(toString, transformeeRefs, transformeeStochiometries, 'UniformOutput', false);
+            transformees = cellfun(@(string)[string,'[]'], transformees, 'UniformOutput', false);
+            
+            formula = [strjoin([reactants, modifiers, transformees], ' + '), ' -> ', strjoin([products, transformees], ' + ')];
         end
         %% Products, reactants and similar.
         function addProduct(this, state, stochiometry)

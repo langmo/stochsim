@@ -10,6 +10,8 @@ classdef stochSimulation < handle
         function className = getClassName()
             className = 'Simulation';
         end
+     end
+    methods(Static, Hidden=true, Access=?stochSimulationComponent)
         function separator = getSeparator()
             separator = '::';
         end
@@ -21,6 +23,9 @@ classdef stochSimulation < handle
                 matstochsim([stochSimulation.getClassName(), stochSimulation.getSeparator(), functionName], ...
                 this.objectHandle, varargin{:});
         end
+    end
+    methods (Access = private, Hidden = true)
+        %% Helper functions to map C++ state and reaction reference strings to Matlab classes
         function state = toState(this, stateRef)
             idx = strfind(stateRef, stochSimulation.getSeparator());
             if length(idx) ~= 1
@@ -34,6 +39,24 @@ classdef stochSimulation < handle
                 state = stochComposedState(this, stateName);
             else
                 error('stochsim:classUnknown', 'the state class %s of the state %s is unknown!', className, stateName);
+            end
+        end
+        
+        function reaction = toReaction(this, reactionRef)
+            idx = strfind(reactionRef, stochSimulation.getSeparator());
+            if length(idx) ~= 1
+                error('stochsim:invalidReactionRef', 'Reference to reaction "%s" has invalid format!', reactionRef);
+            end
+            className = reactionRef(1:idx-1);
+            reactionName = reactionRef(idx+length(stochSimulation.getSeparator()):end);
+            if strcmp(className, stochPropensityReaction.getClassName())
+                reaction = stochPropensityReaction(this, reactionName);
+            elseif strcmp(className, stochDelayReaction.getClassName())
+                reaction = stochDelayReaction(this, reactionName);
+            elseif strcmp(className, stochTimerReaction.getClassName())
+                reaction = stochTimerReaction(this, reactionName);
+            else
+                error('stochsim:classUnknown', 'the state class %s of the state %s is unknown!', className, reactionName);
             end
         end
     end
@@ -66,8 +89,14 @@ classdef stochSimulation < handle
         % Matlab console while the simulation is running. Specifically, the
         % percentage of the simulation already accomplished is displayed.
         logConsole;
-        
+    end
+    properties(SetAccess = private, GetAccess=public,Dependent)
+        % Cell array holding references to all states defined in the
+        % simulation.
         states;
+        % Cell array holding references to all reactions defined in the
+        % simulation.
+        reactions;
     end
     methods
         %% Constructor
@@ -136,7 +165,7 @@ classdef stochSimulation < handle
             % Returns:
             %   valid - True if the simulation is in a valid state and can
             %           be run/edited, false otherwise.
-            valid = isvalid(this);
+            valid = isvalid(this) && this.objectHandle~=0;
         end
         %% States
         function state = createState(this, name, initialCondition)
@@ -205,7 +234,11 @@ classdef stochSimulation < handle
             %   name - Name of the state.
             % Returns:
             %   state - object representing the state.
-            stateRef = this.call('GetState', name);
+            if isempty(strfind(name, stochSimulation.getSeparator()))
+                stateRef = this.call('GetState', name);
+            else
+                stateRef = name;
+            end
             state = this.toState(stateRef);
         end
         %% Create Reactions
@@ -223,7 +256,7 @@ classdef stochSimulation < handle
             %   rateConstant - The rate constant of the reaction used to
             %                  calculate the propensity ("rate") of the
             %                  reaction using mass action kinetics.
-			reaction = stochPropensityReaction(this, this.call('CreatePropensityReaction', name, rateConstant));
+			reaction = this.toReaction(this.call('CreatePropensityReaction', name, rateConstant));
         end
         function reaction = createDelayReaction(this, name, composedState, delay)
             % Creates a reaction which fires exactly after a given time a
@@ -249,7 +282,7 @@ classdef stochSimulation < handle
             if ~ischar(composedState)
                 composedState = composedState.getStateHandle();
             end
-			reaction = stochDelayReaction(this, this.call('CreateDelayReaction', name, composedState, delay));
+			reaction = this.toReaction(this.call('CreateDelayReaction', name, composedState, delay));
         end
         function reaction = createTimerReaction(this, name, fireTime)
             % A reaction or event which fires a single time at exactly the
@@ -263,9 +296,24 @@ classdef stochSimulation < handle
             %                  uniquely identify the reaction.
             %   fireTime     - Time, in sumulation time units, when the
             %                  timer reaction should fire.
-			reaction = stochTimerReaction(this, this.call('CreateTimerReaction', name, fireTime));
+			reaction = this.toReaction(this.call('CreateTimerReaction', name, fireTime));
         end
-        
+        function reaction = getReaction(this, name)
+            % Returns the reaction with the given name. Throws an exception if
+            % the reaction does not exist.
+            % Usage:
+            %   reaction = getReaction(this, name)
+            % Parameters:
+            %   name - Name of the reaction.
+            % Returns:
+            %   reaction - object representing the reaction.
+            if isempty(strfind(name, stochSimulation.getSeparator()))
+                reactionRef = this.call('GetReaction', name);
+            else
+                reactionRef = name;
+            end
+            reaction = this.toReaction(reactionRef);
+        end
         %% Executes simulation
         function varargout = run(this, runtime)
             % Executes the simulation, as it is currently configured. The
@@ -297,6 +345,13 @@ classdef stochSimulation < handle
             states = cell(size(stateRefs));
             for i=1:numel(stateRefs)
                 states{i} = this.toState(stateRefs{i});
+            end
+        end     
+        function reactions = get.reactions(this)
+            reactionRefs = this.call('GetReactions');
+            reactions = cell(size(reactionRefs));
+            for i=1:numel(reactionRefs)
+                reactions{i} = this.toReaction(reactionRefs{i});
             end
         end     
         function set.logPeriod(this, logPeriod)

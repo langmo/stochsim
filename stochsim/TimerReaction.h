@@ -9,24 +9,37 @@ namespace stochsim
 	/// A reaction which fires once at a specific time (instead of having a propensity).
 	/// Good to implement events like adding some substrate at a given time.
 	/// </summary>
-	class TimerReaction : public IDelayedReaction
+	class TimerReaction : public IEventReaction
 	{
 	private:
 		/// <summary>
 		/// Structure to store the information about the products released when the reaction fires, as well as their stochiometries.
 		/// </summary>
-		struct ReactionElement
+		struct ReactionElementWithModifiers
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
 			{
 			}
 		};
 	public:
 		TimerReaction(std::string name, double fireTime_) : fireTime_(fireTime_), name_(std::move(name)), hasFired_(false)
 		{
+		}
+		/// <summary>
+		/// Returns all products of the reaction.
+		/// </summary>
+		/// <returns>Products of the reaction.</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& product : products_)
+			{
+				returnVal.emplace_back(product.state_, product.stochiometry_);
+			}
+			return std::move(returnVal);
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
@@ -91,6 +104,6 @@ namespace stochsim
 		bool hasFired_;
 		double fireTime_;
 		const std::string name_;
-		std::vector<ReactionElement> products_;
+		std::vector<ReactionElementWithModifiers> products_;
 	};
 }

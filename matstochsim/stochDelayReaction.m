@@ -26,6 +26,16 @@ classdef stochDelayReaction < stochSimulationComponent
      properties(SetAccess = private, GetAccess=public,Dependent)
         % Unique name of the reaction.
         name;
+        % Reactants, that is, species which get consumed by the reaction.
+        reactants;
+        % Stochiometries of reactants.
+        reactantStochiometries;
+        % Products, that is, species which get produced by the reaction.
+        products;
+        % Stochiometries of products.
+        productStochiometries;
+        % String representation of the reaction, e.g. A -> 2 B.
+        formula;
     end
     properties(Dependent)
         % The delay after the creation of a molecule of the composed state
@@ -38,12 +48,46 @@ classdef stochDelayReaction < stochSimulationComponent
             % Returns the unique name of this reaction.
             name = this.call('Name');
         end
+        function reactants = get.reactants(this)
+            [reactantRefs, ~] = this.call('GetReactants');
+            reactants = cell(size(reactantRefs));
+            for i=1:length(reactantRefs)
+                reactants{i} = this.simulationHandle.getState(reactantRefs{i});
+            end
+        end
+        function reactantStochiometries = get.reactantStochiometries(this)
+            [~, reactantStochiometries] = this.call('GetReactants');
+        end
         
+        function products = get.products(this)
+            [productRefs, ~] = this.call('GetProducts');
+            products = cell(size(productRefs));
+            for i=1:length(productRefs)
+                products{i} = this.simulationHandle.getState(productRefs{i});
+            end
+        end
+        function productStochiometries = get.productStochiometries(this)
+            [~, productStochiometries] = this.call('GetProducts');
+        end
         function delay = get.delay(this)
             delay = this.call('GetDelay');
         end
         function set.delay(this, delay)
             this.call('SetDelay', delay);
+        end
+        function formula = get.formula(this)
+            iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
+            toString = @(state, stoch) ...
+                iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
+                    true   , @()this.simulationHandle.getState(state{1}).name);
+            
+            [reactantRefs, reactantStochiometries] = this.call('GetReactants');
+            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, 'UniformOutput', false);
+            
+            [productRefs, productStochiometries] = this.call('GetProducts');
+            products = arrayfun(toString, productRefs, productStochiometries, 'UniformOutput', false);
+            
+            formula = [strjoin(reactants, ' + '), ' -> ', strjoin(products, ' + ')];
         end
         %% Products, reactants and similar.
         function addProduct(this, state, stochiometry)

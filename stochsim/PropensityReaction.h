@@ -20,13 +20,13 @@ namespace stochsim
 		/// <summary>
 		/// Structure to store the information about the reactants and products of a SimpleReaction, as well as their stochiometries.
 		/// </summary>
-		struct ReactionElement
+		struct ReactionElementWithModifiers
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
 			const bool modifier_;
-			ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
 			{
 			}
 		};
@@ -37,6 +37,84 @@ namespace stochsim
 		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(0), rateEquation_(rateEquation)
 		{
 		}
+		/// <summary>
+		/// Returns all reactants of the reaction. Modifiers and Transformees are not considered to be reactants.
+		/// </summary>
+		/// <returns>Reactants of reaction.</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetReactants() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& reactant : reactants_)
+			{
+				if (!reactant.modifier_)
+				{
+					returnVal.emplace_back(reactant.state_, reactant.stochiometry_);
+				}
+			}
+			return std::move(returnVal);
+		}
+		/// <summary>
+		/// Returns all products of the reaction. Modifiers and Transformees are not considered to be products.
+		/// </summary>
+		/// <returns>Products of the reaction.</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& product : products_)
+			{
+				if (!product.modifier_)
+				{
+					returnVal.emplace_back(product.state_, product.stochiometry_);
+				}
+			}
+			return std::move(returnVal);
+		}
+		/// <summary>
+		/// Returns all transformees of the reaction.
+		/// Transformees are similar to modifiers of the reaction in that they modify the reaction rate according to their stochiometry, and in that their concentration is neither increased nor decreased
+		/// when the reaction fires. However, a transformee is transformed (IState.transform() is called) according to the stochiometry. What a transformation of a state exactly implies is implementation
+		/// dependent.
+		/// </summary>
+		/// <returns>Transformees of the reaction.</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetTransformees() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& product : products_)
+			{
+				if (product.modifier_)
+				{
+					returnVal.emplace_back(product.state_, product.stochiometry_);
+				}
+			}
+			return std::move(returnVal);
+		}
+		/// <summary>
+		/// Returns all modifiers of the reaction. Modifiers are similar to reactants in that they modify the reaction rate according to their stochiometry, but their concentration is
+		/// neither increased or decreased when the reaction fires.
+		/// </summary>
+		/// <returns>Modifiers of the reaction</returns>
+		stochsim::Collection<stochsim::ReactionElement> GetModifiers() const
+		{
+			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			for (auto& reactant : reactants_)
+			{
+				if (reactant.modifier_)
+				{
+					Stochiometry stoch = reactant.stochiometry_;
+					for (auto& product : products_)
+					{
+						if (product.modifier_ && product.state_ == reactant.state_)
+						{
+							stoch -= product.stochiometry_;
+						}
+					}
+					if(stoch > 0)
+						returnVal.emplace_back(reactant.state_, stoch);
+				}
+			}
+			return std::move(returnVal);
+		}
+
 		/// <summary>
 		/// Adds a species as a reactant of the reaction. When the reaction fires, its concentration is decreased according to its stochiometry.
 		/// </summary>
@@ -97,6 +175,7 @@ namespace stochsim
 		/// <param name="stochiometry">Number of molecules of the transformee taking part in a reaction.</param>
 		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
 		{
+			bool addedReactant = false;
 			for (auto& reactant : reactants_)
 			{
 				if (state == reactant.state_)
@@ -110,10 +189,17 @@ namespace stochsim
 					else
 					{
 						reactant.stochiometry_ += stochiometry;
-						return;
+						addedReactant = true;
+						break;
 					}
 				}
 			}
+			if (!addedReactant)
+			{
+				reactants_.emplace_back(state, stochiometry, true);
+			}
+
+			bool addedProduct = false;
 			for (auto& product : products_)
 			{
 				if (state == product.state_)
@@ -127,12 +213,12 @@ namespace stochsim
 					else
 					{
 						product.stochiometry_ += stochiometry;
-						return;
+						addedProduct = true;
 					}
 				}
 			}
-			reactants_.emplace_back(state, stochiometry, true);
-			products_.emplace_back(state, stochiometry, true);
+			if(!addedProduct)
+				products_.emplace_back(state, stochiometry, true);
 		}
 		/// <summary>
 		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
@@ -162,6 +248,13 @@ namespace stochsim
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
+			for (const auto& reactant : reactants_)
+			{
+				if (!reactant.modifier_)
+				{
+					reactant.state_->Remove(simInfo, reactant.stochiometry_);
+				}
+			}
 			for (const auto& product : products_)
 			{
 				if (product.modifier_)
@@ -171,13 +264,6 @@ namespace stochsim
 				else
 				{
 					product.state_->Add(simInfo, product.stochiometry_);
-				}
-			}
-			for (const auto& reactant : reactants_)
-			{
-				if (!reactant.modifier_)
-				{
-					reactant.state_->Remove(simInfo, reactant.stochiometry_);
 				}
 			}
 		}
@@ -210,7 +296,7 @@ namespace stochsim
 			if (rateEquation_.empty())
 				return;
 			std::vector<std::shared_ptr<IState>> reactantStates;
-			std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantStates), [](ReactionElement& element) -> const std::shared_ptr<IState>& {return element.state_; });
+			std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantStates), [](ReactionElementWithModifiers& element) -> const std::shared_ptr<IState>& {return element.state_; });
 			reactionRate_.Initialize(rateEquation_, reactantStates);
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
@@ -263,7 +349,7 @@ namespace stochsim
 		double rateConstant_;
 		const std::string name_;
 		std::string rateEquation_;
-		std::vector<ReactionElement> reactants_;
-		std::vector<ReactionElement> products_;
+		std::vector<ReactionElementWithModifiers> reactants_;
+		std::vector<ReactionElementWithModifiers> products_;
 	};
 }

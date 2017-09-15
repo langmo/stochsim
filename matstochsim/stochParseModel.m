@@ -2,6 +2,9 @@ function sim = stochParseModel(fileName, externalParameters)
 %parseModel Parses the model saved in fileName (usually a CMDL file) and
 %creates a simulation object in stochsim which can be run.
 
+%% Run unit tests to ensure that parser work as expected
+unitTestRegexpParsers();
+
 %% Setup
 parseTree = struct();
 % Struct p holds all declared parameters
@@ -15,6 +18,9 @@ if exist('externalParameters', 'var') && isstruct(externalParameters)
     parseTree.p_ext = externalParameters;
 else
     parseTree.p_ext = struct();
+end
+if ~exist('fileName', 'var') && isempty(fileName)
+    fileName = 'model.cmdl';
 end
 
 %% Parse model and fill the parse tree
@@ -39,7 +45,141 @@ fclose(fid);
 %% Create and initialize the simulation object
 sim = createSimulation(parseTree);
 end
+%% Run unit tests for various parsers.
+function unitTestRegexpParsers()
+regexpParsers = getRegexParsers();
+parserNames = fieldnames(regexpParsers);
+for p=1:length(parserNames)
+    parser = regexpParsers.(parserNames{p});
+    for i=1:length(parser.unitTests)
+        [match, names] = regexp(parser.unitTests{i,1}, parser.expression, 'match', 'names', 'once');
+        if strcmp(match, parser.unitTests{i,1}) ~= parser.unitTests{i,2} 
+            if isempty(match)
+                match = '';
+            end
+            ME = MException('stochsim:parserUnitTestFailed', [...
+                'Unit test %g of regexp parser %s failed!\n',...
+                ' Regexp      :"%s"\n',...
+                ' Input       :"%s"\n',...
+                ' Should match:%g\n',...
+                ' Match       :"%s"\n'],...
+                i, parserNames{p}, parser.expression, parser.unitTests{i,1}, parser.unitTests{i,2}+0, match);
+            throw(ME);
+        end
+    end
+end
+end
 
+%% Various regular expressions to parse reactions or assignemnts
+function result = evalRegexParser(parser, string)
+[match, result] = regexp(string, parser.expression, 'match', 'names', 'once');
+if ~strcmp(string, match)
+    ME = MException('stochsim:parseFail', [...
+                'Could not parse string!\n',...
+                ' Input       :"%s"\n',...
+                ' Match       :"%s"\n',...
+                ' Regexp      :"%s"\n'],...
+                string, match, parser.expression);
+            throw(ME);
+end
+end
+
+function regexParsers = getRegexParsers()
+regexParsers = struct();
+
+% Name of a state or variable.
+regexParsers.varName = struct();
+regexParsers.varName.expression = ...
+    '\<[a-zA-Z_]\w*\>';
+regexParsers.varName.unitTests = {...
+    'a', true;...
+    'A', true;...
+    'Za', true;...
+    'aBcF', true;...
+    'T1a', true;...
+    'p_Pi', true;...
+    '_oo', true;...
+    '_1', true;...
+    '2', false;...
+    '2a', false
+    ' ', false;...
+    ' A', false;...
+    'A ', false;...
+    'o!', false;...
+    'a12[]', false};
+regexParsers.varName.eval = @(string)evalRegexParser(regexParsers.varName, string);
+%regexParsers.varName.eval = @(x)iff(strcmp(regexp(x, regexParsers.varName.expression, 'match', 'once'),x), regexp(x, regexParsers.varName.expression, 'math', 'once'), true, []);
+
+
+% Stochiometry, name and mofidier of one species taking part in a reaction
+regexParsers.reactionComponent = struct();
+regexParsers.reactionComponent.expression = ...
+    ['(?<stochiometry>\<\w+\>)?(?(stochiometry)\s*[\*\s]\s*)(?<state>', regexParsers.varName.expression, ')(?<modifier>\[\])?'];
+regexParsers.reactionComponent.unitTests = {...
+    '2 * aA_[]', true;...
+    'A', true;...
+    ' A', false;...
+    'A ', false;...
+    '*A', false;...
+    'a*Aa', true;...
+    '2 A', true;...
+    '2*A', true;...
+    '2 * A', true;...
+    '2A', false;...
+    'A[]', true;...
+    'A[ ]', false};
+regexParsers.reactionComponent.eval = @(string)evalRegexParser(regexParsers.reactionComponent, string);
+
+% Everything in a reaction which is NOT used to split the reaction into its
+% fundamental parts
+regexParsers.reactionPart = struct();
+regexParsers.reactionPart.expression = [...
+    '(?:([^,\-<\s]|(?<!<)\-(?!>)|<(?!\-))'...
+    '([^,\-<]|(?<!<)\-(?!>)|<(?!\-))*'...
+    '([^,\-<\s]|(?<!<)\-(?!>)|<(?!\-))'...
+    '|[^,\-\s<]?)'];
+regexParsers.reactionPart.unitTests = {...
+    'sfsdlöfk sdöfksdfö ppop', true;...
+    'A->B', false;...
+    'A-->B', false;...
+    'a,BBB', false;...
+    'A-B', true};
+regexParsers.reactionPart.eval = @(string)evalRegexParser(regexParsers.reactionPart, string);
+
+% Only the formula of a reaction, without the reaction name or similar.
+regexParsers.reactionFormula = struct();
+regexParsers.reactionFormula.expression = [...
+    '(?<LHS>', regexParsers.reactionPart.expression, ')',...
+    '\s*->\s*'...
+    '(?<RHS>', regexParsers.reactionPart.expression, ')'];
+regexParsers.reactionFormula.unitTests = {...
+    'A -> B', true;...
+    'sdfsdfdsf->ztjhfg jhfgh', true;...
+    'sdfsdfdsf -> ztjhfg jhfgh', true;...
+    'sdfsdfdsf - > ztjhfg jhfgh', false;...
+    ' sdfsdfdsf->ztjhfg jhfgh', false;...
+    '1s+!"§$%&/()=?´df2 ***sdfdsf->ztjhfg 666jhfgh', true;...
+    ',1sdf2 ***sdfdsf->ztjhfg 666jhfgh', false;...
+    '   ,1sdf2 ***sdfdsf->ztjhfg 666jhfgh', false;...
+    '1sdf2 ***sdfdsf->ztjhfg 666jhfgh,', false;...
+    '1sdf2 ***sdfdsf->ztjhfg 666jhfgh,  ', false;...
+    '1sdf2 ***sdfdsf-->ztjhfg 666jhfgh', true;...
+    '1sdf2 ***sdfdsf<->ztjhfg 666jhfgh', false;...
+    '1sdf2 ***sdfdsf<-ztjhfg 666jhfgh', false};
+regexParsers.reactionFormula.eval = @(string)evalRegexParser(regexParsers.reactionFormula, string);
+
+% Complete reaction definition
+regexParsers.reaction = struct();
+regexParsers.reaction.expression = [...
+    '\s*(?<reactionName>', regexParsers.varName.expression,')?(?(reactionName)\s*,\s*)',...
+    regexParsers.reactionFormula.expression,...
+    '\s*,\s*',...
+    '(?<arguments>', regexParsers.reactionPart.expression, '(\s*,\s*)?)+\s*'];
+regexParsers.reaction.unitTests = {...
+    'A -> B,1', true;...
+    'huhu,  A -> B   , fdfsfsdf, test ', true};
+regexParsers.reaction.eval = @(string)evalRegexParser(regexParsers.reaction, string);
+end
 %% Parse a line in the CMDL file
 function parseTree = parseLine(line, parseTree)
 % remove comments
@@ -49,24 +189,36 @@ if ~isempty(idx)
 end
 % remove whitespace characters
 line = strtrim(line);
+% ignore empty lines
 if isempty(line)
     return;
 end
+% all other lines must be commands and thus be finished by a ;
 if ~strcmp(line(end), ';')
     error('stochsim:mustEndWithSemicolon', 'Line does not end with a semicolon!');
 end
-% ignore empty commands
+% remove semicolon
 line = strtrim(line(1:end-1));
+% ignore empty commands
 if isempty(line)
     return;
 end
-% check if variable
+% check if assignment
 idx = strfind(line, '=');
 if length(idx) > 1
     error('stochsim:multipleEqualSigns', 'Line does contain more than one equal sign ("=")!');
 elseif length(idx) == 1
     parseTree = parseParameter(line, parseTree);
     return;
+end
+% check if invalid reaction
+idx = strfind(line, '<->');
+if ~isempty(idx)
+    error('stochsim:bidirectionalReaction', 'Bidirectional reactions ("<->") are not allowed. Replace by two unidirectional ones ("->")!');
+end
+idx = strfind(line, '<-');
+if ~isempty(idx)
+    error('stochsim:backwardReaction', 'Backward reactions ("<-") are not allowed. Replace by a forward directional one ("->") by switching the left and right hand side!');
 end
 % check if reaction
 idx = strfind(line, '->');
@@ -95,6 +247,9 @@ end
 % Create reactions
 for i=1:length(parseTree.reactions)
     def = parseTree.reactions{i};
+    if isempty(def.name)
+        def.name = sprintf('reaction_%g', i);
+    end
     % Fuse multiply defined LHS states by simply adding up their
     % stochiometry.
     [reactants,idx_unique,idx] = unique(def.lhs_states);
@@ -266,68 +421,60 @@ end
 
 %% Parse reaction
 function parseTree = parseReaction(reactionStr, parseTree)
+% Everything which does not contain a comma or an arrow.
+reactionPartExpr = [...
+    '(?:([^,\-<\s]|(?<!<)\-(?!>)|<(?!\-))'...
+    '([^,\-<]|(?<!<)\-(?!>)|<(?!\-))*'...
+    '([^,\-<\s]|(?<!<)\-(?!>)|<(?!\-))'...
+    '|[^,\-\s<]?)'];
+% Only the formula, e.g. A -> B
+reactionExpr = [...
+    '\s*(?<reactionName>', reactionPartExpr,')?(?(reactionName)\s*,\s*)',...
+    '(?<LHS>', reactionPartExpr, ')',...
+    '\s*->\s*'...
+    '(?<RHS>', reactionPartExpr, ')',...
+    '\s*,\s*',...
+    '(?<arguments>', reactionPartExpr, '(\s*,\s*)?)+\s*'];
+% Name of a reaction
+reactionNameExpr = ...
+    '\s*(?<reactionName>\<[a-zA-Z_]\w*\>)\s*';
+reactionPropertyExpr = ...
+    '\s*(?<propertyName>\<[a-zA-Z_]\w*\>):(?<propertyValue>.*)\s*';
 
-idx = strfind(reactionStr, '->');
-lhs = strtrim(reactionStr(1:idx-1));
-rhs = strtrim(reactionStr(idx+2:end));
-idx = strfind(rhs, ',');
-if length(idx) > 1
-    error('stochsim:multipleRateConstant', 'Reaction does contain more than one rate constant specification (separated by commas at RHS of "->")!');
-elseif length(idx) < 1
-    error('stochsim:missingRateConstant', 'Reaction does not contain rate specifier (separated by comma at RHS of "->")!');
+% Create structure to hold reaction information
+reaction = struct();
+
+% Split reaction into main components
+[match, reactionComponents] = regexp(reactionStr, reactionExpr, 'match', 'names', 'once');
+if ~strcmp(reactionStr, match)
+    error('stochsim:notCorrectReactantStructure', 'The string %s does not have the right structure of a reaction!', reactionStr);
 end
-rateStr = strtrim(rhs(idx+1:end));
-rhs = strtrim(rhs(1:idx-1));
+
+if isempty(reactionComponents.reactionName)
+    reaction.reactionName = [];
+else
+    [match, reactionName] = regexp(reactionComponents.reactionName, reactionNameExpr, 'match', 'names', 'once');
+    if ~strcmp(reactionComponents.reactionName, match)
+        error('stochsim:invalidReactionName', 'The string %s is not a valid name for a reaction!', reactionComponents.reactionName);
+    end
+    reaction.reactionName = reactionName.reactionName;
+end
+
 
 % Reactants and products
-[lhs_states, lhs_stochiometries, lhs_modifiers] = parseReactants(parseTree,lhs);
-[rhs_states, rhs_stochiometries, rhs_modifiers] = parseReactants(parseTree,rhs);
+reaction.lhsComponents = parseReactants(reactionComponents.LHS);
+reaction.rhsComponents = parseReactants(reactionComponents.RHS);
 
-% get rate constant
-if ~isempty(strfind(rateStr, 'delay:'))
-    %% Create a delay reaction
-    if length(lhs_states) ~= 1
-        error('stochsim:delayReactionRequiresOneReactant', 'A delay reaction must have exactly one reactant (but can have arbitrary many products)!');
+reactionPropertieStrs = strsplit(reactionComponents.arguments, ',');
+for i=1:length(reactionPropertieStrs)
+    [match, reactionProperty] = regexp(reactionPropertieStrs{i}, reactionPropertyExpr, 'match', 'names', 'once');
+    if isempty(reactionProperty)
+        reaction.rate = strtrim(reactionPropertieStrs{i});
+    else
+        reaction.(reactionProperty.propertyName) = reactionProperty.propertyValue;
     end
-    if lhs_stochiometries(1) ~= 1
-        error('stochsim:delayReactionRequiresReactantStochiometryOne', 'The stochiometry of the reactant of a delay reaction must be one!');
-    end
-    if lhs_modifiers(1)
-        error('stochsim:delayReactionRequiresReactantNotModified', 'The reactant of a delay reaction must not be modified ("[]" not allowed)!');
-    end
-    % find out length of delay
-    idx = strfind(rateStr, 'delay:');
-    if idx ~= 1
-        error('stochsim:delayReactionMustOnlyContainDelay', 'After the comma in a delayed reaction and before the "delay:" identifier, nothing else must occur!');
-    end
-    rateStr = strtrim(rateStr(7:end));
-    delay = getValueOfExpression(parseTree, rateStr);
-    % Create states which occur in reaction.
-    parseTree = setState(parseTree, lhs_states{1}, true);
-    for i=1:length(rhs_states)
-        parseTree = setState(parseTree, rhs_states{i}, false);
-    end
-    
-    % Create reaction
-    parseTree = setDelayReaction(parseTree, reactionStr, lhs_states{1}, rhs_states, rhs_stochiometries, rhs_modifiers, delay);
-else
-    %% Create a propensity reaction
-    % read in reaction rate constant
-    rateConstant = getValueOfExpression(parseTree, rateStr);
-    % Create states which occur in reaction.
-    for i=1:length(lhs_states)
-        parseTree = setState(parseTree, lhs_states{i}, false);
-    end
-    for i=1:length(rhs_states)
-        parseTree = setState(parseTree, rhs_states{i}, false);
-    end
-    
-    % Create reaction
-    parseTree = setPropensityReaction(parseTree, reactionStr, ...
-        lhs_states, lhs_stochiometries, lhs_modifiers,...
-        rhs_states, rhs_stochiometries, rhs_modifiers,...
-        rateConstant);
 end
+parseTree.reactions{end+1} = reaction;
 end
 %% evaluate value of an expression
 function value = getValueOfExpression(parseTree, expression) %#ok<INUSL>
@@ -341,7 +488,32 @@ catch e
 end
 end
 %% parseReactants
-function [speciesNames, stochiometries, modifiers] = parseReactants(parseTree, reactantsStr)
+function components = parseReactants(reactionComponentsStr)
+% Name of a state
+varNameExpr = ...
+    '\<[a-zA-Z_]\w*\>';
+reactionComponentExpr = ...
+    ['\s*(?<stochiometry>\<\w+\>)?(?(stochiometry)\s*[\*\s]\s*)(?<state>', varNameExpr, ')(?<modifier>\[\])?\s*'];
+
+reactionComponents = strsplit(reactionComponentsStr, '+');
+components = cell(size(reactionComponents));
+for i=1:length(reactionComponents)
+    [match, reactionComponent] = regexp(reactionComponents{i}, reactionComponentExpr, 'match', 'names', 'once');
+    if ~strcmp(reactionComponents{i}, match)
+        error('stochsim:notCorrectReactionComponent', 'The string %s is not a valid reaction component definition!', reactionComponents{i});
+    end
+    components{i} = struct();
+    if isempty(reactionComponent.stochiometry)
+        components{i}.stochiometry = '1';
+    else
+        components{i}.stochiometry = reactionComponent.stochiometry;
+    end
+    components{i}.state = reactionComponent.state;
+    components{i}.modifier = ~isempty(reactionComponent.modifier);
+end
+end
+
+function [speciesNames, stochiometries, modifiers] = parseReactantsOld(parseTree, reactantsStr)
 
 if isempty(reactantsStr)
     speciesNames = cell(1, 0);

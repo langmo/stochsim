@@ -134,17 +134,17 @@ public:
 			return;
 		plhs_[index] = ::mxCreateDoubleScalar(static_cast<double>(value));
 	}
-	template<> void Set<MatlabVariable>(int index, MatlabVariable&& value)
+	template<> void Set<mxArray*>(int index, mxArray*&& value)
 	{
 		if (index >= nlhs_)
 			return;
-		plhs_[index] = value.release();
+		plhs_[index] = value;
 	}
-	template<> void Set<MatlabVariable&>(int index, MatlabVariable& value)
+	template<> void Set<mxArray*&>(int index, mxArray*& value)
 	{
 		if (index >= nlhs_)
 			return;
-		plhs_[index] = value.release();
+		plhs_[index] = value;
 	}
 	template<> void Set<std::string>(int index, std::string&& value)
 	{

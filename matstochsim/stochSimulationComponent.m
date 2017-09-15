@@ -2,7 +2,7 @@ classdef (Abstract) stochSimulationComponent < handle
 % Base class of all elements of a stochsim simulation. Typically represents
 % a state or a reaction.
     
-    properties (Access = private, Hidden = true)
+    properties (SetAccess = private, GetAccess = public, Hidden = true)
         simulationHandle; % Handle to simulation object to which this component belongs.
         componentHandle;  % Handle to the component this object represents.
     end
@@ -12,20 +12,10 @@ classdef (Abstract) stochSimulationComponent < handle
         % identify the class of the component to which componentHandle is a handle.
         className = getClassName();
     end
-    methods(Static, Hidden=true, Access=private)
-        function separator = getSeparator()
-            separator = '::';
-        end
-    end
     methods (Access = protected, Hidden = true)
         function varargout = call(this, functionName, varargin)
             assert(this.check(), 'Invalid object.');
-            [varargout{1:nargout}] = matstochsim([this.getClassName(), stochSimulationComponent.getSeparator(), functionName], this.simulationHandle.objectHandle, this.componentHandle, varargin{:});
-        end
-    end
-    methods (Access = public, Hidden = true)
-        function componentHandle = getComponentHandle(this)
-            componentHandle = this.componentHandle;
+            [varargout{1:nargout}] = matstochsim([this.getClassName(), stochSimulation.getSeparator(), functionName], this.simulationHandle.objectHandle, this.componentHandle, varargin{:});
         end
     end
     properties(SetAccess = private, GetAccess=public,Abstract)

@@ -12,8 +12,6 @@ namespace stochsim
 	class Simulation
 	{
 	public:
-		template <class T> using Collection = std::vector<T>;
-
 		explicit Simulation();
 		~Simulation();
 		/// <summary>
@@ -70,7 +68,7 @@ namespace stochsim
 		/// Only reactions managed by the simulation will fire when the simulation runs. Also, all states belonging to the reaction must also be managed by the simulation.
 		/// </summary>
 		/// <param name="reaction">Reaction to add.</param>
-		void AddReaction(std::shared_ptr<IDelayedReaction> reaction);
+		void AddReaction(std::shared_ptr<IEventReaction> reaction);
 		/// <summary>
 		/// Adds a state externally created (i.e. not with Simulation::CreateState) to be managed by the simulation. Every state modified by any reaction in the simulation must also be managed by the simulation.
 		/// </summary>
@@ -81,23 +79,40 @@ namespace stochsim
 		/// </summary>
 		/// <param name="name">name of state</param>
 		/// <returns></returns>
-		std::shared_ptr<IState> GetState(const std::string& name);
+		const std::shared_ptr<IState> GetState(const std::string& name) const;
 
-		const Collection<std::shared_ptr<IState>>& GetStates();
+		/// <summary>
+		/// Returns all states defined in this simulation.
+		/// </summary>
+		/// <returns>Collection of all states.</returns>
+		const Collection<std::shared_ptr<IState>> GetStates() const;
 
 		/// <summary>
 		/// Returns the propensity reaction with the given name, or nullptr if a propensity reaction with the name is not yet defined in the simulation.
 		/// </summary>
 		/// <param name="name">name of reaction</param>
 		/// <returns></returns>
-		std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string& name);
+		const std::shared_ptr<IPropensityReaction> GetPropensityReaction(const std::string& name) const;
 
 		/// <summary>
-		/// Returns the delayed reaction with the given name, or nullptr if a delayed reaction with the name is not yet defined in the simulation.
+		/// Returns all propensity reactions defined in this simulation.
+		/// </summary>
+		/// <returns>Collection of all propensity reactions.</returns>
+		const Collection<std::shared_ptr<IPropensityReaction>>  GetPropensityReactions() const;
+
+		/// <summary>
+		/// Returns the event reaction with the given name, or nullptr if an event reaction with the name is not yet defined in the simulation.
 		/// </summary>
 		/// <param name="name">name of reaction</param>
 		/// <returns></returns>
-		std::shared_ptr<IDelayedReaction> GetDelayedReaction(const std::string& name);
+		const std::shared_ptr<IEventReaction> GetEventReaction(const std::string& name) const;
+
+		/// <summary>
+		/// Returns all event reactions defined in this simulation.
+		/// </summary>
+		/// <returns>Collection of all event reactions.</returns>
+		const Collection<std::shared_ptr<IEventReaction>>  GetEventReactions() const;
+
 
 		/// <summary>
 		/// Adds a logger to the simulation monitoring the progress of a simulation and e.g. writing it to a file. This logger is called every time the simulation time exceeds the log period.
@@ -160,6 +175,6 @@ namespace stochsim
 		Simulation& operator=(const Simulation&) = delete;
 
 		class Impl;
-		Impl *impl_;
+		Impl* const impl_;
 	};
 }

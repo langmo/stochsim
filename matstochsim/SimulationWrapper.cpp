@@ -2,8 +2,82 @@
 #include <sstream> 
 #include <iomanip>
 #include <functional>
+#include <utility>
 
 #include "ComposedStateLogger.h"
+
+std::string GetStateReference(const std::shared_ptr<stochsim::IState>& state)
+{
+	std::string stateRef;
+	if (dynamic_cast<stochsim::ComposedState*>(state.get()))
+	{
+		stateRef = SimulationWrapper::composedStatePrefix_;
+	}
+	else if (dynamic_cast<stochsim::State*>(state.get()))
+	{
+		stateRef = SimulationWrapper::statePrefix_;
+	}
+	else
+	{
+		stateRef = SimulationWrapper::unknownPrefix_;
+	}
+	stateRef += SimulationWrapper::prefixSeparator_;
+	stateRef += state->GetName();
+	return stateRef;
+}
+std::string GetReactionReference(const std::shared_ptr<stochsim::IPropensityReaction>& reaction)
+{
+	std::string reactionRef;
+	if (dynamic_cast<stochsim::PropensityReaction*>(reaction.get()))
+	{
+		reactionRef = SimulationWrapper::propensityReactionPrefix_;
+	}
+	else
+	{
+		reactionRef = SimulationWrapper::unknownPrefix_;
+	}
+	reactionRef += SimulationWrapper::prefixSeparator_;
+	reactionRef += reaction->GetName();
+	return reactionRef;
+}
+std::string GetReactionReference(const std::shared_ptr<stochsim::IEventReaction>& reaction)
+{
+	std::string reactionRef;
+	if (dynamic_cast<stochsim::DelayReaction*>(reaction.get()))
+	{
+		reactionRef = SimulationWrapper::delayReactionPrefix_;
+	}
+	else if (dynamic_cast<stochsim::TimerReaction*>(reaction.get()))
+	{
+		reactionRef = SimulationWrapper::timerReactionPrefix_;
+	}
+	else
+	{
+		reactionRef = SimulationWrapper::unknownPrefix_;
+	}
+	reactionRef += SimulationWrapper::prefixSeparator_;
+	reactionRef += reaction->GetName();
+	return reactionRef;
+}
+
+std::pair<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable> toMatlab(const stochsim::Collection<stochsim::ReactionElement>& reactionElements)
+{
+	size_t numElements = reactionElements.size();
+	auto stateRefs = MatlabParams::CreateCell(1, numElements);
+	auto stochs = MatlabParams::CreateDoubleMatrix(1, numElements);
+	size_t i = 0;
+	for (auto element : reactionElements)
+	{
+		if (i >= numElements)
+			break;
+		MatlabParams::AssignCellElement(*stateRefs, 0, i, GetStateReference(element.state_));
+		MatlabParams::AssignArrayElement(*stochs, 0, i, element.stochiometry_);
+		i++;
+	}
+	return std::pair<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable>(std::move(stateRefs), std::move(stochs));
+}
+
+
 
 void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, MatlabParams& params)
 {
@@ -35,17 +109,18 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 	else if (methodName == "CreatePropensityReaction")
 	{
 		std::string name = params.Get<std::string>(0);
+		std::shared_ptr<stochsim::PropensityReaction> reaction;
 		if (params.IsString(1))
 		{
 			std::string rateEquation = params.Get<std::string>(1);
-			auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateEquation);
+			reaction = CreateReaction<stochsim::PropensityReaction>(name, rateEquation);
 		}
 		else
 		{
 			double rateConstant = params.Get<double>(1);
-			auto reaction = CreateReaction<stochsim::PropensityReaction>(name, rateConstant);
+			reaction = CreateReaction<stochsim::PropensityReaction>(name, rateConstant);
 		}
-		params.Set(0, name);
+		params.Set(0, GetReactionReference(reaction));
 	}
 	else if (methodName == "CreateDelayReaction")
 	{
@@ -69,14 +144,14 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 
 		double delay = params.Get<double>(2);
 		auto reaction = CreateReaction<stochsim::DelayReaction>(name, composedState, delay);
-		params.Set(0, name);
+		params.Set(0, GetReactionReference(reaction));
 	}
 	else if (methodName == "CreateTimerReaction")
 	{
 		std::string name = params.Get<std::string>(0);
 		double fireTime = params.Get<double>(1);
 		auto reaction = CreateReaction<stochsim::TimerReaction>(name, fireTime);
-		params.Set(0, name);
+		params.Set(0, GetReactionReference(reaction));
 	}
 	else if (methodName == "GetStates")
 	{
@@ -91,7 +166,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 			MatlabParams::AssignCellElement(*stateRefs, 0, i, GetStateReference(state));
 			i++;
 		}
-		params.Set(0, stateRefs);
+		params.Set(0, stateRefs.release());
 	}
 	else if (methodName == "GetState")
 	{
@@ -105,6 +180,48 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		}
 		params.Set(0, GetStateReference(state));
 	}
+	else if (methodName == "GetReactions")
+	{
+		auto propensityReactions = GetPropensityReactions();
+		auto eventReactions = GetEventReactions();
+		size_t numReactions = propensityReactions.size() + eventReactions.size();
+		auto reactionRefs = params.CreateCell(1, numReactions);
+		size_t i = 0;
+		for (auto reaction : propensityReactions)
+		{
+			if (i >= numReactions)
+				break;
+			MatlabParams::AssignCellElement(*reactionRefs, 0, i, GetReactionReference(reaction));
+			i++;
+		}
+		for (auto reaction : eventReactions)
+		{
+			if (i >= numReactions)
+				break;
+			MatlabParams::AssignCellElement(*reactionRefs, 0, i, GetReactionReference(reaction));
+			i++;
+		}
+		params.Set(0, reactionRefs.release());
+	}
+	else if (methodName == "GetReaction")
+	{
+		std::string reactionName = params.Get<std::string>(0);
+		auto propensityReaction = GetPropensityReaction(reactionName);
+		if (propensityReaction)
+		{
+			params.Set(0, GetReactionReference(propensityReaction));
+			return;
+		}
+		auto eventReaction = GetEventReaction(reactionName);
+		if (eventReaction)
+		{
+			params.Set(0, GetReactionReference(eventReaction));
+			return;
+		}
+		std::stringstream errorMessage;
+		errorMessage << "Reaction with name " << reactionName << " not defined in simulation.";
+		throw std::exception(errorMessage.str().c_str());		
+	}
 	else if (methodName == "Run")
 	{
 		resultLogger_->SetShouldLog(params.NumReturns() > 0);
@@ -112,12 +229,12 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		Run(runtime);
 		if (params.NumReturns() >= 2)
 		{
-			params.Set(0, resultLogger_->GetHeaders());
-			params.Set(1, resultLogger_->GetResults());
+			params.Set(0, resultLogger_->GetHeaders().release());
+			params.Set(1, resultLogger_->GetResults().release());
 		}
 		else if (params.NumReturns() == 1)
 		{
-			params.Set(0, resultLogger_->GetResults());
+			params.Set(0, resultLogger_->GetResults().release());
 		}
 	}
 	else if (methodName == "SetLogPeriod")
@@ -303,6 +420,13 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			stochiometry = 1;
 		reaction->AddReactant(state, stochiometry);
 	}
+	else if (methodName == "GetReactants")
+	{
+		auto elements = reaction->GetReactants();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
+	}
 	else if (methodName == "AddModifier")
 	{
 		std::string stateName = params.Get<std::string>(0);
@@ -319,6 +443,13 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		else
 			stochiometry = 1;
 		reaction->AddModifier(state, stochiometry);
+	}
+	else if (methodName == "GetModifiers")
+	{
+		auto elements = reaction->GetModifiers();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
 	}
 	else if (methodName == "AddTransformee")
 	{
@@ -337,6 +468,13 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			stochiometry = 1;
 		reaction->AddTransformee(state, stochiometry);
 	}
+	else if (methodName == "GetTransformees")
+	{
+		auto elements = reaction->GetTransformees();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
+	}
 	else if (methodName == "AddProduct")
 	{
 		std::string stateName = params.Get<std::string>(0);
@@ -354,6 +492,13 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 			stochiometry = 1;
 		reaction->AddProduct(state, stochiometry);
 	}
+	else if (methodName == "GetProducts")
+	{
+		auto elements = reaction->GetProducts();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
+	}
 	else if (methodName == "SetRateConstant")
 	{
 		double rateConstant = params.Get<double>(0);
@@ -364,10 +509,20 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		double rateConstant = reaction->GetRateConstant();
 		params.Set(0, rateConstant);
 	}
+	else if (methodName == "SetRateEquation")
+	{
+		auto rateEquation = params.Get<std::string>(0);
+		reaction->SetRateEquation(rateEquation);
+	}
+	else if (methodName == "GetRateEquation")
+	{
+		auto rateEquation = reaction->GetRateEquation();
+		params.Set(0, rateEquation);
+	}
 	else
 	{
 		std::stringstream errorMessage;
-		errorMessage << "Method " << methodName << " not known for class " << simpleReactionPrefix_ << ".";
+		errorMessage << "Method " << methodName << " not known for class " << propensityReactionPrefix_ << ".";
 		throw std::exception(errorMessage.str().c_str());
 	}
 }
@@ -394,6 +549,22 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 		else
 			stochiometry = 1;
 		reaction->AddProduct(state, stochiometry);
+	}
+	else if (methodName == "GetProducts")
+	{
+		auto elements = reaction->GetProducts();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
+	}
+	else if (methodName == "GetReactants")
+	{
+		auto reactant = reaction->GetReactant();
+		// create collection to offer a common interface to Matlab.
+		stochsim::Collection<stochsim::ReactionElement> elements = { stochsim::ReactionElement (reactant, 1)};
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
 	}
 	else if (methodName == "SetDelay")
 	{
@@ -437,6 +608,13 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 
 		reaction->AddProduct(state, stochiometry);
 	}
+	else if (methodName == "GetProducts")
+	{
+		auto elements = reaction->GetProducts();
+		auto pair = toMatlab(elements);
+		params.Set(0, pair.first.release());
+		params.Set(1, pair.second.release());
+	}
 	else if (methodName == "SetFireTime")
 	{
 		double fireTime = params.Get<double>(0);
@@ -453,26 +631,6 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 		errorMessage << "Method " << methodName << " not known for class " << delayReactionPrefix_ << ".";
 		throw std::exception(errorMessage.str().c_str());
 	}
-}
-
-std::string SimulationWrapper::GetStateReference(const std::shared_ptr<stochsim::IState>& state)
-{
-	std::string stateRef;
-	if (dynamic_cast<stochsim::ComposedState*>(state.get()))
-	{
-		stateRef = composedStatePrefix_;
-	}
-	else if (dynamic_cast<stochsim::State*>(state.get()))
-	{
-		stateRef = statePrefix_;
-	}
-	else
-	{
-		stateRef = unknownPrefix_;
-	}
-	stateRef += prefixSeparator_;
-	stateRef += state->GetName();
-	return stateRef;
 }
 
 SimulationWrapper::SimulationWrapper()
@@ -551,7 +709,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		}
 		ParseComposedStateCommand(stateObj, methodName, params.ShiftInputs(1));
 	}
-	else if (className == simpleReactionPrefix_)
+	else if (className == propensityReactionPrefix_)
 	{
 		std::string reactionName = params.Get<std::string>(0);
 		std::shared_ptr<stochsim::IPropensityReaction> reaction = GetPropensityReaction(reactionName);
@@ -573,7 +731,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 	else if (className == delayReactionPrefix_)
 	{
 		std::string reactionName = params.Get<std::string>(0);
-		std::shared_ptr<stochsim::IDelayedReaction> reaction = GetDelayedReaction(reactionName);
+		std::shared_ptr<stochsim::IEventReaction> reaction = GetEventReaction(reactionName);
 		if (!reaction)
 		{
 			std::stringstream errorMessage;
@@ -592,7 +750,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 	else if (className == timerReactionPrefix_)
 	{
 		std::string reactionName = params.Get<std::string>(0);
-		std::shared_ptr<stochsim::IDelayedReaction> reaction = GetDelayedReaction(reactionName);
+		std::shared_ptr<stochsim::IEventReaction> reaction = GetEventReaction(reactionName);
 		if (!reaction)
 		{
 			std::stringstream errorMessage;
