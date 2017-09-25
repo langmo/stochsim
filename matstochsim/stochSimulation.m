@@ -100,49 +100,32 @@ classdef stochSimulation < handle
     end
     methods
         %% Constructor
-        function this = stochSimulation(varargin)
+        function this = stochSimulation(fileName, externalParameters)
             % Creates a new stochsim Simulation.
             % Usage:
             %   stochSimulation()
-            %   stochSimulation(baseFolder)
-            %   stochSimulation(baseFolder, logPeriod)
-            %   stochSimulation(baseFolder, logPeriod, uniqueSubfolder)
+            %   stochSimulation(fileName)
+            %   stochSimulation(fileName, externalParameters)
             % Parameters:
-            %   baseFolder     - Name of the file where the state
-            %                    trajectories are saved to the hard drive.
-            %                    If set to an empty string, the state
-            %                    trajectories are not saved to disk.
-            %                    Typically has the file ending CSV. 
-            %   logPeriod      - Simulation time period defining in which
-            %                    intervals the current molecular numbers of
-            %                    the states of this simulation get logged,
-            %                    e.g. to the disk, or returned when calling
-            %                    run(...).
-            %  uniqueSubfolder - If true, a unique sub-folder is created
-            %                    under the base folder for every run of the
-            %                    simulation. This, thus, allows to run the
-            %                    simulation several times without
-            %                    accidentially overwriting old simulation
-            %                    results. If false, no such sub-folder is
-            %                    created. If created, the name of the
-            %                    sub-folder encodes the date and time when
-            %                    the simulation was started. 
+            %   fileName            Name of the file containing the model, e.g.
+            %                       'model.cmdl'.
+            %   externalParameters  Structure of additional parameters for the model.
+            %                       If a parameter is defined both in the model and in
+            %                       this structure, the definition in this structure
+            %                       has precedence, allowing e.g. to easily scan
+            %                       parameter regions. Parameters are defined as
+            %                       externalParameters.myParameter = myValue; Can be
+            %                       empty ("[]") to not predefine any parameters.
+            %
+            % If no file name for the model is provided, an empty model is
+            % constructed.
             
             this.objectHandle = matstochsim('new');
-            if nargin >= 1
-                this.baseFolder = varargin{1};
-            else
-                this.baseFolder = 'simulations';
-            end
-            if nargin >= 2
-                this.logPeriod = varargin{2};
-            else
-                this.logPeriod = 1;
-            end
-            if nargin >= 3
-                this.uniqueSubfolder = varargin{3};
-            else
-                this.uniqueSubfolder = false;
+            if nargin >= 1 && ~isempty(fileName)
+                if nargin < 2
+                    externalParameters = [];
+                end
+                this = stochParseModel(fileName, externalParameters, this);
             end
         end
         
