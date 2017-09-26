@@ -1,4 +1,4 @@
-classdef stochState < stochSimulationComponent
+classdef stochState < stochSimulationComponent & matlab.mixin.CustomDisplay
 % A state of a stochsim, typically representing the molecular count of some
 % species like proteins, mRNA, genes, inducers or similar.
 % Can only be constructed via a stochSimulation object.
@@ -26,6 +26,29 @@ classdef stochState < stochSimulationComponent
             this = this@stochSimulationComponent(simulationHandle, stateHandle);
         end
     end
+    methods(Access = protected)
+        %% Display methods
+        function header = getHeader(this)
+            if ~isscalar(this)
+                header = getHeader@matlab.mixin.CustomDisplay(this);
+            else
+                className = matlab.mixin.CustomDisplay.getClassNameForHeader(this);
+                nameLength = 15;
+                header = sprintf([...
+                    'StochSim state (%s):\n',...
+                    '\t%-', int2str(nameLength), 's %s\n'...
+                    '\t%-', int2str(nameLength), 's %g\n'...
+                    '\nProperties:'...
+                    ], className, ...
+                    'Name:', this.name, ...
+                    'Initial Condition:', this.initialCondition);
+            end
+        end
+        
+        function s = getFooter(this)
+            s = matlab.mixin.CustomDisplay.getDetailedFooter(this);
+        end
+    end
     methods  
         %% Getters and setters for properties
         function ic = get.initialCondition(this)
@@ -41,6 +64,12 @@ classdef stochState < stochSimulationComponent
         function name = get.name(this)
             % Returns the unique name of this state.
             name = this.call('GetName');
+        end
+        
+        function cmdl = getCmdl(this)
+            % Returns a string representing the cmdl command to
+            % instantiate this state, e.g. 'A = 10;'. 
+            cmdl = sprintf('%s = %g;', this.name, this.initialCondition);
         end
     end
 end

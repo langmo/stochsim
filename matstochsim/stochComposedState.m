@@ -1,4 +1,4 @@
-classdef stochComposedState < stochSimulationComponent
+classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisplay
 % A composed state is a state where each molecule represented by the
 % composed state has an own identity. Specifically, for each molecule it is
 % defined separately when it was created, and how often it was transformed.
@@ -27,6 +27,29 @@ classdef stochComposedState < stochSimulationComponent
             % Create a new stochsim composed state.
             % Should only be called from stochSimulation class.
             this = this@stochSimulationComponent(simulationHandle, stateHandle);
+        end
+    end
+    methods(Access = protected)
+        %% Display methods
+        function header = getHeader(this)
+            if ~isscalar(this)
+                header = getHeader@matlab.mixin.CustomDisplay(this);
+            else
+                className = matlab.mixin.CustomDisplay.getClassNameForHeader(this);
+                nameLength = 18;
+                header = sprintf([...
+                    'StochSim composed state (%s):\n',...
+                    '\t%-', int2str(nameLength), 's %s\n'...
+                    '\t%-', int2str(nameLength), 's %g\n'...
+                    '\nProperties:'...
+                    ], className, ...
+                    'Name:', this.name, ...
+                    'Initial Condition:', this.initialCondition);
+            end
+        end
+        
+        function s = getFooter(this)
+            s = matlab.mixin.CustomDisplay.getDetailedFooter(this);
         end
     end
     methods        
@@ -74,6 +97,12 @@ classdef stochComposedState < stochSimulationComponent
                 maxTransformed = 20;
             end
             this.call('SaveFinalNumModificationsToFile', fileName, maxTransformed);
+        end
+        
+        function cmdl = getCmdl(this)
+            % Returns a string representing the cmdl command to
+            % instantiate this state, e.g. 'A = 10;'. 
+            cmdl = sprintf('%s = %g;', this.name, this.initialCondition);
         end
     end
 end

@@ -1,4 +1,4 @@
-classdef stochPropensityReaction < stochSimulationComponent
+classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.CustomDisplay
 % A propensity based ("normal") reaction. The
 % propensity ("rate") of the reaction is calculated using mass
 % action kinetics and can be considered to represent the
@@ -50,8 +50,6 @@ classdef stochPropensityReaction < stochSimulationComponent
         transformees;
         % Stochiometries of transformees.
         transformeeStochiometries;
-        % String representation of the reaction, e.g. A -> 2 B.
-        formula;
     end
     properties(Dependent)
         % The rate constant of the reaction used to calculate the
@@ -63,6 +61,38 @@ classdef stochPropensityReaction < stochSimulationComponent
         % equation is used to determine the reaction rate dynamically
         % instead of calculating the rate using mass action kinetics.
         rateEquation;
+    end
+    methods(Access = protected)
+        %% Display methods
+        function header = getHeader(this)
+            if ~isscalar(this)
+                header = getHeader@matlab.mixin.CustomDisplay(this);
+            else
+                className = matlab.mixin.CustomDisplay.getClassNameForHeader(this);
+                nameLength = 15;
+                formula = this.getFormula();
+                rateConstant = this.rateConstant;
+                if rateConstant ~= -1
+                    rateStr = mat2str(rateConstant);
+                    rateName = 'Rate Constant:';
+                else
+                    rateStr = this.rateEquation;
+                    rateName = 'Rate Equation:';
+                end
+                header = sprintf([...
+                    'StochSim propensity reaction (%s):\n',...
+                    '\t%-', int2str(nameLength), 's %s\n'...
+                    '\t%-', int2str(nameLength), 's %s\n'...
+                    '\nProperties:'...
+                    ], className, ...
+                    'Formula:', formula, ...
+                    rateName, rateStr);
+            end
+        end
+        
+        function s = getFooter(this)
+            s = matlab.mixin.CustomDisplay.getDetailedFooter(this);
+        end
     end
     methods       
         %% Getters and setters for properties
@@ -130,8 +160,39 @@ classdef stochPropensityReaction < stochSimulationComponent
         function transformeeStochiometries = get.transformeeStochiometries(this)
             [~, transformeeStochiometries] = this.call('GetTransformees');
         end
-        
-        function formula = get.formula(this)
+        function formula = formatFormula(this, format, numberFormat)
+            % Displays the chemical formula of this reaction according to
+            % the provided format string. In this format string, '%1$s'
+            % corresponds to the reaction name, '%2$s' to the reactants,
+            % '%3$s' to the products and '%4$s' to the rate constant or to
+            % the rate equation. 
+            % Usage: 
+            %   formatFormula(this)
+            %   formatFormula(this, format)
+            %   formatFormula(this, format, numberFormat)
+            % Parameters:
+            %   format          The format string. See e.g. sprintf.
+            %                   Default = '%2$s -> %3$s'.
+            %   numberFormat    The format to convert numbers like the
+            %                   reaction rate constant to strings.
+            %                   Default = '%g';
+            % Returns:
+            %   A string describing the reaction formatted according to the
+            %   prodided string.
+            % Examples:
+            %   this.formatFormula('%2$s -> %3$s')
+            %       returns 'A + B -> C'
+            %   this.formatFormula('%1$s, %2$s -> %3$s, %4$s')
+            %       returns 'reaction1, A + B -> C, 3.141'  
+            %   this.formatFormula('%2$s becomes %3$s in %1$s with rate %4$s')
+            %       returns 'A + B becomes C in reaction1 with rate 3.141'  
+            
+            if nargin < 2
+                format = '%2$s -> %3$s';
+            end
+            if nargin < 3
+                numberFormat = '%g';
+            end
             iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
             toString = @(state, stoch) ...
                 iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
@@ -151,7 +212,28 @@ classdef stochPropensityReaction < stochSimulationComponent
             transformees = arrayfun(toString, transformeeRefs, transformeeStochiometries, 'UniformOutput', false);
             transformees = cellfun(@(string)[string,'[]'], transformees, 'UniformOutput', false);
             
-            formula = [strjoin([reactants, modifiers, transformees], ' + '), ' -> ', strjoin([products, transformees], ' + ')];
+            rateConstant = this.rateConstant;
+            if rateConstant ~=-1
+                rateStr = sprintf(numberFormat, this.rateConstant);
+            else
+                rateStr = ['[', this.rateEquation, ']'];
+            end
+            
+            formula = sprintf(format, ...
+                this.name, ...
+                strjoin([reactants, modifiers, transformees], ' + '), ...
+                strjoin([products, transformees], ' + '), ...
+                rateStr);
+        end
+        function formula = getFormula(this)
+            % Returns a string representation of the reaction, e.g. A -> 2 B.
+            formula = this.formatFormula();
+        end
+        function cmdl = getCmdl(this)
+            % Returns a string representing the cmdl command to
+            % instantiate this reaction, e.g. 'reaction5, A -> 2 B, 7.1;'. 
+            format = '%1$s, %2$s -> %3$s, %4$s;';
+            cmdl = this.formatFormula(format);
         end
         %% Products, reactants and similar.
         function addProduct(this, state, stochiometry)
@@ -168,7 +250,7 @@ classdef stochPropensityReaction < stochSimulationComponent
             %   stochiometry    ...number of molecules assumed to be
             %                      consumed by the reaction. Default = 1.
             if ~ischar(state)
-                state = state.getStateHandle();
+                state = state.componentHandle;
             end
             if ~exist('stochiometry', 'var') || isempty(stochiometry)
                 stochiometry = 1;
@@ -188,7 +270,7 @@ classdef stochPropensityReaction < stochSimulationComponent
             %   stochiometry    ...number of molecules assumed to be
             %                      produced by the reaction. Default = 1.
             if ~ischar(state)
-                state = state.getStateHandle();
+                state = state.componentHandle;
             end
             if ~exist('stochiometry', 'var') || isempty(stochiometry)
                 stochiometry = 1;
@@ -213,7 +295,7 @@ classdef stochPropensityReaction < stochSimulationComponent
             %   stochiometry    ...number of molecules taking part in the
             %                      reaction. Default = 1. 
             if ~ischar(state)
-                state = state.getStateHandle();
+                state = state.componentHandle;
             end
             if ~exist('stochiometry', 'var') || isempty(stochiometry)
                 stochiometry = 1;
@@ -242,7 +324,7 @@ classdef stochPropensityReaction < stochSimulationComponent
             %                      being transformed by the reaction.
             %                      Default = 1.  
             if ~ischar(state)
-                state = state.getStateHandle();
+                state = state.componentHandle;
             end
             if ~exist('stochiometry', 'var') || isempty(stochiometry)
                 stochiometry = 1;

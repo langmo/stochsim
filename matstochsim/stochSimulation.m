@@ -1,4 +1,4 @@
-classdef stochSimulation < handle
+classdef stochSimulation < handle & matlab.mixin.CustomDisplay
     % Main object representing a simulation in stochsim. Every simulation
     % in stochsim is created by first creating a stochSimulation class, and
     % then configuring this class by adding states and reactions to the
@@ -98,6 +98,60 @@ classdef stochSimulation < handle
         % simulation.
         reactions;
     end
+    
+    methods(Access = protected)
+        %% Display methods
+        function header = getHeader(this)
+            if ~isscalar(this)
+                header = getHeader@matlab.mixin.CustomDisplay(this);
+            else
+                className = matlab.mixin.CustomDisplay.getClassNameForHeader(this);
+                nameLength = 15;
+                
+                formatState = ['\t%-', int2str(nameLength), 's %d\n'];
+                states = this.states;
+                stateStrings = cell(size(states));
+                for i=1:numel(states)
+                    stateStrings{i} = sprintf(formatState, states{i}.name, states{i}.initialCondition);
+                end
+                
+                reactions = this.reactions;
+                formatPropensity = ['\t%1$-', int2str(nameLength), 's %2$-10s -> %3$-10s %4$s\n'];
+                formatDelay = ['\t%1$-', int2str(nameLength), 's %2$-10s -> %3$-10s delay: %4$s\n'];
+                formatTimer = ['\t%1$-', int2str(nameLength), 's %2$-10s -> %3$-10s time: %4$s\n'];
+                formatElse = ['\t%1$-', int2str(nameLength), 's %2$-10s -> %3$-10s unknown: %4$s\n'];
+                reactionStrings = cell(size(reactions));
+                for i=1:numel(reactions)
+                    if isa(reactions{i}, 'stochPropensityReaction')
+                        reactionStrings{i} = reactions{i}.formatFormula(formatPropensity);
+                    elseif isa(reactions{i}, 'stochDelayReaction')
+                        reactionStrings{i} = reactions{i}.formatFormula(formatDelay);
+                    elseif isa(reactions{i}, 'stochTimerReaction')
+                        reactionStrings{i} = reactions{i}.formatFormula(formatTimer);
+                    else
+                        reactionStrings{i} = reactions{i}.formatFormula(formatElse);
+                    end
+                end
+                header = sprintf([...
+                    'StochSim simulation (%s):\n',...
+                    '\t%-', int2str(nameLength), 's %s\n'...
+                    '\t',repmat('=', 1, nameLength+1+length('Initial Condition')),'\n',...
+                    '%s\n',...
+                    '\t%-', int2str(nameLength), 's %-24s %s\n'...
+                    '\t',repmat('=', 1, nameLength+1+24+1+length('Rate Eq./Const., Time or Delay')),'\n',...
+                    '%s\n',...
+                    'Properties:'...
+                    ], className, ...
+                    'State', 'Initial Condition', [stateStrings{:}], ...
+                    'Reaction', 'Formula', 'Rate Eq./Const., Time or Delay', [reactionStrings{:}]);
+            end
+        end
+        
+        function s = getFooter(this)
+            s = matlab.mixin.CustomDisplay.getDetailedFooter(this);
+        end
+   end
+    
     methods
         %% Constructor
         function this = stochSimulation(fileName, externalParameters)
@@ -263,7 +317,7 @@ classdef stochSimulation < handle
             %                  of the composed state when this reaction
             %                  fires.
             if ~ischar(composedState)
-                composedState = composedState.getStateHandle();
+                composedState = composedState.componentHandle;
             end
 			reaction = this.toReaction(this.call('CreateDelayReaction', name, composedState, delay));
         end
@@ -273,7 +327,7 @@ classdef stochSimulation < handle
             % products but no reactans. Useful to e.g. simulate the
             % addition of some ligands at a specific time.
             % Usage:
-            %   reaction = stochTimerReaction(this, this.call('CreateTimerReaction', name, fireTime));
+            %   reaction = createTimerReaction(this, name, fireTime)
             % Parameters:
             %   name         - Name of the reaction, e.g. 'A->B' used to
             %                  uniquely identify the reaction.
