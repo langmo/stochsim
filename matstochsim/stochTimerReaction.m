@@ -61,7 +61,7 @@ classdef stochTimerReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         %% Getters and setters for properties
         function name = get.name(this)
             % Returns the unique name of this reaction.
-            name = this.call('Name');
+            name = this.call('GetName');
         end
         function fireTime = get.fireTime(this)
             % Returns the time, in simulation time units, when the reaction

@@ -17,15 +17,15 @@ namespace stochsim
 		{
 			return num_;
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1) override
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			num_ += num;
 		}
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1) override
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			num_ -= num;
 		}
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1) override
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			// do nothing, simple states are not counting...
 		}

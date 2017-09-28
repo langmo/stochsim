@@ -98,7 +98,7 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         %% Getters and setters for properties
         function name = get.name(this)
             % Returns the unique name of this reaction.
-            name = this.call('Name');
+            name = this.call('GetName');
         end
         function rateConstant = get.rateConstant(this)
             rateConstant = this.call('GetRateConstant');

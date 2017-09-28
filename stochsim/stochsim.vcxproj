@@ -149,6 +149,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Choice.h" />
     <ClInclude Include="CircularBuffer.h" />
     <ClInclude Include="DelayReaction.h" />
     <ClInclude Include="ComposedState.h" />

@@ -72,8 +72,10 @@ catch e
 end
 end
 
-%% Parse a line in the CMDL file
 function parseTree = parseLine(line, parseTree)
+% Parse a line in the CMDL file
+
+%% Preliminary line processing.
 % remove comments
 idx = strfind(line, '//');
 if ~isempty(idx)
@@ -85,6 +87,7 @@ line = strtrim(line);
 if isempty(line)
     return;
 end
+% Check if all non-empty lines end with a semicolon.
 % all other lines must be commands and thus be finished by a ;
 if ~strcmp(line(end), ';')
     error('stochsim:mustEndWithSemicolon', 'Line does not end with a semicolon!');
@@ -95,14 +98,9 @@ line = strtrim(line(1:end-1));
 if isempty(line)
     return;
 end
-% check if assignment
-idx = strfind(line, '=');
-if length(idx) > 1
-    error('stochsim:multipleEqualSigns', 'Line does contain more than one equal sign ("=")!');
-elseif length(idx) == 1
-    parseTree = parseAssignment(line, parseTree);
-    return;
-end
+
+%% Separate processing for assignments and reactions
+
 % check if invalid reaction
 idx = strfind(line, '<->');
 if ~isempty(idx)
@@ -120,16 +118,24 @@ elseif length(idx) == 1
     parseTree = parseReaction(line, parseTree);
     return;
 end
+% check if assignment
+idx = strfind(line, '=');
+if length(idx) >= 1
+    parseTree = parseAssignment(line, parseTree);
+    return;
+end
 error('stochsim:notAssignmentNotReaction', 'Line is neither an assignment, nor a reaction!');
 end
 
-%% Create the simulation from the parse tree
 function sim = createSimulation(sim, parseTree)
+% Create the simulation from the parse tree
+
 % Create simulation object
 if isempty(sim)
     sim = stochSimulation();
 end
 
+%% Process parameters
 % Get all parameters. Parameters which are provided by the user have
 % precedence over the parameters defined in the model file.
 parameters = parseTree.p;
@@ -137,6 +143,64 @@ parameterNames = fieldnames(parseTree.p_ext);
 for i=1:length(parameterNames)
     parameters.(parameterNames{i}) = parseTree.p_ext.(parameterNames{i});
 end
+
+%% create states
+choices = cell(1,0);
+stateID = 0;
+while stateID<length(parseTree.states)
+    stateID = stateID+1;
+    name = parseTree.states{stateID}.name;
+    if ~isfield(parameters, name)
+        error('stochsim:ICnotdefined', 'Initial condition for state %g not defined. Define initial conditions like normal variable assignments, e.g. "%s=10;" to assign an initial condition of 10 molecules to %s.', name, name, name);
+    end
+    value = parameters.(name);
+    if ischar(value)
+        [startLoc, questLoc, colonLoc, endLoc] = findConditional(value, true);
+        if ~isempty(startLoc) && startLoc == 1 && endLoc == length(value)
+            % This is not a state, but a choice.
+            condition = strtrim(value(startLoc:questLoc-1));
+            productsIfTrueStr = value(questLoc+1:colonLoc-1);
+            productsIfFalseStr = value(colonLoc+1:endLoc);
+            productsIfTrue = parseReactionComponents(productsIfTrueStr, parseTree);
+            for k=1:length(productsIfTrue)
+                if productsIfTrue{k}.modifier
+                    error('stochsim:TransformeesNotAllowedForChoices', 'State %s is marked as a transformee (i.e. followed by ''[]'') in choice %s, which is not allowed.', productsIfTrue{k}.name);
+                end
+                % check if state already exists
+                stateIdx = find(cellfun(@(x)strcmp(x.name, productsIfTrue{k}.name), parseTree.states), 1);
+                if isempty(stateIdx)
+                    parseTree.states{end+1} = struct('name', productsIfTrue{k}.name, 'composed', false);
+                end
+            end
+            productsIfFalse = parseReactionComponents(productsIfFalseStr, parseTree);
+            for k=1:length(productsIfFalse)
+                if productsIfFalse{k}.modifier
+                    error('stochsim:TransformeesNotAllowedForChoices', 'State %s is marked as a transformee (i.e. followed by ''[]'') in choice %s, which is not allowed.', productsIfTrue{k}.name);
+                end
+                % check if state already exists
+                stateIdx = find(cellfun(@(x)strcmp(x.name, productsIfFalse{k}.name), parseTree.states), 1);
+                if isempty(stateIdx)
+                    parseTree.states{end+1} = struct('name', productsIfFalse{k}.name, 'composed', false);
+                end
+            end
+            choices{end+1} = struct(); %#ok<AGROW>
+            choices{end}.name = name;
+            choices{end}.condition = condition;
+            choices{end}.productsIfTrue = productsIfTrue;
+            choices{end}.productsIfFalse = productsIfFalse;
+            
+            continue;
+        end
+    end
+    IC = evaluateFormula(value, parameters);
+    
+    if parseTree.states{stateID}.composed
+        sim.createComposedState(name, IC);
+    else
+        sim.createState(name, IC);
+    end
+end
+%% Find parameters which are not states
 % Get all parameters which are not initial conditions of states. These
 % parameters must be filled into the lazy evaluated rate equations and
 % similar, while the parameters corresponding to ICs of states mustn't.
@@ -146,22 +210,33 @@ for i=1:length(parameterNames)
     onlyParameters.(parameterNames{i}) = parameters.(parameterNames{i});
 end
 
-% create states
-for i=1:length(parseTree.states)
-    name = parseTree.states{i}.name;
-    if ~isfield(parameters, name)
-        error('stochsim:ICnotdefined', 'Initial condition for state %g not defined. Define initial conditions like normal variable assignments, e.g. "%s=10;" to assign an initial condition of 10 molecules to %s.', name, name, name);
+%% Create choices
+for choiceID = 1:length(choices)
+    def = choices{choiceID};
+    % Fuse multiply defined states by simply adding up their
+    % stochiometry.
+    [productsIfTrueNames,~,idx] = unique(cellfun(@(x)x.name, def.productsIfTrue, 'UniformOutput', false));
+    productsIfTrueStochiometries = zeros(size(productsIfTrueNames));
+    for k=1:length(idx)
+        productsIfTrueStochiometries(idx(k)) = productsIfTrueStochiometries(idx(k)) + evaluateFormula(def.productsIfTrue{k}.stochiometry, parameters);
     end
-    IC = parameters.(name);
-    if parseTree.states{i}.composed
-        sim.createComposedState(name, IC);
-    else
-        sim.createState(name, IC);
+    
+    [productsIfFalseNames,~,idx] = unique(cellfun(@(x)x.name, def.productsIfFalse, 'UniformOutput', false));
+    productsIfFalseStochiometries = zeros(size(productsIfFalseNames));
+    for k=1:length(idx)
+        productsIfFalseStochiometries(idx(k)) = productsIfFalseStochiometries(idx(k)) + evaluateFormula(def.productsIfFalse{k}.stochiometry, parameters);
+    end
+    
+    choice = sim.createChoice(def.name, simplifyFormula(def.condition, onlyParameters));
+    for k=1:length(productsIfTrueNames)
+        choice.addProductIfTrue(productsIfTrueNames{k}, productsIfTrueStochiometries(k));
+    end
+    for k=1:length(productsIfFalseNames)
+        choice.addProductIfFalse(productsIfFalseNames{k}, productsIfFalseStochiometries(k));
     end
 end
 
-
-% Create reactions
+%% Create reactions
 for i=1:length(parseTree.reactions)
     def = parseTree.reactions{i};
     if isempty(def.reactionName)
@@ -255,12 +330,13 @@ for i=1:length(parseTree.reactions)
 end
 end
 
-%% Parse an assignment
 function parseTree = parseAssignment(assignment, parseTree)
+% Parse an assignment.
 % An assignment assignes either a value or a formula to a variable or
 % state (for the latter, as the initial condition).
 
 idx = strfind(assignment, '=');
+idx = idx(1);
 nameStr = assignment(1:idx-1);
 formulaStr = assignment(idx+1:end);
 % Get name
@@ -276,8 +352,9 @@ formula = parseFormula(formulaStr, parseTree);
 % store parameter in parse tree
 parseTree.p.(name) = formula;
 end
-%% Parse formula
+
 function value = parseFormula(formula, parseTree, forceEvaluation)
+% Parse a formula.
 % A formula is a mathematical expression which can represent a variable
 % value, an initial condition for a state, a reaction rate constant, or
 % similar. There are two kinds of formulas: formulas which are eager, and
@@ -314,8 +391,11 @@ else
 end
 end
 
-%% Evaluate formula
 function value = evaluateFormula(formula, parameters)
+% Evaluate a formula.
+
+% Helper function to implement if-then-else in a functional way.
+iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}(); %#ok<NASGU>
 % If formula is already evaluated, return simply its value
 if ~ischar(formula)
     value = formula;
@@ -323,7 +403,7 @@ if ~ischar(formula)
 end
 qualifiedFormula = formula;
 
-% find all parts of a formula which might be a parameter name.
+%% find all parts of a formula which might be a parameter name, and replace them by qualified names.
 nameExpr = ...
     '(\<[a-zA-Z_]\w*\>)';
 matches = unique(regexp(qualifiedFormula, nameExpr, 'match'));
@@ -337,7 +417,24 @@ for i=1:length(matches)
     end
 end
 
-% Evaluate formula
+%% Rewrite conditionals ('?:'s)  to Matlab syntax.
+% process conditionals from right to left
+[startLoc, questLoc, colonLoc, endLoc] = findConditional(qualifiedFormula, false);
+while ~isempty(startLoc)
+    qualifiedFormula = [...
+        qualifiedFormula(1:startLoc-1),...
+        'iff(', ...
+        qualifiedFormula(startLoc:questLoc-1), ',',...
+        qualifiedFormula(questLoc+1:colonLoc-1), ',',...
+        'true,',...
+        qualifiedFormula(colonLoc+1:endLoc),...
+        ')',...
+        qualifiedFormula(endLoc+1:end)];
+    
+    [startLoc, questLoc, colonLoc, endLoc] = findConditional(qualifiedFormula, false);
+end
+
+%% Evaluate formula
 try
     value = eval(qualifiedFormula);
 catch e
@@ -348,8 +445,90 @@ end
     
 end
 
-%% Simplify formula
+function [startLoc, questLoc, colonLoc, endLoc] = findConditional(formula, first)
+% Find parts of conditional expressions ('?:'s).
+questLoc = strfind(formula, '?');
+if isempty(questLoc)
+    startLoc = [];
+    questLoc = [];
+    colonLoc = [];
+    endLoc = [];
+    return;
+end
+
+if first
+    questLoc = questLoc(1);
+else
+    questLoc = questLoc(end);
+end
+
+% find the character where the conditional starts
+startLoc = questLoc;
+closedBrackets = 0;
+while startLoc > 1
+    startLoc = startLoc-1;
+    if formula(startLoc) == '('
+        closedBrackets = closedBrackets-1;
+    elseif formula(startLoc) == ')';
+        closedBrackets = closedBrackets+1;
+    end
+    if closedBrackets < 0 || (closedBrackets == 0 && formula(startLoc) == '?');
+        startLoc = startLoc+1;
+        closedBrackets = 0;
+        break;
+    end
+end
+if closedBrackets ~= 0
+    error('stochsim:syntaxError', 'Brackets before conditional (''?:'') in string ''%s'' do not match.', formula);
+end
+
+colonLoc = questLoc+1;
+openBrackets = 0;
+while colonLoc < length(formula)
+    colonLoc = colonLoc+1;
+    if formula(colonLoc) == '('
+        openBrackets = openBrackets+1;
+    elseif formula(colonLoc) == ')';
+        openBrackets = openBrackets-1;
+    end
+    if openBrackets < 0
+        colonLoc = colonLoc-1;
+        openBrackets = 0;
+        break;
+    elseif openBrackets == 0 && formula(colonLoc) == ':'
+        break;
+    end
+end
+if openBrackets ~= 0
+    error('stochsim:syntaxError', 'Brackets after the question mark of conditional (''?:'') in string ''%s'' do not match.', formula);
+elseif formula(colonLoc) ~= ':';
+    error('stochsim:syntaxError', 'Colon of conditional (''?:'') is missing in string ''%s''.', formula);
+end
+
+endLoc = colonLoc+1;
+openBrackets = 0;
+while endLoc < length(formula)
+    endLoc = endLoc+1;
+    if formula(endLoc) == '('
+        openBrackets = openBrackets+1;
+    elseif formula(endLoc) == ')';
+        openBrackets = openBrackets-1;
+    end
+    if openBrackets < 0
+        endLoc = endLoc-1;
+        openBrackets = 0;
+        break;
+    end
+end
+if openBrackets ~= 0
+    error('stochsim:syntaxError', 'Brackets after the colon of conditional (''?:'') in string ''%s'' do not match.', formula);
+end
+
+end
+
+
 function formula = simplifyFormula(formula, parameters)
+% Simplify a lazy evaluation formula.
 
 % If formula is already evaluated, return simply its value
 if ~ischar(formula)    
@@ -379,8 +558,8 @@ while replacedString
 end
 end
 
-%% Parse reaction
 function parseTree = parseReaction(reactionStr, parseTree)
+% Parse a reaction.
 % A reaction specifies how the reactants interact to form the products. Its
 % main part is the reaction definition, consisting of a left hand side
 % (LHS) and a right hand side (RHS) separated by an arrow ("->"). This main
@@ -491,8 +670,9 @@ end
 parseTree.reactions{end+1} = reaction;
 end
 
-%% parseReactants
 function components = parseReactionComponents(reactionComponentsStr, parseTree)
+% Parse definition of reactants or products in a reaction.
+
 if isempty(reactionComponentsStr)
     components = cell(1, 0);
     return;

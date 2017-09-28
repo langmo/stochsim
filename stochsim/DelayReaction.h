@@ -79,7 +79,7 @@ namespace stochsim
 		{
 			for (const auto& product : products_)
 			{
-				product.state_->Add(simInfo, product.stochiometry_);
+				product.state_->Add(simInfo, product.stochiometry_, { stochsim::make_variable("numModified", static_cast<double>((*state_)[0].numModified)) });
 			}
 			state_->Remove(simInfo);
 		}

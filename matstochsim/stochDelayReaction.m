@@ -68,7 +68,7 @@ classdef stochDelayReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         %% Getters and setters for properties
         function name = get.name(this)
             % Returns the unique name of this reaction.
-            name = this.call('Name');
+            name = this.call('GetName');
         end
         function reactants = get.reactants(this)
             [reactantRefs, ~] = this.call('GetReactants');

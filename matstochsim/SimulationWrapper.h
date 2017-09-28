@@ -9,6 +9,7 @@
 
 #include "State.h"
 #include "ComposedState.h"
+#include "Choice.h"
 
 #include "PropensityReaction.h"
 #include "DelayReaction.h"
@@ -27,6 +28,7 @@ public:
 	static constexpr char simulationPrefix_[] = "Simulation";
 	static constexpr char statePrefix_[] = "State";
 	static constexpr char composedStatePrefix_[] = "ComposedState";
+	static constexpr char choicePrefix_[] = "Choice";
 	static constexpr char unknownPrefix_[] = "Unknown";
 	static constexpr char propensityReactionPrefix_[] = "PropensityReaction";
 	static constexpr char delayReactionPrefix_[] = "DelayReaction";
@@ -38,6 +40,7 @@ private:
 	void ParsePropensityReactionCommand(std::shared_ptr<stochsim::PropensityReaction>& simpleReaction, const std::string& methodName, MatlabParams& params); 
 	void ParseDelayReactionCommand(std::shared_ptr<stochsim::DelayReaction>& reaction, const std::string & methodName, MatlabParams & params);
 	void ParseTimerReactionCommand(std::shared_ptr<stochsim::TimerReaction>& reaction, const std::string & methodName, MatlabParams & params);
+	void ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& choice, const std::string & methodName, MatlabParams & params);
 public:
 	SimulationWrapper();
 	virtual ~SimulationWrapper();

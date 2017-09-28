@@ -49,11 +49,39 @@ namespace stochsim
 				auto stateName = reactants_[i]->GetName();
 				mu::string_type stateNameMu;
 				std::transform(stateName.begin(), stateName.end(), std::back_inserter(stateNameMu), [](std::string::value_type value) {return static_cast<mu::string_type::value_type>(value); });
-				parser_.DefineVar(stateNameMu, &molecularNumbers_[i]);
-				mu::string_type rateEquationMu;
-				std::copy(rateEquation.begin(), rateEquation.end(), std::back_inserter(rateEquationMu));
+				try
+				{
+					parser_.DefineVar(stateNameMu, &molecularNumbers_[i]);
+				}
+				catch(mu::Parser::exception_type &e)
+				{
+					mu::string_type messageMu = e.GetMsg();
+					std::string message;
+					std::transform(messageMu.begin(), messageMu.end(), std::back_inserter(message), [](mu::string_type::value_type value) {return static_cast<std::string::value_type>(value); });
+
+					std::stringstream errorMessage;
+					errorMessage << "Could not set variable representing state "<<stateName<<" in parser for custom rate equation: " << message;
+					throw std::exception(errorMessage.str().c_str());
+				}
+			}
+			mu::string_type rateEquationMu;
+			std::copy(rateEquation.begin(), rateEquation.end(), std::back_inserter(rateEquationMu));
+
+			try
+			{
 				parser_.SetExpr(rateEquationMu);
 			}
+			catch (mu::Parser::exception_type &e)
+			{
+				mu::string_type messageMu = e.GetMsg();
+				std::string message;
+				std::transform(messageMu.begin(), messageMu.end(), std::back_inserter(message), [](mu::string_type::value_type value) {return static_cast<std::string::value_type>(value); });
+
+				std::stringstream errorMessage;
+				errorMessage << "Could not parse custom rate equation: " << message;
+				throw std::exception(errorMessage.str().c_str());
+			}
+			
 		}
 		/// <summary>
 		/// Calculates the current rate of the reaction by solving the rate equation with the current species concentrations.
@@ -86,11 +114,5 @@ namespace stochsim
 		std::vector<std::shared_ptr<IState>> reactants_;
 		mutable std::vector<mu::value_type> molecularNumbers_;
 		mu::Parser parser_;
-
-		template <typename From, typename To>
-		struct static_caster
-		{
-			To operator()(From p) { return static_cast<To>(p); }
-		};
 	};
 }

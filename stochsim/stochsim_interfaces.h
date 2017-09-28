@@ -3,6 +3,9 @@
 #include <limits>
 #include <vector>
 #include <memory>
+#include <utility>
+#include <initializer_list>
+#include <tuple>			
 namespace stochsim
 {
 	/// <summary>
@@ -18,7 +21,14 @@ namespace stochsim
 	/// Note that the way these sets are saved internally can deviate from this definition.
 	/// </summary>
 	template <class T> using Collection = std::vector<T>;
-
+	/// <summary>
+	/// Name value pair, used to pass named variables having double values around.
+	/// </summary>
+	typedef std::pair<std::string, double> Variable;
+	/// <summary>
+	/// Creates a variable with the given name.
+	/// </summary>
+	constexpr auto make_variable = std::make_pair<std::string, double>;
 	/// <summary>
 	/// Provides information about the current global state of the simulation, e.g. the current simulation time.
 	/// Also provides some helper functions to e.g. calculate random numbers. Random numbers should only be calculated given these numbers,
@@ -77,13 +87,13 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Object providing context under which situation (e.g. when) the value of the state is increased.</param>
 		/// <param name="num">Number by which the value of the state is increased. Must be &gt;0. </param>
-		virtual void Add(ISimInfo& simInfo, size_t num = 1) = 0;
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
 		/// <summary>
 		/// Decreases the value of the state by the given number. Typically called by the simulation as a result of a reaction firing, with this state being a reactant of the reaction.
 		/// </summary>
 		/// <param name="simInfo">Object providing context under which situation (e.g. when) the value of the state is decreased.</param>
 		/// <param name="num">Number by which the value of the state is decreased. Must be &gt;0. </param>
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1) = 0;
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
 		/// <summary>
 		/// Called when, as the result of a reaction, the number of molecules represented by this state should not increase or decrease, but instead some molecule should be transformed in some way.
 		/// It is assumed that each molecule represented by the state is equally likely to get transformed, i.e. the molecule which is actually transformed should be chosen randomly.
@@ -91,7 +101,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Simulation context.</param>
 		/// <param name="num">Number of molecules which should be modified. Must be &gt;0. </param>
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1) = 0;
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
 		/// <summary>
 		/// Called by the simulation before the simulation starts. Should ensure that e.g. the current value of the state equals the initial condition.
 		/// </summary>
@@ -107,11 +117,6 @@ namespace stochsim
 		/// </summary>
 		/// <returns>Name of the species/state.</returns>
 		virtual std::string GetName() const = 0;
-		/*/// <summary>
-		///  Returns the initial condition of the state. It must be guaranteed that at t=0, Num()==GetInitialCondition().
-		/// </summary>
-		/// <returns>Initial condition of the state.</returns>
-		virtual size_t GetInitialCondition() const = 0;*/
 	};
 
 	/// <summary>

@@ -37,8 +37,10 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
                 state = stochState(this, stateName);
             elseif strcmp(className, stochComposedState.getClassName())
                 state = stochComposedState(this, stateName);
+            elseif strcmp(className, stochChoice.getClassName())
+                state = stochChoice(this, stateName);
             else
-                error('stochsim:classUnknown', 'the state class %s of the state %s is unknown!', className, stateName);
+                error('stochsim:classUnknown', 'The state class %s of the state %s is unknown!', className, stateName);
             end
         end
         
@@ -109,10 +111,15 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
                 nameLength = 15;
                 
                 formatState = ['\t%-', int2str(nameLength), 's %d\n'];
+                formatChoice= ['\t%-', int2str(nameLength), 's %s\n'];
                 states = this.states;
                 stateStrings = cell(size(states));
                 for i=1:numel(states)
-                    stateStrings{i} = sprintf(formatState, states{i}.name, states{i}.initialCondition);
+                    if isa(states{i}, 'stochState') || isa(states{i}, 'stochComposedState')
+                        stateStrings{i} = sprintf(formatState, states{i}.name, states{i}.initialCondition);
+                    elseif isa(states{i}, 'stochChoice')
+                        stateStrings{i} = sprintf(formatChoice, states{i}.name, states{i}.formatFormula('%2$s ? %3$s : %4$s'));
+                    end
                 end
                 
                 reactions = this.reactions;
@@ -223,6 +230,49 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
                 initialCondition = 0;
             end
 			state = this.toState(this.call('CreateState', name, initialCondition));
+        end
+        
+        function choice = createChoice(this, name, choiceEquation)
+            % Creates a choice with the given name in the choice equation. The
+            % choice can subsequently e.g. be added as a product
+            % of a reaction. The choice should never be added as a
+            % reactant.
+            % A choice is a special kind of state in stochsim. Different to most or all other states, its concentration is always zero. The concentration of a choice can thus not be decreased, and an
+            % error is thrown when the concentration of the choice is tried to be decreased, e.g. when the choice is used as a reactant in a reaction with non-zero propensity. 
+            % In contrary, the choice can (and is intended to) be used as a product of a reaction. However, when in this case the reaction fires, the concentration of the choice is not increased. 
+            % Instead, the boolean formula
+            % associated with this choice is evaluated. Depending on the outcome of this evaluation, either the concentrations of one or the other set of product states is increased according to their
+            % stochiometry.
+            % The typical use case is to use a Choice to implement conditionals for reactions. For example, a reaction might result in a product B with a certain probability, and in a product C with another, i.e.
+            %      { B     if rand()>0.2
+            % A -> {
+            %      { C     otherwise.
+            % This would then be implemented as a propensity reaction with A as the reactant, and a choice as the product. The boolean formula associated to the choice would be "rand()>0.2", the first set of
+            % products of the choice would contain only B with stochiometry 1, and the second set only C with stochiometry 1.
+            % The usage of a choice becomes specifically interesting when combined with reactions providing additional information (variables) which can be used in the boolean expression. For example, a delay
+            % reaction passes the number of how often its (sole) reactant was transformed.
+            % Usage:
+            %   choice = createChoice(this, name)
+            %   choice = createChoice(this, name, choiceEquation)
+            % Parameters:
+            %   name             - Name of the choice, e.g. 'doEitherThisOrThat', used to
+            %                      uniquely identify the choice. Note that
+            %                      due to implementation details, a choice
+            %                      must also not have the same name as a
+            %                      state.
+            %   choiceEquation   - A boolean equation which gets evaluated
+            %                      every time the choice is invoked.
+            %                      Depending on the outcome of the
+            %                      evaluation, the concentration of one of
+            %                      the product sets of the choice is
+            %                      increased.
+            %                      Default='1'.
+            % Returns:
+            %   choice           - The newly created Choice.
+            if nargin <3 || isempty(choiceEquation)
+                choiceEquation = '1';
+            end
+			choice = this.toState(this.call('CreateChoice', name, choiceEquation));
         end
         
         function state = createComposedState(this, name, initialCondition, capacity)
