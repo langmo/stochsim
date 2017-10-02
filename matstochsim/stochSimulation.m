@@ -181,12 +181,14 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
             % If no file name for the model is provided, an empty model is
             % constructed.
             
-            this.objectHandle = matstochsim('new');
             if nargin >= 1 && ~isempty(fileName)
                 if nargin < 2
                     externalParameters = [];
                 end
-                this = stochParseModel(fileName, externalParameters, this);
+				this.objectHandle = matstochsim('new', fileName);
+                %this = stochParseModel(fileName, externalParameters, this);
+			else
+				this.objectHandle = matstochsim('new');
             end
         end
         

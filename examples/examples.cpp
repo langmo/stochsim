@@ -7,7 +7,9 @@
 #include <unordered_map>
 #include <vector>
 #include "examples.h"
-
+#include "CmdlParser.h"
+#include "StateLogger.h"
+#include "ProgressLogger.h"
 std::vector<Example> getExamples()
 {
 	return
@@ -43,9 +45,34 @@ void cmdHelp(std::ostream& stream, int &argc, char **argv)
 	stream << "\t-o folder\tSpecifies folder in which results should be saved." << std::endl;
 }
 
+void runCustomModel(std::string modelPath, std::string folder, double runtime)
+{
+	// Construct simulation
+	stochsim::Simulation sim;
+	sim.SetBaseFolder(folder);
+	sim.SetLogPeriod(1);
+
+	// Logging state values
+	auto logger = sim.CreateLogger<stochsim::StateLogger>("states.csv");
+
+	// Display simulation progress in console
+	sim.CreateLogger<stochsim::ProgressLogger>();
+
+	stochsim::CmdlParser::Parse(modelPath, sim);
+	for (auto& state : sim.GetStates())
+	{
+		logger->AddState(state);
+	}
+	sim.Run(runtime);
+}
+
+
 int main(int argc, char *argv[])
 {
-	if (cmdOptionExists(argc, argv, "-h") 
+	// remove name of executable
+	argc --;
+	argv++;
+	if (argc<=0 || cmdOptionExists(argc, argv, "-h")
 		|| cmdOptionExists(argc, argv, "-help")
 		|| cmdOptionExists(argc, argv, "--help")
 		|| cmdOptionExists(argc, argv, "-?"))
@@ -56,45 +83,71 @@ int main(int argc, char *argv[])
 	std::string outputFolder = cmdGetOption(argc, argv, "-o");
 	if (outputFolder.empty())
 		outputFolder = "simulations";
+
 	std::string exampleName = cmdGetOption(argc, argv, "-e");
-	auto examples = getExamples();
-	if (exampleName.empty())
+	if (!exampleName.empty())
 	{
-		std::cerr << "No example model name specified." << std::endl;
-		cmdHelp(std::cerr, argc, argv);
+		auto examples = getExamples();
+		for (auto example : examples)
+		{
+			if (std::get<0>(example).compare(exampleName) != 0)
+				continue;
+			try
+			{
+				std::get<2>(example)(outputFolder);
+				return 0;
+			}
+			catch (const std::runtime_error& re)
+			{
+				std::cerr << "Runtime error: " << re.what() << std::endl;
+				return 1;
+			}
+			catch (const std::exception& ex)
+			{
+				std::cerr << "Error occurred: " << ex.what() << std::endl;
+				return 1;
+			}
+			catch (std::string message)
+			{
+				std::cerr << "Error occured: " << message << std::endl;
+				return 1;
+			}
+			catch (...)
+			{
+				std::cerr << "Unknown error occured." << std::endl;
+				return 1;
+			}
+		}
+		std::cerr << "Unknown example " << exampleName << ".";
 		return 1;
 	}
-	for (auto example : examples)
+
+	// if we are here, the last parameter must be the model path
+	std::string model(argv[argc - 1]);
+	try
 	{
-		if (std::get<0>(example).compare(exampleName) != 0)
-			continue;
-		try
-		{
-			std::get<2>(example)(outputFolder);
-			return 0;
-		}
-		catch (const std::runtime_error& re)
-		{
-			std::cerr << "Runtime error: " << re.what() << std::endl;
-			return 1;
-		}
-		catch (const std::exception& ex)
-		{
-			std::cerr << "Error occurred: " << ex.what() << std::endl;
-			return 1;
-		}
-		catch (std::string message)
-		{
-			std::cerr << "Error occured: " << message << std::endl;
-			return 1;
-		}
-		catch (...)
-		{
-			std::cerr << "Unknown error occured." << std::endl;
-			return 1;
-		}
+		runCustomModel(model, outputFolder, 10);
 	}
-	std::cerr << "Unknown example " << exampleName << ".";
-	return 1;
+	catch (const std::runtime_error& re)
+	{
+		std::cerr << "Runtime error: " << re.what() << std::endl;
+		return 1;
+	}
+	catch (const std::exception& ex)
+	{
+		std::cerr << "Error occurred: " << ex.what() << std::endl;
+		return 1;
+	}
+	catch (std::string message)
+	{
+		std::cerr << "Error occured: " << message << std::endl;
+		return 1;
+	}
+	catch (...)
+	{
+		std::cerr << "Unknown error occured." << std::endl;
+		return 1;
+	}
+	return 0;
 }
 

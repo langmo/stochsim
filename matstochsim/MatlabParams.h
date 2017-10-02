@@ -97,6 +97,12 @@ public:
 		}
 		return mxGetScalar(elem);
 	}
+	template<> const mxArray* Get<const mxArray*>(int index)
+	{
+		index += shift_;
+		AssertParamIndex(index);
+		return prhs_[index];
+	}
 	template<> bool Get<bool>(int index)
 	{
 		return Get<double>(index) != 0;

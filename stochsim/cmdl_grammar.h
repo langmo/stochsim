@@ -1,0 +1,14 @@
+#define TOKEN_SEMICOLON                        1
+#define TOKEN_PLUS                             2
+#define TOKEN_MINUS                            3
+#define TOKEN_MULTIPLY                         4
+#define TOKEN_DIVIDE                           5
+#define TOKEN_IDENTIFIER                       6
+#define TOKEN_VALUE                            7
+#define TOKEN_LEFT_ROUND                       8
+#define TOKEN_RIGHT_ROUND                      9
+#define TOKEN_EQUAL                           10
+#define TOKEN_LEFT_SQUARE                     11
+#define TOKEN_RIGHT_SQUARE                    12
+#define TOKEN_ARROW                           13
+#define TOKEN_COMMA                           14

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Grammar">
+      <UniqueIdentifier>{97e3330b-6c7d-40a7-95b5-49e0b60b42f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation.h">
@@ -87,6 +90,18 @@
     <ClInclude Include="Choice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cmdl_grammar_definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdlParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="expression.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cmdl_grammar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp">
@@ -110,5 +125,22 @@
     <ClCompile Include="muParserTokenReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CmdlParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cmdl_grammar.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cmdl_grammar.y">
+      <Filter>Grammar</Filter>
+    </None>
+    <None Include="cmdl_grammar.template">
+      <Filter>Grammar</Filter>
+    </None>
+    <None Include="cmdl_grammar.out">
+      <Filter>Grammar</Filter>
+    </None>
   </ItemGroup>
 </Project>
