@@ -1,7 +1,7 @@
 // Configuration of output
 %token_prefix TOKEN_
 %start_symbol model
-%parse_failure {throw std::exception("Failed parsing cmdl file.");}
+%parse_failure {throw std::exception("Syntax error.");}
 %stack_overflow {throw std::exception("Parser stack overflow while parsing cmdl file.");}
 %name Parse
 %token_type {terminal_symbol*}
@@ -114,10 +114,13 @@
 // A statement is finished with a semicolon only after all rules having a precedence higher than a semicolon are applied. Rules having the precedence of a semicolon are only
 // applied if they have to, which is convenient for conversion rules which should only be applied if nothing else works.
 %right SEMICOLON. 
+%left AND.
+%left OR.
+%nonassoc EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL.
 %left PLUS MINUS.
 %left MULTIPLY DIVIDE.
+%right EXP NOT.
 %nonassoc IDENTIFIER VALUE. // always prefer longer rules
-
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -131,9 +134,11 @@ statements ::= .
 // A statement can either be a variable assignment or a reaction
 statement ::= assignment.
 statement ::= reaction.
+statement ::= freeExpression.
+statement ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines
 
 // Basic mathematical expressions
-%type expression {basic_expression*}
+%type expression {expression_base*}
 %destructor expression { 
 	delete $$;
 }
@@ -160,21 +165,21 @@ expression(e) ::= sum(s). [SEMICOLON] {
 }
 sum(s) ::= expression(e1) PLUS expression(e2). {
 	s = new sum_expression();
-	s->push_back(std::unique_ptr<basic_expression>(e1), true);
-	s->push_back(std::unique_ptr<basic_expression>(e2), true);
+	s->push_back(false, std::unique_ptr<expression_base>(e1));
+	s->push_back(false, std::unique_ptr<expression_base>(e2));
 }
 sum(s) ::= expression(e1) MINUS expression(e2). {
 	s = new sum_expression();
-	s->push_back(std::unique_ptr<basic_expression>(e1), true);
-	s->push_back(std::unique_ptr<basic_expression>(e2), false);
+	s->push_back(false,  std::unique_ptr<expression_base>(e1));
+	s->push_back(true, std::unique_ptr<expression_base>(e2));
 }
 sum(s_new) ::= sum(s_old) PLUS expression(e). {
 	s_new = s_old;
-	s_new->push_back(std::unique_ptr<basic_expression>(e), true);
+	s_new->push_back(false, std::unique_ptr<expression_base>(e));
 }
 sum(s_new) ::= sum(s_old) MINUS expression(e). {
 	s_new = s_old;
-	s_new->push_back(std::unique_ptr<basic_expression>(e), false);
+	s_new->push_back(true, std::unique_ptr<expression_base>(e));
 }
 
 
@@ -188,43 +193,148 @@ expression(e) ::= product(p). [SEMICOLON] {
 }
 product(p) ::= expression(e1) MULTIPLY expression(e2). {
 	p = new product_expression();
-	p->push_back(std::unique_ptr<basic_expression>(e1), true);
-	p->push_back(std::unique_ptr<basic_expression>(e2), true);
+	p->push_back(false, std::unique_ptr<expression_base>(e1));
+	p->push_back(false, std::unique_ptr<expression_base>(e2));
 
 }
 product(p) ::= expression(e1) DIVIDE expression(e2). {
 	p = new product_expression();
-	p->push_back(std::unique_ptr<basic_expression>(e1), true);
-	p->push_back(std::unique_ptr<basic_expression>(e2), false);
+	p->push_back(false, std::unique_ptr<expression_base>(e1));
+	p->push_back(true, std::unique_ptr<expression_base>(e2));
 
 }
 product(p_new) ::= product(p_old) MULTIPLY expression(e). {
 	p_new = p_old;
-	p_new->push_back(std::unique_ptr<basic_expression>(e), true);
+	p_new->push_back(false, std::unique_ptr<expression_base>(e));
 }
 product(p_new) ::= product(p_old) DIVIDE expression(e). {
 	p_new = p_old;
-	p_new->push_back(std::unique_ptr<basic_expression>(e), false);
+	p_new->push_back(true, std::unique_ptr<expression_base>(e));
+}
+
+// conjunction
+%type conjunction {conjunction_expression*}
+%destructor conjunction { 
+	delete $$;
+}
+expression(e) ::= conjunction(c). [SEMICOLON] {
+	e = c;
+}
+conjunction(c) ::= expression(e1) AND expression(e2). {
+	c = new conjunction_expression();
+	c->push_back(false, std::unique_ptr<expression_base>(e1));
+	c->push_back(false, std::unique_ptr<expression_base>(e2));
+
+}
+conjunction(c_new) ::= conjunction(c_old) AND expression(e). {
+	c_new = c_old;
+	c_new->push_back(false, std::unique_ptr<expression_base>(e));
+}
+
+// disjunction
+%type disjunction {disjunction_expression*}
+%destructor disjunction { 
+	delete $$;
+}
+expression(e) ::= disjunction(c). [SEMICOLON] {
+	e = c;
+}
+disjunction(c) ::= expression(e1) OR expression(e2). {
+	c = new disjunction_expression();
+	c->push_back(false, std::unique_ptr<expression_base>(e1));
+	c->push_back(false, std::unique_ptr<expression_base>(e2));
+
+}
+disjunction(c_new) ::= disjunction(c_old) OR expression(e). {
+	c_new = c_old;
+	c_new->push_back(false, std::unique_ptr<expression_base>(e));
+}
+
+// not
+expression(e_new) ::= NOT expression(e_old). {
+	e_new = new not_expression(std::unique_ptr<expression_base>(e_old));
+}
+
+// unary minus
+expression(e_new) ::= MINUS expression(e_old). [NOT] {
+	e_new = new minus_expression(std::unique_ptr<expression_base>(e_old));
+}
+
+// Exponentiation
+expression(e_new) ::= expression(e1) EXP expression(e2). {
+	e_new = new exponentiation_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2));
 }
 
 
-// An assignment associates a variable with an expression.
-assignment ::= IDENTIFIER(I) EQUAL expression(e) SEMICOLON. {
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I), e->eval(parseTree->get_lookup()));
-	delete e;
+// Comparison
+expression(e_new) ::= expression(e1) EQUAL expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_equal);
 }
-assignment ::= IDENTIFIER(I) EQUAL LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I), std::unique_ptr<basic_expression>(e));
+expression(e_new) ::= expression(e1) NOT_EQUAL expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_not_equal);
+}
+expression(e_new) ::= expression(e1) GREATER expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_greater);
+}
+expression(e_new) ::= expression(e1) GREATER_EQUAL expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_greater_equal);
+}
+expression(e_new) ::= expression(e1) LESS expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_less);
+}
+expression(e_new) ::= expression(e1) LESS_EQUAL expression(e2). {
+	e_new = new comparison_expression(std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2), comparison_expression::type_less_equal);
+}
+
+// assignments
+assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
+	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto I_temp = I;
+	auto e_temp = e;
+	I = nullptr;
+	e = nullptr;
+
+	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), e_temp->eval(parseTree->get_lookup()));
+	delete e_temp;
+}
+assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
+	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto I_temp = I;
+	auto e_temp = e;
+	I = nullptr;
+	e = nullptr;
+
+	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), std::unique_ptr<expression_base>(e_temp));
 }
 
 
 // reaction
 reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA expression(e) SEMICOLON. {
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants), std::unique_ptr<sum_expression>(products), e->eval(parseTree->get_lookup()));
-	delete e;
+	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto reactants_temp = reactants;
+	auto products_temp = products;
+	auto e_temp = e;
+	reactants = nullptr;
+	products = nullptr;
+	e = nullptr;
+
+	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), e_temp->eval(parseTree->get_lookup()));
+	delete e_temp;
 }
 reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants), std::unique_ptr<sum_expression>(products), std::unique_ptr<basic_expression>(e));
+	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto reactants_temp = reactants;
+	auto products_temp = products;
+	auto e_temp = e;
+	reactants = nullptr;
+	products = nullptr;
+	e = nullptr;
+
+	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), std::unique_ptr<expression_base>(e_temp));
 }
 
 %type reactionSide {sum_expression*}
@@ -236,10 +346,13 @@ reactionSide(rs) ::= sum(s). [PLUS] {
 }
 reactionSide(rs) ::= expression(e). [SEMICOLON] {
 	rs = new sum_expression();
-	rs->push_back(std::unique_ptr<basic_expression>(e), true);
+	rs->push_back(false, std::unique_ptr<expression_base>(e));
 }
 reactionSide(rs) ::= . [SEMICOLON] {
 	rs = new sum_expression();
 }
+
+// free expressions
+freeExpression ::= expression SEMICOLON.
 
 

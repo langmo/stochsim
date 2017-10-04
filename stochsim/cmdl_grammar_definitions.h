@@ -105,7 +105,7 @@ namespace stochsim
 				reaction_components components;
 				for (auto& componentRaw : *componentRaws)
 				{
-					if (!componentRaw.is_positive())
+					if (componentRaw.is_inverse())
 					{
 						throw std::exception("Reaction components must be separated by plus signs ('+'), and may or may not be proceeded by a factor determining their stochiometry, which is separated by a multiplication sign ('*'). This factor can either be a number, or an arbitrary formula which must, however, not include outer plus or minus signs. To include sums or differences in the calculation of the stochiometry, put the formula into brackets ('(' and ')').");
 					}
@@ -139,7 +139,7 @@ namespace stochsim
 						// Get name and stochiometry.
 						// All products must be non-empty, so we don't have to check...
 						auto identifierElement = product->pop_back();
-						if (!identifierElement.is_positive())
+						if (identifierElement.is_inverse())
 						{
 							throw std::exception("Reaction components must be separated by plus signs ('+'), and may or may not be proceeded by a factor determining their stochiometry, which is separated by a multiplication sign ('*'). This factor can either be a number, or an arbitrary formula which must, however, not include outer plus or minus signs. To include sums or differences in the calculation of the stochiometry, put the formula into brackets ('(' and ')').");
 						}
@@ -202,7 +202,7 @@ namespace stochsim
 				}
 			}
 		public:
-			reaction_definition(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::basic_expression> rate, const expression::variable_lookup& lookup) :
+			reaction_definition(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate, const expression::variable_lookup& lookup) :
 				reactants_(parse_components(reactants, lookup)),
 				products_(parse_components(products, lookup)),
 				rate_(std::move(rate))
@@ -243,18 +243,18 @@ namespace stochsim
 			{
 				return products_;
 			}
-			const expression::basic_expression* get_rate() const noexcept
+			const expression::expression_base* get_rate() const noexcept
 			{
 				return rate_.get();
 			}
-			expression::basic_expression* get_rate() noexcept
+			expression::expression_base* get_rate() noexcept
 			{
 				return rate_.get();
 			}
 		private:
 			reaction_components reactants_;
 			reaction_components products_;
-			std::unique_ptr<expression::basic_expression> rate_;
+			std::unique_ptr<expression::expression_base> rate_;
 		};
 
 		class parse_tree
@@ -289,7 +289,7 @@ namespace stochsim
 				return reactions_.cend();
 			}
 		public:
-			parse_tree() : currentLine_(0), lookup_(std::bind(&parse_tree::variable_value, this, std::placeholders::_1))
+			parse_tree() :lookup_(std::bind(&parse_tree::variable_value, this, std::placeholders::_1))
 			{
 			}
 			/// <summary>
@@ -297,7 +297,7 @@ namespace stochsim
 			/// </summary>
 			/// <param name="name">Name of variable.</param>
 			/// <param name="expression">Expression of variable.</param>
-			void create_variable(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::basic_expression> expression)
+			void create_variable(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::expression_base> expression)
 			{
 				variables_[*name] = std::move(expression);
 			}
@@ -314,7 +314,7 @@ namespace stochsim
 			{
 				create_reaction(std::move(reactants), std::move(products), std::make_unique<expression::number_expression>(rateConstant));
 			}
-			void create_reaction(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::basic_expression> rate)
+			void create_reaction(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate)
 			{
 				std::stringstream name;
 				name << "reaction_" << (reactions_.size() + 1);
@@ -324,7 +324,7 @@ namespace stochsim
 			{
 				create_reaction(std::move(name), std::move(reactants), std::move(products), std::make_unique<expression::number_expression>(rateConstant));
 			}
-			void create_reaction(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::basic_expression> rate)
+			void create_reaction(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate)
 			{
 				reactions_[*name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate), this->get_lookup());
 			}
@@ -338,25 +338,43 @@ namespace stochsim
 			{
 				return variable_expression(name)->eval(lookup_);
 			}
+			static expression::expression_base* get_default_variable(const expression::identifier& name) noexcept
+			{
+				static std::map<expression::identifier, expression::number_expression> defaultVariables(
+				{
+					std::make_pair(expression::identifier("true"), expression::number_true),
+					std::make_pair(expression::identifier("false"), expression::number_false),
+					std::make_pair(expression::identifier("pi"), expression::number(3.141592653589793)),
+					std::make_pair(expression::identifier("e"), expression::number(2.718281828459046))
+				});
+				auto search = defaultVariables.find(name);
+				if (search != defaultVariables.end())
+				{
+					return &search->second;
+				}
+				else
+					return nullptr;
+			}
 			/// <summary>
 			/// Finds the variable with the given name and returns its expression.
 			/// If no variable with the given name exists, throws a std::exception.
 			/// </summary>
 			/// <param name="name">Name of the variable to evaluate.</param>
 			/// <returns>Expression of the variable.</returns>
-			const expression::basic_expression* variable_expression(const expression::identifier& name) const
+			const expression::expression_base* variable_expression(const expression::identifier& name) const
 			{
 				auto search = variables_.find(name);
 				if (search != variables_.end())
 				{
 					return search->second.get();
 				}
-				else
-				{
-					std::stringstream errorMessage;
-					errorMessage << "Variable with name \"" << name << "\" not defined";
-					throw std::exception(errorMessage.str().c_str());
-				}
+				auto default_var = get_default_variable(name);
+				if (default_var)
+					return default_var;
+				
+				std::stringstream errorMessage;
+				errorMessage << "Variable with name \"" << name << "\" not defined";
+				throw std::exception(errorMessage.str().c_str());
 			}
 			/// <summary>
 			/// Returns a function to lookup the value of a variable.
@@ -368,18 +386,9 @@ namespace stochsim
 			{
 				return lookup_;
 			}
-			const unsigned int current_line() const noexcept
-			{
-				return currentLine_;
-			}
-			unsigned int& current_line() noexcept
-			{
-				return currentLine_;
-			}
 		private:
-			std::unordered_map<expression::identifier, std::unique_ptr<expression::basic_expression>> variables_;
+			std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> variables_;
 			std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>> reactions_;
-			unsigned int currentLine_;
 			expression::variable_lookup lookup_;
 		};
 

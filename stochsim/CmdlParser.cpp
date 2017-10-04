@@ -124,12 +124,48 @@ namespace stochsim
 			case '+':
 				*tokenID = TOKEN_PLUS;
 				return ++stream;
+			case '^':
+				*tokenID = TOKEN_EXP;
+				return ++stream;
 			case '*':
 				*tokenID = TOKEN_MULTIPLY;
 				return ++stream;
 			case '=':
-				*tokenID = TOKEN_EQUAL;
-				return ++stream;
+				if (stream[1] == '=')
+				{
+					*tokenID = TOKEN_EQUAL;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = TOKEN_ASSIGN;
+					return ++stream;
+				}
+			case '&':
+				if (stream[1] == '&')
+				{
+					*tokenID = TOKEN_AND;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = 0;
+					return stream;
+				}
+			case '|':
+				if (stream[1] == '|')
+				{
+					*tokenID = TOKEN_OR;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = 0;
+					return stream;
+				}
 			case '-':
 				if (stream[1] == '>')
 				{
@@ -151,6 +187,48 @@ namespace stochsim
 			case ')':
 				*tokenID = TOKEN_RIGHT_ROUND;
 				return ++stream;
+			case '[':
+				*tokenID = TOKEN_LEFT_SQUARE;
+				return ++stream;
+			case ']':
+				*tokenID = TOKEN_RIGHT_SQUARE;
+				return ++stream;
+			case '!':
+				if (stream[1] == '=')
+				{
+					*tokenID = TOKEN_NOT_EQUAL;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = TOKEN_NOT;
+					return ++stream;
+				}
+			case '>':
+				if (stream[1] == '=')
+				{
+					*tokenID = TOKEN_GREATER_EQUAL;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = TOKEN_GREATER;
+					return ++stream;
+				}
+			case '<':
+				if (stream[1] == '=')
+				{
+					*tokenID = TOKEN_LESS_EQUAL;
+					stream += 2;
+					return stream;
+				}
+				else
+				{
+					*tokenID = TOKEN_LESS;
+					return ++stream;
+				}
 			default:
 				*tokenID = 0;
 				return stream;
@@ -233,6 +311,12 @@ namespace stochsim
 			else
 			{
 				auto initialCondition = expression->eval(parseTree.get_lookup());
+				if (initialCondition + 0.5 < 0)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Initial condition for state '" << state.first << "' is negative.";
+					throw std::exception(errorMessage.str().c_str());
+				}
 				if (state.second.type_ == state_definition::type_simple)
 					sim.CreateState<stochsim::State>(state.first, static_cast<size_t>(initialCondition + 0.5));
 				else if (state.second.type_ == state_definition::type_composed)
@@ -246,10 +330,10 @@ namespace stochsim
 			}
 		}
 		// Create reactions
-		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier& variableName) -> const stochsim::expression::basic_expression*
+		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier& variableName) -> const stochsim::expression::expression_base*
 		{
-			// We want to simplify everything away which is not a state name.
-			if (states.find(variableName) != states.end())
+			// We want to simplify everything away which is not a state name, and not one of the standard variables.
+			if (states.find(variableName) == states.end())
 				return parseTree.variable_expression(variableName);
 			std::stringstream errorMessage;
 			errorMessage << "Variable with name \"" << variableName << "\" not defined";
@@ -266,8 +350,7 @@ namespace stochsim
 			}
 			else
 			{
-				//TODO: implement
-				throw std::exception("Not yet implemented");
+				reaction = sim.CreateReaction<PropensityReaction>(reactionDefinition.first, std::move(rate));
 			}
 			for (auto& component : reactionDefinition.second->get_reactants())
 			{
@@ -292,7 +375,7 @@ namespace stochsim
 		cmdl::parse_tree parseTree;
 
 		// Open file
-		std::ifstream infile(fileName);
+		std::ifstream infile(fileName); 
 		if (infile.fail())
 		{
 			std::stringstream errorMessage;
@@ -300,7 +383,7 @@ namespace stochsim
 			throw std::exception(errorMessage.str().c_str());
 		}
 
-		// create parser
+		// Create parser
 		auto errorFileName = fileName;
 		errorFileName += ".log";
 		cmdl::parser parser(errorFileName);
@@ -311,16 +394,20 @@ namespace stochsim
 		constexpr int maxStringValueLength = 200;
 		std::string::value_type stringValue[maxStringValueLength]; // buffer for token values. must be zero terminated.
 		
-		// parse lines
+		// Parse lines
 		std::string line;
+		unsigned int currentLine = 0;
 		while (std::getline(infile, line))
 		{
-			parseTree.current_line()++;
+			currentLine++;
 			auto currentCharPtr = line.c_str();
+			auto startCharPtr = currentCharPtr;
+			auto lastCharPtr = currentCharPtr;
 			try
 			{
 				while (*currentCharPtr)
 				{
+					lastCharPtr = currentCharPtr;
 					// Discard spaces/tabs/...
 					if (CmdlCodecs::IsSpace(currentCharPtr[0]))
 					{
@@ -369,13 +456,23 @@ namespace stochsim
 			catch (const std::exception& ex)
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Parse error in file " << fileName << ", line " << parseTree.current_line() << ": " << ex.what();
+				errorMessage << "Parse error in file " << fileName << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr+1) << ": " << ex.what();
+				errorMessage << '\n' << line << '\n';
+				for (int i = 0; i < lastCharPtr - startCharPtr; i++)
+					errorMessage << ' ';
+				errorMessage << "|___ close to here.";
+
 				throw std::exception(errorMessage.str().c_str());
 			}
 			catch (...)
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Parse error in file " << fileName << ", line " << parseTree.current_line() << ": Unknown error.";
+				errorMessage << "Parse error in file " << fileName << ", line " << currentLine << "-"<<(lastCharPtr-startCharPtr+1)<<": Unknown error.";
+				errorMessage << '\n' << line << '\n';
+				for (int i = 0; i < lastCharPtr - startCharPtr; i++)
+					errorMessage << ' ';
+				errorMessage << "|___ close to here.";
+
 				throw std::exception(errorMessage.str().c_str());
 			}
 		}

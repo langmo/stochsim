@@ -2,6 +2,7 @@
 #include "mex.h"
 #include <string>
 #include <sstream>
+#include <type_traits>
 #include <functional>
 class MatlabParams
 {
@@ -9,7 +10,7 @@ public:
 
 	typedef std::unique_ptr<mxArray, std::function<void(mxArray*)>> MatlabVariable;
 
-	MatlabParams(int nlhs, mxArray* plhs[], int nrhs, const mxArray *prhs[], unsigned int shift=0) : shift_(shift), nlhs_(nlhs), plhs_(plhs), nrhs_(nrhs), prhs_(prhs)
+	MatlabParams(size_t nlhs, mxArray* plhs[], size_t nrhs, const mxArray *prhs[], size_t shift=0) : shift_(shift), nlhs_(nlhs), plhs_(plhs), nrhs_(nrhs), prhs_(prhs)
 	{
 	}
 
@@ -17,24 +18,36 @@ public:
 	{
 	}
 
-	unsigned int NumParams()
+	size_t NumParams()
 	{
 		return nrhs_ - shift_;
 	}
-	unsigned int NumReturns()
+	size_t NumReturns()
 	{
 		return nlhs_;
 	}
 	static MatlabVariable CreateDoubleMatrix(mwSize rows, mwSize columns)
 	{
-		return MatlabVariable(::mxCreateDoubleMatrix(rows, columns, ::mxREAL), [](mxArray* content) {::mxDestroyArray(content); });
+		return MatlabVariable(::mxCreateDoubleMatrix(rows, columns, ::mxREAL), 
+			[](mxArray* content) 
+			{
+				if(content)
+					::mxDestroyArray(content); 
+				content = nullptr;
+			});
 	}
 	static MatlabVariable CreateCell(mwSize rows, mwSize columns)
 	{
 		mwSize dims[2];
 		dims[0] = rows;
 		dims[1] = columns;
-		return MatlabVariable(::mxCreateCellArray(2, dims), [](mxArray* content) {::mxDestroyArray(content); });
+		return MatlabVariable(::mxCreateCellArray(2, dims),
+			[](mxArray* content)
+		{
+			if (content)
+				::mxDestroyArray(content);
+			content = nullptr;
+		});
 	}
 	static void AssignArrayElement(mxArray& array, mwIndex row, mwIndex column, double value)
 	{
@@ -77,12 +90,15 @@ public:
 		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
 		::mxSetCell(&cell, index, ::mxCreateString(value.c_str()));
 	}
-
-	template<typename T> T Get(int index)
+	template<typename T> inline T Get(size_t index)
 	{
-		return static_cast<T>(Get<double>(index) + 0.5);
+		static_assert(std::is_floating_point<T>::value || std::is_integral<T>::value, "Function template T MatlabParams::Get<T>(size_t) not defined for type T.");
+		if(std::is_floating_point<T>::value)
+			return static_cast<T>(Get<double>(index));
+		else
+			return static_cast<T>(Get<double>(index)+0.5); // round to nearest integer value
 	}
-	template<> double Get<double>(int index)
+	template<> double Get<double>(size_t index)
 	{
 		index += shift_;
 		AssertParamIndex(index);
@@ -97,17 +113,17 @@ public:
 		}
 		return mxGetScalar(elem);
 	}
-	template<> const mxArray* Get<const mxArray*>(int index)
+	template<> const mxArray* Get<const mxArray*>(size_t index)
 	{
 		index += shift_;
 		AssertParamIndex(index);
 		return prhs_[index];
 	}
-	template<> bool Get<bool>(int index)
+	template<> bool Get<bool>(size_t index)
 	{
 		return Get<double>(index) != 0;
 	}
-	template<> std::string Get<std::string>(int index)
+	template<> std::string Get<std::string>(size_t index)
 	{
 		index += shift_;
 		AssertParamIndex(index);
@@ -121,56 +137,45 @@ public:
 		return std::string(buffer_);
 	}
 
-	bool IsString(int index)
+	bool IsString(size_t index)
 	{
 		index += shift_;
 		AssertParamIndex(index);
 		return ::mxIsChar(prhs_[index]);
 	}
 
-	MatlabParams ShiftInputs(int shift)
+	MatlabParams ShiftInputs(size_t shift)
 	{
 		shift += shift_;
 		AssertParamIndex(shift - 1);
 		return MatlabParams(nlhs_, plhs_, nrhs_, prhs_, shift);
 	}
-	template<typename T> void Set(int index, T&& value)
+	template<typename T> void Set(size_t index, T value)
 	{
+		static_assert(std::is_floating_point<T>::value || std::is_integral<T>::value, "Function template void Set(size_t index, T value) not defined for type T.");
 		if (index >= nlhs_)
 			return;
 		plhs_[index] = ::mxCreateDoubleScalar(static_cast<double>(value));
 	}
-	template<> void Set<mxArray*>(int index, mxArray*&& value)
+	template<> void Set<mxArray*>(size_t index, mxArray* value)
 	{
 		if (index >= nlhs_)
 			return;
 		plhs_[index] = value;
 	}
-	template<> void Set<mxArray*&>(int index, mxArray*& value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = value;
-	}
-	template<> void Set<std::string>(int index, std::string&& value)
+	template<> void Set<std::string>(size_t index, std::string value)
 	{
 		if (index >= nlhs_)
 			return;
 		plhs_[index] = ::mxCreateString(value.c_str());
 	}
-	template<> void Set<std::string&>(int index, std::string& value)
+	template<> void Set<const std::string&>(size_t index, const std::string& value)
 	{
 		if (index >= nlhs_)
 			return;
 		plhs_[index] = ::mxCreateString(value.c_str());
 	}
-	template<> void Set<bool>(int index, bool&& value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = ::mxCreateLogicalScalar(value);
-	}
-	template<> void Set<bool&>(int index, bool& value)
+	template<> void Set<bool>(size_t index, bool value)
 	{
 		if (index >= nlhs_)
 			return;
@@ -178,12 +183,12 @@ public:
 	}
 private:
 	char buffer_[256];
-	const unsigned int shift_;
-	const int nlhs_;
+	const size_t shift_;
+	const size_t nlhs_;
 	mxArray** const plhs_;
-	const int nrhs_;
+	const size_t nrhs_;
 	const mxArray ** const prhs_;
-	void AssertParamIndex(int index)
+	void AssertParamIndex(size_t index)
 	{
 		if (index < 0)
 		{

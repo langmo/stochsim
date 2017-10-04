@@ -2,9 +2,12 @@
 #include "stochsim_interfaces.h"
 #include <vector>
 #include <memory>
+#include <map>
+#include <functional>
 #include <sstream>
 #include <algorithm>
 #include "ReactionRate.h"
+#include "expression.h"
 namespace stochsim
 {
 	/// <summary>
@@ -26,22 +29,22 @@ namespace stochsim
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
 			const bool modifier_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) noexcept : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
 			{
 			}
 		};
 	public:
-		PropensityReaction(std::string name, double rateConstant) : name_(std::move(name)), rateConstant_(rateConstant), rateEquation_("")
+		PropensityReaction(std::string name, double rateConstant) noexcept : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}
-		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(0), rateEquation_(rateEquation)
+		PropensityReaction(std::string name, std::unique_ptr<const expression::expression_base> rateEquation) noexcept : name_(std::move(name)), rateConstant_(0), rateEquation_(std::move(rateEquation))
 		{
 		}
 		/// <summary>
 		/// Returns all reactants of the reaction. Modifiers and Transformees are not considered to be reactants.
 		/// </summary>
 		/// <returns>Reactants of reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetReactants() const
+		stochsim::Collection<stochsim::ReactionElement> GetReactants() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& reactant : reactants_)
@@ -57,7 +60,7 @@ namespace stochsim
 		/// Returns all products of the reaction. Modifiers and Transformees are not considered to be products.
 		/// </summary>
 		/// <returns>Products of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		stochsim::Collection<stochsim::ReactionElement> GetProducts() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : products_)
@@ -76,7 +79,7 @@ namespace stochsim
 		/// dependent.
 		/// </summary>
 		/// <returns>Transformees of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetTransformees() const
+		stochsim::Collection<stochsim::ReactionElement> GetTransformees() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : products_)
@@ -93,7 +96,7 @@ namespace stochsim
 		/// neither increased or decreased when the reaction fires.
 		/// </summary>
 		/// <returns>Modifiers of the reaction</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetModifiers() const
+		stochsim::Collection<stochsim::ReactionElement> GetModifiers() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& reactant : reactants_)
@@ -269,7 +272,26 @@ namespace stochsim
 		}
 		virtual double ComputeRate(ISimInfo& simInfo) const override
 		{
-			if (rateEquation_.empty())
+			if (customRate_)
+			{
+				try
+				{
+					return customRate_(simInfo);
+				}
+				catch (const std::exception& ex)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Error while computing custom reaction rate of reaction " << name_ << ": " << ex.what();
+					throw std::exception(errorMessage.str().c_str());
+				}
+				catch (...)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Error while computing custom reaction rate of reaction " << name_ << ": Unexpected error.";
+					throw std::exception(errorMessage.str().c_str());
+				}
+			}
+			else
 			{
 				double rate = rateConstant_;
 				for (const auto& reactant : reactants_)
@@ -284,8 +306,6 @@ namespace stochsim
 				}
 				return rate;
 			}
-			else
-				return reactionRate_.CalculateRate(simInfo);
 		}
 		virtual std::string GetName() const override
 		{
@@ -293,23 +313,28 @@ namespace stochsim
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			if (rateEquation_.empty())
-				return;
-			std::vector<std::shared_ptr<IState>> reactantStates;
-			std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantStates), [](ReactionElementWithModifiers& element) -> const std::shared_ptr<IState>& {return element.state_; });
-			reactionRate_.Initialize(rateEquation_, reactantStates);
+			if (rateEquation_)
+			{
+				std::vector<std::shared_ptr<IState>> reactantsPtrs;
+				std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantsPtrs),
+					[](const ReactionElementWithModifiers& reactant) -> std::shared_ptr<IState> {return reactant.state_; });
+
+				customRate_ = ReactionRate(rateEquation_.get(), reactantsPtrs);
+			}
+			else
+				customRate_ = ReactionRate();
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
-			// do nothing.
+			customRate_ = ReactionRate();
 		}
 		/// <summary>
 		/// Returns the rate constant of this reaction. If this reaction depends on a custom rate equation instead of a rate constant, returns -1.
 		/// </summary>
 		/// <returns>Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants.</returns>
-		double GetRateConstant() const
+		double GetRateConstant() const noexcept
 		{
-			if (rateEquation_.empty())
+			if (!rateEquation_)
 				return rateConstant_;
 			else
 				return -1;
@@ -318,19 +343,19 @@ namespace stochsim
 		/// Sets the rate constant of this reaction. Resets any custom rate equation if defined.
 		/// </summary>
 		/// <param name="rateConstant">Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants</param>
-		void SetRateConstant(double rateConstant)
+		void SetRateConstant(double rateConstant) noexcept
 		{
-			rateEquation_ = "";
 			rateConstant_ = rateConstant;
+			rateEquation_ = nullptr;
 		}
 
 		/// <summary>
-		/// Returns the rate equation of this reaction. If this reaction does not have a custom rate equation but instead follows standard mass action kinetics, returns an empty string.
+		/// Returns the rate equation of this reaction. If this reaction does not have a custom rate equation but instead follows standard mass action kinetics, returns a nullptr.
 		/// </summary>
-		/// <returns>Custom rate equation of reaction. Unit is one divided by simulation time.</returns>
-		std::string GetRateEquation() const
+		/// <returns>Custom rate equation of reaction.</returns>
+		const expression::expression_base* GetRateEquation() const noexcept
 		{
-			return rateEquation_;
+			return rateEquation_.get();
 		}
 		/// <summary>
 		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
@@ -339,16 +364,16 @@ namespace stochsim
 		/// during evaluation. To deactivate the usage of a custom rate equation again, simply define a rate constant for this reaction (i.e. call SetRateConstant(...)).
 		/// </summary>
 		/// <param name="rateEquation">Custom reaction rate equation.</param>
-		void SetRateEquation(std::string rateEquation)
+		void SetRateEquation(std::unique_ptr<const expression::expression_base> rateEquation) noexcept
 		{
 			rateConstant_ = 0;
 			rateEquation_ = std::move(rateEquation);
 		}
 	private:
-		ReactionRate reactionRate_;
+		ReactionRate customRate_;
 		double rateConstant_;
 		const std::string name_;
-		std::string rateEquation_;
+		std::unique_ptr<const expression::expression_base> rateEquation_;
 		std::vector<ReactionElementWithModifiers> reactants_;
 		std::vector<ReactionElementWithModifiers> products_;
 	};

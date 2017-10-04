@@ -124,7 +124,9 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		if (params.IsString(1))
 		{
 			std::string rateEquation = params.Get<std::string>(1);
-			reaction = CreateReaction<stochsim::PropensityReaction>(name, rateEquation);
+			//reaction = CreateReaction<stochsim::PropensityReaction>(name, rateEquation);
+			//TODO: implement
+			throw std::exception("Yet not implemented (CreatePropensityReaction).");
 		}
 		else
 		{
@@ -523,12 +525,14 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	else if (methodName == "SetRateEquation")
 	{
 		auto rateEquation = params.Get<std::string>(0);
-		reaction->SetRateEquation(rateEquation);
+		//reaction->SetRateEquation(rateEquation);
+		//TODO: implement
+		throw std::exception("Not implemented.");
 	}
 	else if (methodName == "GetRateEquation")
 	{
 		auto rateEquation = reaction->GetRateEquation();
-		params.Set(0, rateEquation);
+		params.Set(0, rateEquation->toCmdl());
 	}
 	else
 	{

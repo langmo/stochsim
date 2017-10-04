@@ -4,115 +4,105 @@
 #include <string>
 #include <codecvt>
 #include <memory>
+#include "expression.h"
+#include <map>
 namespace stochsim
 {
 	/// <summary>
-	/// A reaction rate is a formula stored as a string, which can be evaluated to obtain the reaction rate as a double value.
-	/// The string may contain typical math functions like min, sqrt and similar, as well as variables having the name of the reactants of the reaction.
+	/// A custom reaction rate is a formula stored as a mathematical expression, which can be evaluated to obtain the reaction rate as a double value.
+	/// The expression may contain variables with the names of the reactants of the reaction.
 	/// </summary>
 	class ReactionRate
 	{
 	public:
 		/// <summary>
-		/// Default constructor. Before usage, Initialize(...) must be called.
+		/// Default constructor.
+		/// Sets the reaction rate to zero.
 		/// </summary>
-		ReactionRate()
+		ReactionRate() noexcept
 		{
-			// do nothing.
 		}
 		/// <summary>
-		/// Constructor automatically calling Initialize(...).
-		/// Same as
-		/// <code>
-		/// auto rate = ReactionRate();
-		/// rate.Initialize(rateEquation, reactants);
-		/// </code>
+		/// Constructor.
+		/// Sets the reaction rate expression and all reactants of the reaction. The expression may contain variables with the names of the reactants of the reaction.
 		/// </summary>
-		/// <param name="rateEquation">The equation this reaction rate implements.</param>
-		/// <param name="reactants">The reactants of this rate. Only the names of these species might occur in the rate equation.</param>
-		template<class E, class R>  ReactionRate(E rateEquation, R reactants)
+		/// <param name="rateExpression">Custom reaction rate expression.</param>
+		/// <param name="reactants">Reactants of the reaction.</param>
+		ReactionRate(const expression::expression_base* rateExpression, const std::vector<std::shared_ptr<IState>>& reactants)
 		{
-			Initialize(std::forward<E>(rateEquation), std::forward<R>(reactants));
+			std::map<std::string, std::function<size_t()>> varMap;
+			for (auto& reactant : reactants)
+			{
+				varMap[reactant->GetName()] = std::bind(&IState::Num, reactant);
+			}
+			boundRateExpession_ = expression::bind_variables(rateExpression, std::move(varMap));
 		}
 		/// <summary>
-		/// Initializes the reaction rate.
+		/// Copy constructor.
 		/// </summary>
-		/// <param name="rateEquation">The equation this reaction rate implements.</param>
-		/// <param name="reactants">The reactants of this rate. Only the names of these species might occur in the rate equation.</param>
-		template<class E,class R> void Initialize(E rateEquation, R reactants) 
+		/// <param name="other">Reation rate to copy.</param>
+		ReactionRate(const ReactionRate& other)
 		{
-			parser_.ClearVar();
-			reactants_ = std::forward<R>(reactants);
-			molecularNumbers_.resize(reactants_.size());
-			for (std::vector<std::shared_ptr<IState>>::size_type i = 0; i < reactants_.size(); i++)
-			{
-				auto stateName = reactants_[i]->GetName();
-				mu::string_type stateNameMu;
-				std::transform(stateName.begin(), stateName.end(), std::back_inserter(stateNameMu), [](std::string::value_type value) {return static_cast<mu::string_type::value_type>(value); });
-				try
-				{
-					parser_.DefineVar(stateNameMu, &molecularNumbers_[i]);
-				}
-				catch(mu::Parser::exception_type &e)
-				{
-					mu::string_type messageMu = e.GetMsg();
-					std::string message;
-					std::transform(messageMu.begin(), messageMu.end(), std::back_inserter(message), [](mu::string_type::value_type value) {return static_cast<std::string::value_type>(value); });
-
-					std::stringstream errorMessage;
-					errorMessage << "Could not set variable representing state "<<stateName<<" in parser for custom rate equation: " << message;
-					throw std::exception(errorMessage.str().c_str());
-				}
-			}
-			mu::string_type rateEquationMu;
-			std::copy(rateEquation.begin(), rateEquation.end(), std::back_inserter(rateEquationMu));
-
-			try
-			{
-				parser_.SetExpr(rateEquationMu);
-			}
-			catch (mu::Parser::exception_type &e)
-			{
-				mu::string_type messageMu = e.GetMsg();
-				std::string message;
-				std::transform(messageMu.begin(), messageMu.end(), std::back_inserter(message), [](mu::string_type::value_type value) {return static_cast<std::string::value_type>(value); });
-
-				std::stringstream errorMessage;
-				errorMessage << "Could not parse custom rate equation: " << message;
-				throw std::exception(errorMessage.str().c_str());
-			}
-			
+			boundRateExpession_ = other.boundRateExpession_->clone();
 		}
+		/// <summary>
+		/// Move constructor.
+		/// </summary>
+		/// <param name="other">Reaction rate to swap contents with.</param>
+		ReactionRate(ReactionRate&& other) noexcept
+		{
+			boundRateExpession_.swap(other.boundRateExpession_);
+		}
+		/// <summary>
+		/// Copy assignment operator.
+		/// </summary>
+		/// <param name="other">Reation rate to copy.</param>
+		/// <returns>Reference to this object.</returns>
+		ReactionRate& operator=(const ReactionRate& other)
+		{
+			boundRateExpession_ = other.boundRateExpession_->clone();
+			return *this;
+		}
+		/// <summary>
+		/// Move assignement operator.
+		/// </summary>
+		/// <param name="other">Reaction rate to swap contents with.</param>
+		/// <returns>Reference to this object.</returns>
+		ReactionRate& operator=(ReactionRate&& other) noexcept
+		{
+			boundRateExpession_.swap(other.boundRateExpession_);
+			return *this;
+		}
+		/// <summary>
+		/// Returns true if a custom reaction rate expression was set via an appropriate constructor, false otherwise.
+		/// </summary>
+		/// <returns>True if custom reaction rate.</returns>
+		operator bool() const noexcept
+		{
+			return boundRateExpession_.operator bool();
+		}
+
 		/// <summary>
 		/// Calculates the current rate of the reaction by solving the rate equation with the current species concentrations.
-		/// Must be called only after initialize has been called.
+		/// Throws a std::exception if rate could not be calculated.
 		/// </summary>
 		/// <param name="simInfo">Simulation context.</param>
 		/// <returns>The current rate of the reaction.</returns>
-		double CalculateRate(ISimInfo& simInfo) const
+		double operator()(ISimInfo& simInfo) const
 		{
-			try
+			static const auto lookup = [](const expression::identifier& variableName)->expression::number
 			{
-				for (std::vector<std::shared_ptr<IState>>::size_type i = 0; i < reactants_.size(); i++)
-				{
-					molecularNumbers_[i] = static_cast<mu::value_type>(reactants_[i]->Num());
-				}
-				return static_cast<double>(parser_.Eval());
-			}
-			catch (mu::Parser::exception_type &e)
-			{
-				mu::string_type messageMu = e.GetMsg();
-				std::string message;
-				std::transform(messageMu.begin(), messageMu.end(), std::back_inserter(message), [](mu::string_type::value_type value) {return static_cast<std::string::value_type>(value); });
-				
+				// We have already bound all known variables.
 				std::stringstream errorMessage;
-				errorMessage << "Could not evaluate custom rate equation: "<< message;
+				errorMessage << "Variable with name \"" << variableName << "\" not defined.";
 				throw std::exception(errorMessage.str().c_str());
-			}
+			};
+			if (!operator bool())
+				throw std::exception("Custom reaction rate not set.");
+			return boundRateExpession_->eval(lookup);
 		}
 	private:
-		std::vector<std::shared_ptr<IState>> reactants_;
-		mutable std::vector<mu::value_type> molecularNumbers_;
-		mu::Parser parser_;
+		std::unique_ptr<expression::expression_base> boundRateExpession_;
 	};
 }
+
