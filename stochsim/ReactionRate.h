@@ -31,9 +31,9 @@ namespace stochsim
 		ReactionRate(const expression::expression_base* rateExpression, const std::vector<std::shared_ptr<IState>>& reactants)
 		{
 			std::map<std::string, std::function<size_t()>> varMap;
-			for (auto& reactant : reactants)
+			for (auto reactant : reactants)
 			{
-				varMap[reactant->GetName()] = std::bind(&IState::Num, reactant);
+				varMap[reactant->GetName()] = std::bind(&IState::Num, std::move(reactant));
 			}
 			boundRateExpession_ = expression::bind_variables(rateExpression, std::move(varMap));
 		}
@@ -90,16 +90,9 @@ namespace stochsim
 		/// <returns>The current rate of the reaction.</returns>
 		double operator()(ISimInfo& simInfo) const
 		{
-			static const auto lookup = [](const expression::identifier& variableName)->expression::number
-			{
-				// We have already bound all known variables.
-				std::stringstream errorMessage;
-				errorMessage << "Variable with name \"" << variableName << "\" not defined.";
-				throw std::exception(errorMessage.str().c_str());
-			};
 			if (!operator bool())
 				throw std::exception("Custom reaction rate not set.");
-			return boundRateExpession_->eval(lookup);
+			return boundRateExpession_->eval();
 		}
 	private:
 		std::unique_ptr<expression::expression_base> boundRateExpession_;

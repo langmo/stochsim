@@ -17,7 +17,7 @@ namespace stochsim
 	public:
 		CmdlCodecs() = delete;
 		/// <summary>
-		/// Returns c in [0-9].
+		/// Returns c in [0-9]. 
 		/// </summary>
 		/// <param name="c">Character to test.</param>
 		/// <returns>c in [0-9]</returns>
@@ -291,7 +291,7 @@ namespace stochsim
 		// Check for states which are choices.
 		for (auto& state : states)
 		{
-			auto expression = parseTree.variable_expression(state.first);
+			auto expression = parseTree.get_variable_expression(state.first);
 			if (dynamic_cast<const expression::conditional_expression*>(expression))
 			{
 				// TODO: Handle conditional.
@@ -302,7 +302,7 @@ namespace stochsim
 		// Create states
 		for (auto& state : states)
 		{
-			auto expression = parseTree.variable_expression(state.first);
+			auto expression = parseTree.get_variable_expression(state.first);
 			if (state.second.type_ == state_definition::type_choice)
 			{
 				// TODO: Handle conditional.
@@ -310,7 +310,7 @@ namespace stochsim
 			}
 			else
 			{
-				auto initialCondition = expression->eval(parseTree.get_lookup());
+				auto initialCondition = parseTree.get_expression_value(expression);
 				if (initialCondition + 0.5 < 0)
 				{
 					std::stringstream errorMessage;
@@ -330,11 +330,11 @@ namespace stochsim
 			}
 		}
 		// Create reactions
-		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier& variableName) -> const stochsim::expression::expression_base*
+		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier variableName) -> const stochsim::expression::expression_base*
 		{
 			// We want to simplify everything away which is not a state name, and not one of the standard variables.
 			if (states.find(variableName) == states.end())
-				return parseTree.variable_expression(variableName);
+				return parseTree.get_variable_expression(variableName);
 			std::stringstream errorMessage;
 			errorMessage << "Variable with name \"" << variableName << "\" not defined";
 			throw std::exception(errorMessage.str().c_str());

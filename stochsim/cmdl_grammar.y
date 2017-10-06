@@ -7,6 +7,7 @@
 %token_type {terminal_symbol*}
 %token_destructor {
 	delete $$;
+	$$ = nullptr;
 }
 %extra_argument {parse_tree* parseTree}
 %include {#include "cmdl_grammar_definitions.h"}
@@ -39,9 +40,11 @@
 		}
 		else
 		{
-			traceFile_ = fopen(errorFileName.c_str(), "w");
+			fopen_s(&traceFile_, errorFileName.c_str(), "w");
 			if(traceFile_)
-				ParseTrace(traceFile_, "test_");
+				ParseTrace(traceFile_, "cmdl_");
+			else
+				ParseTrace(0, "cmdl_");
 		}
 		try
 		{
@@ -58,6 +61,7 @@
 	}
 	stochsim::cmdl::parser::~parser()
 	{
+		ParseTrace(0, "cmdl_");
 		if(handle_)
 			ParseFree(handle_, free); 
 		handle_ = nullptr;
@@ -68,6 +72,10 @@
 
 	void stochsim::cmdl::parser::operator()(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
 	{
+		if (!handle_)
+		{
+			throw std::exception("Parser handle invalid.");
+		}
 		try
 		{
 			Parse(handle_, tokenID, token, &parseTree);
@@ -134,21 +142,23 @@ statements ::= .
 // A statement can either be a variable assignment or a reaction
 statement ::= assignment.
 statement ::= reaction.
-statement ::= freeExpression.
 statement ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines
 
 // Basic mathematical expressions
 %type expression {expression_base*}
 %destructor expression { 
 	delete $$;
+	$$ = nullptr;
 }
-expression(e) ::= IDENTIFIER(I). {
+expression(e) ::= IDENTIFIER(I). [SEMICOLON] {
 	e = new variable_expression(*I);
 	delete I;
+	I = nullptr;
 }
-expression(e) ::= VALUE(V). {
+expression(e) ::= VALUE(V). [SEMICOLON]{
 	e = new number_expression(*V);
 	delete V;
+	V = nullptr;
 }
 expression(e_new) ::= LEFT_ROUND expression(e_old) RIGHT_ROUND. {
 	e_new = e_old;
@@ -159,6 +169,7 @@ expression(e_new) ::= LEFT_ROUND expression(e_old) RIGHT_ROUND. {
 %type sum {sum_expression*}
 %destructor sum { 
 	delete $$;
+	$$ = nullptr;
 }
 expression(e) ::= sum(s). [SEMICOLON] {
 	e = s;
@@ -187,6 +198,7 @@ sum(s_new) ::= sum(s_old) MINUS expression(e). {
 %type product {product_expression*}
 %destructor product { 
 	delete $$;
+	$$ = nullptr;
 }
 expression(e) ::= product(p). [SEMICOLON] {
 	e = p;
@@ -216,6 +228,7 @@ product(p_new) ::= product(p_old) DIVIDE expression(e). {
 %type conjunction {conjunction_expression*}
 %destructor conjunction { 
 	delete $$;
+	$$ = nullptr;
 }
 expression(e) ::= conjunction(c). [SEMICOLON] {
 	e = c;
@@ -235,6 +248,7 @@ conjunction(c_new) ::= conjunction(c_old) AND expression(e). {
 %type disjunction {disjunction_expression*}
 %destructor disjunction { 
 	delete $$;
+	$$ = nullptr;
 }
 expression(e) ::= disjunction(c). [SEMICOLON] {
 	e = c;
@@ -295,8 +309,9 @@ assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
 	I = nullptr;
 	e = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), e_temp->eval(parseTree->get_lookup()));
+	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
+	e_temp = nullptr;
 }
 assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
@@ -321,8 +336,9 @@ reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA expressi
 	products = nullptr;
 	e = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), e_temp->eval(parseTree->get_lookup()));
+	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
+	e_temp = nullptr;
 }
 reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
@@ -340,19 +356,53 @@ reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA LEFT_SQU
 %type reactionSide {sum_expression*}
 %destructor reactionSide { 
 	delete $$;
-}
-reactionSide(rs) ::= sum(s). [PLUS] {
-	rs = s;
-}
-reactionSide(rs) ::= expression(e). [SEMICOLON] {
-	rs = new sum_expression();
-	rs->push_back(false, std::unique_ptr<expression_base>(e));
+	$$ = nullptr;
 }
 reactionSide(rs) ::= . [SEMICOLON] {
 	rs = new sum_expression();
 }
+reactionSide(rs) ::= reactionComponent(rc). [MULTIPLY]{
+	rs = new sum_expression();
+	rs->push_back(false, std::unique_ptr<product_expression>(rc));
+}
+reactionSide(rs_new) ::= reactionSide(rs_old) PLUS reactionComponent(rc). [MULTIPLY]{
+	rs_new = rs_old;
+	rs_new->push_back(false, std::unique_ptr<product_expression>(rc));
+}
 
-// free expressions
-freeExpression ::= expression SEMICOLON.
+reactionSide ::= expression(e). [PLUS] {
+	delete(e);
+	e=nullptr;
+	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
+	delete(e);
+	e=nullptr;
+	delete(rs_old);
+	rs_old=nullptr;
+	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+
+%type reactionComponent {product_expression*}
+%destructor reactionComponent { 
+	delete $$;
+	$$ = nullptr;
+}
+reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
+	rc = new product_expression();
+	rc->push_back(false, std::make_unique<number_expression>(1));
+	rc->push_back(false, std::make_unique<variable_expression>(*I));
+	delete I;
+	I = nullptr;
+}
+
+reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I). [EXP]{
+	rc = new product_expression();
+	rc->push_back(false, std::unique_ptr<expression_base>(e));
+	rc->push_back(false, std::make_unique<variable_expression>(*I));
+	delete I;
+	I = nullptr;
+}
+
 
 

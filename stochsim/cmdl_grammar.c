@@ -24,17 +24,17 @@
 */
 #include <stdio.h>
 /************ Begin %include sections from the grammar ************************/
-#line 12 "cmdl_grammar.y"
-#include "cmdl_grammar_definitions.h"
 #line 13 "cmdl_grammar.y"
-#include  <assert.h>
+#include "cmdl_grammar_definitions.h"
 #line 14 "cmdl_grammar.y"
-using namespace stochsim::expression;
+#include  <assert.h>
 #line 15 "cmdl_grammar.y"
-using namespace stochsim::cmdl;
+using namespace stochsim::expression;
 #line 16 "cmdl_grammar.y"
+using namespace stochsim::cmdl;
+#line 17 "cmdl_grammar.y"
 #undef NDEBUG
-#line 18 "cmdl_grammar.y"
+#line 19 "cmdl_grammar.y"
 
 	// Forward declaration parser functions.
 	void Parse(
@@ -59,9 +59,11 @@ using namespace stochsim::cmdl;
 		}
 		else
 		{
-			traceFile_ = fopen(errorFileName.c_str(), "w");
+			fopen_s(&traceFile_, errorFileName.c_str(), "w");
 			if(traceFile_)
-				ParseTrace(traceFile_, "test_");
+				ParseTrace(traceFile_, "cmdl_");
+			else
+				ParseTrace(0, "cmdl_");
 		}
 		try
 		{
@@ -78,6 +80,7 @@ using namespace stochsim::cmdl;
 	}
 	stochsim::cmdl::parser::~parser()
 	{
+		ParseTrace(0, "cmdl_");
 		if(handle_)
 			ParseFree(handle_, free); 
 		handle_ = nullptr;
@@ -88,6 +91,10 @@ using namespace stochsim::cmdl;
 
 	void stochsim::cmdl::parser::operator()(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
 	{
+		if (!handle_)
+		{
+			throw std::exception("Parser handle invalid.");
+		}
 		try
 		{
 			Parse(handle_, tokenID, token, &parseTree);
@@ -101,7 +108,7 @@ using namespace stochsim::cmdl;
 			throw std::exception("Unknown error");
 		}
 	}
-#line 105 "cmdl_grammar.c"
+#line 112 "cmdl_grammar.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -183,16 +190,16 @@ typedef union {
 #define ParseARG_STORE yypParser->parseTree = parseTree
 #define YYERRORSYMBOL 25
 #define YYERRSYMDT yy77
-#define YYNSTATE             67
-#define YYNRULE              43
-#define YY_MAX_SHIFT         66
-#define YY_MIN_SHIFTREDUCE   80
-#define YY_MAX_SHIFTREDUCE   122
-#define YY_MIN_REDUCE        123
-#define YY_MAX_REDUCE        165
-#define YY_ERROR_ACTION      166
-#define YY_ACCEPT_ACTION     167
-#define YY_NO_ACTION         168
+#define YYNSTATE             70
+#define YYNRULE              45
+#define YY_MAX_SHIFT         69
+#define YY_MIN_SHIFTREDUCE   83
+#define YY_MAX_SHIFTREDUCE   127
+#define YY_MIN_REDUCE        128
+#define YY_MAX_REDUCE        172
+#define YY_ERROR_ACTION      173
+#define YY_ACCEPT_ACTION     174
+#define YY_NO_ACTION         175
 /************* End control #defines *******************************************/
 
 /* Define the yytestcase() macro to be a no-op if is not already defined
@@ -264,113 +271,116 @@ typedef union {
 **  yy_default[]       Default action for each state.
 **
 *********** Begin parsing tables **********************************************/
-#define YY_ACTTAB_COUNT (358)
+#define YY_ACTTAB_COUNT (361)
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */    22,   21,   19,   18,   17,   16,   15,   14,   27,   25,
- /*    10 */    24,   23,   20,   35,   46,   51,   61,   60,   54,  111,
- /*    20 */    53,    3,  110,   22,   21,   19,   18,   17,   16,   15,
- /*    30 */    14,   27,   25,   24,   23,   20,  122,   22,   21,   19,
- /*    40 */    18,   17,   16,   15,   14,   27,   25,   24,   23,   20,
- /*    50 */    22,   21,   19,   18,   17,   16,   15,   14,   27,   25,
- /*    60 */    24,   23,   20,   30,   52,   51,   61,   60,  167,    1,
- /*    70 */    56,  109,  108,   22,   21,   19,   18,   17,   16,   15,
- /*    80 */    14,   27,   25,   24,   23,   20,   22,   21,   19,   18,
- /*    90 */    17,   16,   15,   14,   27,   25,   24,   23,   20,   24,
- /*   100 */    23,   20,    2,   82,   13,    8,   22,   21,   19,   18,
- /*   110 */    17,   16,   15,   14,   27,   25,   24,   23,   20,   21,
- /*   120 */    19,   18,   17,   16,   15,   14,   27,   25,   24,   23,
- /*   130 */    20,   20,  159,   26,    7,  159,  159,  159,  159,   31,
- /*   140 */    46,   51,   61,   60,   55,   19,   18,   17,   16,   15,
- /*   150 */    14,   27,   25,   24,   23,   20,  166,  166,  166,  166,
- /*   160 */   166,  166,   27,   25,   24,   23,   20,  158,   11,    9,
- /*   170 */    12,    4,  125,   10,   80,   81,   28,  125,    9,    5,
- /*   180 */   125,  125,   10,   66,   81,   28,    9,  125,  125,  125,
- /*   190 */    10,   80,   81,   28,    9,  125,    6,  125,   10,   80,
- /*   200 */    81,   28,   33,   52,   51,   61,   60,  125,   29,   52,
- /*   210 */    51,   61,   60,  125,  125,  125,   32,   52,   51,   61,
- /*   220 */    60,  125,  125,   48,   52,   51,   61,   60,  125,   57,
- /*   230 */    52,   51,   61,   60,   58,   52,   51,   61,   60,   59,
- /*   240 */    52,   51,   61,   60,   38,   52,   51,   61,   60,   36,
- /*   250 */    52,   51,   61,   60,  125,  125,   62,   52,   51,   61,
- /*   260 */    60,  125,   39,   52,   51,   61,   60,   40,   52,   51,
- /*   270 */    61,   60,   41,   52,   51,   61,   60,   42,   52,   51,
- /*   280 */    61,   60,   43,   52,   51,   61,   60,  125,  125,   44,
- /*   290 */    52,   51,   61,   60,  125,   63,   52,   51,   61,   60,
- /*   300 */    45,   52,   51,   61,   60,   37,   52,   51,   61,   60,
- /*   310 */    64,   52,   51,   61,   60,   65,   52,   51,   61,   60,
- /*   320 */   125,  125,   49,   52,   51,   61,   60,  125,   50,   52,
- /*   330 */    51,   61,   60,   47,   52,   51,   61,   60,   34,   52,
- /*   340 */    51,   61,   60,   26,    7,  125,  125,  125,  125,  125,
- /*   350 */   125,  125,  125,  125,  125,  125,  155,  155,
+ /*     0 */    24,   23,   21,   20,   19,   18,   17,   16,   29,   27,
+ /*    10 */    26,   25,   22,   37,   58,   57,   65,   64,   55,  161,
+ /*    20 */    59,  114,  113,   24,   23,   21,   20,   19,   18,   17,
+ /*    30 */    16,   29,   27,   26,   25,   22,   24,   23,   21,   20,
+ /*    40 */    19,   18,   17,   16,   29,   27,   26,   25,   22,   36,
+ /*    50 */    58,   57,   65,   64,  112,  162,   60,   22,  111,   24,
+ /*    60 */    23,   21,   20,   19,   18,   17,   16,   29,   27,   26,
+ /*    70 */    25,   22,   24,   23,   21,   20,   19,   18,   17,   16,
+ /*    80 */    29,   27,   26,   25,   22,   26,   25,   22,   13,   85,
+ /*    90 */   174,    1,   24,   23,   21,   20,   19,   18,   17,   16,
+ /*   100 */    14,   27,    7,   25,   22,   23,   21,   20,   19,   18,
+ /*   110 */    17,   16,   29,   27,   26,   25,   22,  130,  168,   15,
+ /*   120 */    10,  168,  168,  168,   37,   58,   57,   65,   64,   56,
+ /*   130 */   161,   21,   20,   19,   18,   17,   16,   29,   27,   26,
+ /*   140 */    25,   22,  173,  173,  173,  173,  173,  173,   29,   27,
+ /*   150 */    26,   25,   22,  167,  130,   11,   28,    9,  130,   12,
+ /*   160 */    83,   84,   30,  130,   11,    6,  130,  130,   12,   54,
+ /*   170 */    84,   30,   11,  130,  130,  130,   12,   83,   84,   30,
+ /*   180 */    11,  130,    8,  130,   12,   48,   84,   30,  165,  130,
+ /*   190 */   130,   32,   58,   57,   65,   64,   34,   58,   57,   65,
+ /*   200 */    64,  165,  165,   11,  166,  130,  130,   12,   83,   84,
+ /*   210 */    30,   31,   58,   57,   65,   64,  130,  166,  166,   11,
+ /*   220 */   130,  130,  130,   12,   49,   84,   30,   69,   58,   57,
+ /*   230 */    65,   64,   33,   58,   57,   65,   64,    3,  130,   51,
+ /*   240 */    58,   57,   65,   64,   61,   58,   57,   65,   64,  130,
+ /*   250 */     2,   62,   58,   57,   65,   64,   63,   58,   57,   65,
+ /*   260 */    64,   40,   58,   57,   65,   64,   38,   58,   57,   65,
+ /*   270 */    64,   66,   58,   57,   65,   64,   41,   58,   57,   65,
+ /*   280 */    64,  130,  130,   42,   58,   57,   65,   64,   43,   58,
+ /*   290 */    57,   65,   64,   44,   58,   57,   65,   64,   45,   58,
+ /*   300 */    57,   65,   64,   46,   58,   57,   65,   64,   67,   58,
+ /*   310 */    57,   65,   64,  130,  130,   47,   58,   57,   65,   64,
+ /*   320 */    39,   58,   57,   65,   64,   68,   58,   57,   65,   64,
+ /*   330 */    52,   58,   57,   65,   64,   53,   58,   57,   65,   64,
+ /*   340 */    50,   58,   57,   65,   64,  165,    3,   35,   58,   57,
+ /*   350 */    65,   64,  130,  130,  130,    5,  130,  130,  165,  130,
+ /*   360 */     4,
 };
 static const YYCODETYPE yy_lookahead[] = {
  /*     0 */     2,    3,    4,    5,    6,    7,    8,    9,   10,   11,
- /*    10 */    12,   13,   14,   32,   33,   34,   35,   36,   37,    1,
- /*    20 */    22,   24,    1,    2,    3,    4,    5,    6,    7,    8,
- /*    30 */     9,   10,   11,   12,   13,   14,    1,    2,    3,    4,
- /*    40 */     5,    6,    7,    8,    9,   10,   11,   12,   13,   14,
- /*    50 */     2,    3,    4,    5,    6,    7,    8,    9,   10,   11,
- /*    60 */    12,   13,   14,   32,   33,   34,   35,   36,   26,   27,
- /*    70 */    22,    1,    1,    2,    3,    4,    5,    6,    7,    8,
- /*    80 */     9,   10,   11,   12,   13,   14,    2,    3,    4,    5,
- /*    90 */     6,    7,    8,    9,   10,   11,   12,   13,   14,   12,
- /*   100 */    13,   14,   23,   19,   12,   13,    2,    3,    4,    5,
- /*   110 */     6,    7,    8,    9,   10,   11,   12,   13,   14,    3,
- /*   120 */     4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
- /*   130 */    14,   14,   25,   10,   11,   28,   29,   30,   31,   32,
- /*   140 */    33,   34,   35,   36,   37,    4,    5,    6,    7,    8,
- /*   150 */     9,   10,   11,   12,   13,   14,    4,    5,    6,    7,
- /*   160 */     8,    9,   10,   11,   12,   13,   14,    0,    3,   11,
- /*   170 */     2,   20,   38,   15,   16,   17,   18,   38,   11,   21,
- /*   180 */    38,   38,   15,   16,   17,   18,   11,   38,   38,   38,
- /*   190 */    15,   16,   17,   18,   11,   38,   21,   38,   15,   16,
- /*   200 */    17,   18,   32,   33,   34,   35,   36,   38,   32,   33,
- /*   210 */    34,   35,   36,   38,   38,   38,   32,   33,   34,   35,
- /*   220 */    36,   38,   38,   32,   33,   34,   35,   36,   38,   32,
- /*   230 */    33,   34,   35,   36,   32,   33,   34,   35,   36,   32,
- /*   240 */    33,   34,   35,   36,   32,   33,   34,   35,   36,   32,
- /*   250 */    33,   34,   35,   36,   38,   38,   32,   33,   34,   35,
- /*   260 */    36,   38,   32,   33,   34,   35,   36,   32,   33,   34,
- /*   270 */    35,   36,   32,   33,   34,   35,   36,   32,   33,   34,
- /*   280 */    35,   36,   32,   33,   34,   35,   36,   38,   38,   32,
- /*   290 */    33,   34,   35,   36,   38,   32,   33,   34,   35,   36,
- /*   300 */    32,   33,   34,   35,   36,   32,   33,   34,   35,   36,
- /*   310 */    32,   33,   34,   35,   36,   32,   33,   34,   35,   36,
- /*   320 */    38,   38,   32,   33,   34,   35,   36,   38,   32,   33,
- /*   330 */    34,   35,   36,   32,   33,   34,   35,   36,   32,   33,
- /*   340 */    34,   35,   36,   10,   11,   38,   38,   38,   38,   38,
- /*   350 */    38,   38,   38,   38,   38,   38,   23,   24,
+ /*    10 */    12,   13,   14,   31,   32,   33,   34,   35,   36,   37,
+ /*    20 */    22,    1,    1,    2,    3,    4,    5,    6,    7,    8,
+ /*    30 */     9,   10,   11,   12,   13,   14,    2,    3,    4,    5,
+ /*    40 */     6,    7,    8,    9,   10,   11,   12,   13,   14,   31,
+ /*    50 */    32,   33,   34,   35,    1,   37,   22,   14,    1,    2,
+ /*    60 */     3,    4,    5,    6,    7,    8,    9,   10,   11,   12,
+ /*    70 */    13,   14,    2,    3,    4,    5,    6,    7,    8,    9,
+ /*    80 */    10,   11,   12,   13,   14,   12,   13,   14,    3,   19,
+ /*    90 */    26,   27,    2,    3,    4,    5,    6,    7,    8,    9,
+ /*   100 */     2,   11,   12,   13,   14,    3,    4,    5,    6,    7,
+ /*   110 */     8,    9,   10,   11,   12,   13,   14,   38,   25,   12,
+ /*   120 */    13,   28,   29,   30,   31,   32,   33,   34,   35,   36,
+ /*   130 */    37,    4,    5,    6,    7,    8,    9,   10,   11,   12,
+ /*   140 */    13,   14,    4,    5,    6,    7,    8,    9,   10,   11,
+ /*   150 */    12,   13,   14,    0,   38,   11,   10,   11,   38,   15,
+ /*   160 */    16,   17,   18,   38,   11,   21,   38,   38,   15,   16,
+ /*   170 */    17,   18,   11,   38,   38,   38,   15,   16,   17,   18,
+ /*   180 */    11,   38,   21,   38,   15,   16,   17,   18,   10,   38,
+ /*   190 */    38,   31,   32,   33,   34,   35,   31,   32,   33,   34,
+ /*   200 */    35,   23,   24,   11,   10,   38,   38,   15,   16,   17,
+ /*   210 */    18,   31,   32,   33,   34,   35,   38,   23,   24,   11,
+ /*   220 */    38,   38,   38,   15,   16,   17,   18,   31,   32,   33,
+ /*   230 */    34,   35,   31,   32,   33,   34,   35,   10,   38,   31,
+ /*   240 */    32,   33,   34,   35,   31,   32,   33,   34,   35,   38,
+ /*   250 */    23,   31,   32,   33,   34,   35,   31,   32,   33,   34,
+ /*   260 */    35,   31,   32,   33,   34,   35,   31,   32,   33,   34,
+ /*   270 */    35,   31,   32,   33,   34,   35,   31,   32,   33,   34,
+ /*   280 */    35,   38,   38,   31,   32,   33,   34,   35,   31,   32,
+ /*   290 */    33,   34,   35,   31,   32,   33,   34,   35,   31,   32,
+ /*   300 */    33,   34,   35,   31,   32,   33,   34,   35,   31,   32,
+ /*   310 */    33,   34,   35,   38,   38,   31,   32,   33,   34,   35,
+ /*   320 */    31,   32,   33,   34,   35,   31,   32,   33,   34,   35,
+ /*   330 */    31,   32,   33,   34,   35,   31,   32,   33,   34,   35,
+ /*   340 */    31,   32,   33,   34,   35,   10,   10,   31,   32,   33,
+ /*   350 */    34,   35,   38,   38,   38,   20,   38,   38,   23,   38,
+ /*   360 */    24,
 };
-#define YY_SHIFT_USE_DFLT (358)
-#define YY_SHIFT_COUNT    (66)
-#define YY_SHIFT_MIN      (-3)
-#define YY_SHIFT_MAX      (333)
+#define YY_SHIFT_USE_DFLT (361)
+#define YY_SHIFT_COUNT    (69)
+#define YY_SHIFT_MIN      (-2)
+#define YY_SHIFT_MAX      (336)
 static const short yy_shift_ofst[] = {
- /*     0 */   358,  167,  183,  158,  175,  183,  183,  183,  183,  183,
- /*    10 */   183,  183,  183,  183,  183,  183,  183,  183,  183,  183,
- /*    20 */   183,  183,  183,  183,  183,  183,  183,  183,  183,   -2,
- /*    30 */    21,   35,   48,   71,   84,  104,  116,  116,  141,  152,
- /*    40 */   152,  152,  152,  152,  152,  141,  333,   87,   87,   87,
- /*    50 */    87,   92,  123,   18,   -3,   79,   70,  117,  117,  117,
- /*    60 */   165,  168,  117,  117,  117,  117,  151,
+ /*     0 */   361,  153,  169,  169,  144,  161,  192,  208,  192,  192,
+ /*    10 */   192,  192,  192,  192,  192,  192,  192,  192,  192,  192,
+ /*    20 */   192,  192,  192,  192,  192,  192,  192,  192,  192,  192,
+ /*    30 */   192,   -2,   21,   34,   57,   70,   90,   90,  102,  102,
+ /*    40 */   127,  138,  138,  138,  138,  138,  138,  127,  178,  194,
+ /*    50 */    73,   73,   73,   73,  335,  336,  227,  107,  146,   20,
+ /*    60 */    53,   43,   43,   43,   85,   98,   43,   43,   43,   43,
 };
-#define YY_REDUCE_USE_DFLT (-20)
-#define YY_REDUCE_COUNT (28)
-#define YY_REDUCE_MIN   (-19)
-#define YY_REDUCE_MAX   (306)
+#define YY_REDUCE_USE_DFLT (-19)
+#define YY_REDUCE_COUNT (30)
+#define YY_REDUCE_MIN   (-18)
+#define YY_REDUCE_MAX   (316)
 static const short yy_reduce_ofst[] = {
- /*     0 */    42,  107,  -19,   31,  170,  176,  184,  191,  197,  202,
- /*    10 */   207,  212,  217,  224,  230,  235,  240,  245,  250,  257,
- /*    20 */   263,  268,  273,  278,  283,  290,  296,  301,  306,
+ /*     0 */    64,   93,  -18,   18,  160,  165,  180,  196,  201,  208,
+ /*    10 */   213,  220,  225,  230,  235,  240,  245,  252,  257,  262,
+ /*    20 */   267,  272,  277,  284,  289,  294,  196,  299,  304,  309,
+ /*    30 */   316,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */   160,  157,  157,  166,  166,  166,  166,  166,  166,  166,
- /*    10 */   166,  166,  166,  166,  166,  166,  166,  166,  166,  166,
- /*    20 */   166,  166,  166,  166,  166,  166,  166,  166,  166,  166,
- /*    30 */   166,  156,  166,  166,  166,  156,  138,  137,  141,  150,
- /*    40 */   149,  148,  147,  146,  145,  140,  126,  127,  130,  128,
- /*    50 */   129,  131,  126,  166,  166,  166,  166,  135,  143,  142,
- /*    60 */   139,  136,  134,  144,  133,  132,  123,
+ /*     0 */   169,  160,  160,  173,  173,  173,  173,  173,  173,  173,
+ /*    10 */   173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+ /*    20 */   173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
+ /*    30 */   173,  173,  173,  173,  173,  173,  164,  163,  143,  142,
+ /*    40 */   146,  155,  154,  153,  152,  151,  150,  145,  128,  128,
+ /*    50 */   132,  135,  133,  134,  128,  173,  173,  136,  131,  173,
+ /*    60 */   173,  140,  148,  147,  144,  141,  139,  149,  138,  137,
 };
 /********** End of lemon-generated parsing tables *****************************/
 
@@ -483,9 +493,9 @@ static const char *const yyTokenName[] = {
   "IDENTIFIER",    "VALUE",         "LEFT_ROUND",    "RIGHT_ROUND", 
   "ASSIGN",        "LEFT_SQUARE",   "RIGHT_SQUARE",  "ARROW",       
   "COMMA",         "error",         "model",         "statements",  
-  "statement",     "assignment",    "reaction",      "freeExpression",
-  "expression",    "sum",           "product",       "conjunction", 
-  "disjunction",   "reactionSide",
+  "statement",     "assignment",    "reaction",      "expression",  
+  "sum",           "product",       "conjunction",   "disjunction", 
+  "reactionSide",  "reactionComponent",
 };
 #endif /* NDEBUG */
 
@@ -525,17 +535,19 @@ static const char *const yyRuleName[] = {
  /*  29 */ "assignment ::= IDENTIFIER ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON",
  /*  30 */ "reaction ::= reactionSide ARROW reactionSide COMMA expression SEMICOLON",
  /*  31 */ "reaction ::= reactionSide ARROW reactionSide COMMA LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON",
- /*  32 */ "reactionSide ::= sum",
- /*  33 */ "reactionSide ::= expression",
- /*  34 */ "reactionSide ::=",
- /*  35 */ "model ::= statements",
- /*  36 */ "statements ::= statements statement",
- /*  37 */ "statements ::=",
- /*  38 */ "statement ::= assignment",
- /*  39 */ "statement ::= reaction",
- /*  40 */ "statement ::= freeExpression",
- /*  41 */ "statement ::= error",
- /*  42 */ "freeExpression ::= expression SEMICOLON",
+ /*  32 */ "reactionSide ::=",
+ /*  33 */ "reactionSide ::= reactionComponent",
+ /*  34 */ "reactionSide ::= reactionSide PLUS reactionComponent",
+ /*  35 */ "reactionSide ::= expression",
+ /*  36 */ "reactionSide ::= reactionSide PLUS expression",
+ /*  37 */ "reactionComponent ::= IDENTIFIER",
+ /*  38 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER",
+ /*  39 */ "model ::= statements",
+ /*  40 */ "statements ::= statements statement",
+ /*  41 */ "statements ::=",
+ /*  42 */ "statement ::= assignment",
+ /*  43 */ "statement ::= reaction",
+ /*  44 */ "statement ::= error",
 };
 #endif /* NDEBUG */
 
@@ -685,54 +697,61 @@ static void yy_destructor(
 #line 8 "cmdl_grammar.y"
 
 	delete (yypminor->yy0);
+	(yypminor->yy0) = nullptr;
 
-#line 690 "cmdl_grammar.c"
+#line 703 "cmdl_grammar.c"
 }
       break;
-    case 32: /* expression */
+    case 31: /* expression */
 {
-#line 142 "cmdl_grammar.y"
+#line 149 "cmdl_grammar.y"
  
 	delete (yypminor->yy53);
+	(yypminor->yy53) = nullptr;
 
-#line 699 "cmdl_grammar.c"
+#line 713 "cmdl_grammar.c"
 }
       break;
-    case 33: /* sum */
-    case 37: /* reactionSide */
+    case 32: /* sum */
+    case 36: /* reactionSide */
 {
-#line 160 "cmdl_grammar.y"
+#line 170 "cmdl_grammar.y"
  
 	delete (yypminor->yy43);
+	(yypminor->yy43) = nullptr;
 
-#line 709 "cmdl_grammar.c"
+#line 724 "cmdl_grammar.c"
 }
       break;
-    case 34: /* product */
+    case 33: /* product */
+    case 37: /* reactionComponent */
 {
-#line 188 "cmdl_grammar.y"
+#line 199 "cmdl_grammar.y"
  
 	delete (yypminor->yy47);
+	(yypminor->yy47) = nullptr;
 
-#line 718 "cmdl_grammar.c"
+#line 735 "cmdl_grammar.c"
 }
       break;
-    case 35: /* conjunction */
+    case 34: /* conjunction */
 {
-#line 217 "cmdl_grammar.y"
+#line 229 "cmdl_grammar.y"
  
 	delete (yypminor->yy4);
+	(yypminor->yy4) = nullptr;
 
-#line 727 "cmdl_grammar.c"
+#line 745 "cmdl_grammar.c"
 }
       break;
-    case 36: /* disjunction */
+    case 35: /* disjunction */
 {
-#line 236 "cmdl_grammar.y"
+#line 249 "cmdl_grammar.y"
  
 	delete (yypminor->yy72);
+	(yypminor->yy72) = nullptr;
 
-#line 736 "cmdl_grammar.c"
+#line 755 "cmdl_grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -913,7 +932,7 @@ static void yyStackOverflow(yyParser *yypParser){
 /******** Begin %stack_overflow code ******************************************/
 #line 5 "cmdl_grammar.y"
 throw std::exception("Parser stack overflow while parsing cmdl file.");
-#line 917 "cmdl_grammar.c"
+#line 936 "cmdl_grammar.c"
 /******** End %stack_overflow code ********************************************/
    ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
@@ -987,49 +1006,51 @@ static const struct {
   YYCODETYPE lhs;       /* Symbol on the left-hand side of the rule */
   signed char nrhs;     /* Negative of the number of RHS symbols in the rule */
 } yyRuleInfo[] = {
-  { 32, -1 },
-  { 32, -1 },
+  { 31, -1 },
+  { 31, -1 },
+  { 31, -3 },
+  { 31, -1 },
   { 32, -3 },
-  { 32, -1 },
+  { 32, -3 },
+  { 32, -3 },
+  { 32, -3 },
+  { 31, -1 },
   { 33, -3 },
   { 33, -3 },
   { 33, -3 },
   { 33, -3 },
-  { 32, -1 },
+  { 31, -1 },
   { 34, -3 },
   { 34, -3 },
-  { 34, -3 },
-  { 34, -3 },
-  { 32, -1 },
+  { 31, -1 },
   { 35, -3 },
   { 35, -3 },
-  { 32, -1 },
-  { 36, -3 },
-  { 36, -3 },
-  { 32, -2 },
-  { 32, -2 },
-  { 32, -3 },
-  { 32, -3 },
-  { 32, -3 },
-  { 32, -3 },
-  { 32, -3 },
-  { 32, -3 },
-  { 32, -3 },
+  { 31, -2 },
+  { 31, -2 },
+  { 31, -3 },
+  { 31, -3 },
+  { 31, -3 },
+  { 31, -3 },
+  { 31, -3 },
+  { 31, -3 },
+  { 31, -3 },
   { 29, -4 },
   { 29, -6 },
   { 30, -6 },
   { 30, -8 },
+  { 36, 0 },
+  { 36, -1 },
+  { 36, -3 },
+  { 36, -1 },
+  { 36, -3 },
   { 37, -1 },
-  { 37, -1 },
-  { 37, 0 },
+  { 37, -3 },
   { 26, -1 },
   { 27, -2 },
   { 27, 0 },
   { 28, -1 },
   { 28, -1 },
   { 28, -1 },
-  { 28, -1 },
-  { 31, -2 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -1094,278 +1115,280 @@ static void yy_reduce(
 /********** Begin reduce actions **********************************************/
         YYMINORTYPE yylhsminor;
       case 0: /* expression ::= IDENTIFIER */
-#line 145 "cmdl_grammar.y"
+#line 153 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new variable_expression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
+	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1103 "cmdl_grammar.c"
+#line 1125 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 1: /* expression ::= VALUE */
-#line 149 "cmdl_grammar.y"
+#line 158 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new number_expression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
+	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1112 "cmdl_grammar.c"
+#line 1135 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 2: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
 {  yy_destructor(yypParser,18,&yymsp[-2].minor);
-#line 153 "cmdl_grammar.y"
+#line 163 "cmdl_grammar.y"
 {
 	yymsp[-2].minor.yy53 = yymsp[-1].minor.yy53;
 }
-#line 1121 "cmdl_grammar.c"
+#line 1144 "cmdl_grammar.c"
   yy_destructor(yypParser,19,&yymsp[0].minor);
 }
         break;
       case 3: /* expression ::= sum */
-#line 163 "cmdl_grammar.y"
+#line 174 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy43;
 }
-#line 1130 "cmdl_grammar.c"
+#line 1153 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 4: /* sum ::= expression PLUS expression */
-#line 166 "cmdl_grammar.y"
+#line 177 "cmdl_grammar.y"
 {
 	yylhsminor.yy43 = new sum_expression();
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1140 "cmdl_grammar.c"
+#line 1163 "cmdl_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 5: /* sum ::= expression MINUS expression */
-#line 171 "cmdl_grammar.y"
+#line 182 "cmdl_grammar.y"
 {
 	yylhsminor.yy43 = new sum_expression();
 	yylhsminor.yy43->push_back(false,  std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy43->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1151 "cmdl_grammar.c"
+#line 1174 "cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 6: /* sum ::= sum PLUS expression */
-#line 176 "cmdl_grammar.y"
+#line 187 "cmdl_grammar.y"
 {
 	yylhsminor.yy43 = yymsp[-2].minor.yy43;
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1161 "cmdl_grammar.c"
+#line 1184 "cmdl_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 7: /* sum ::= sum MINUS expression */
-#line 180 "cmdl_grammar.y"
+#line 191 "cmdl_grammar.y"
 {
 	yylhsminor.yy43 = yymsp[-2].minor.yy43;
 	yylhsminor.yy43->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1171 "cmdl_grammar.c"
+#line 1194 "cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 8: /* expression ::= product */
-#line 191 "cmdl_grammar.y"
+#line 203 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy47;
 }
-#line 1180 "cmdl_grammar.c"
+#line 1203 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 9: /* product ::= expression MULTIPLY expression */
-#line 194 "cmdl_grammar.y"
+#line 206 "cmdl_grammar.y"
 {
 	yylhsminor.yy47 = new product_expression();
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1191 "cmdl_grammar.c"
+#line 1214 "cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 10: /* product ::= expression DIVIDE expression */
-#line 200 "cmdl_grammar.y"
+#line 212 "cmdl_grammar.y"
 {
 	yylhsminor.yy47 = new product_expression();
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy47->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1203 "cmdl_grammar.c"
+#line 1226 "cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 11: /* product ::= product MULTIPLY expression */
-#line 206 "cmdl_grammar.y"
+#line 218 "cmdl_grammar.y"
 {
 	yylhsminor.yy47 = yymsp[-2].minor.yy47;
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1213 "cmdl_grammar.c"
+#line 1236 "cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 12: /* product ::= product DIVIDE expression */
-#line 210 "cmdl_grammar.y"
+#line 222 "cmdl_grammar.y"
 {
 	yylhsminor.yy47 = yymsp[-2].minor.yy47;
 	yylhsminor.yy47->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1223 "cmdl_grammar.c"
+#line 1246 "cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 13: /* expression ::= conjunction */
-#line 220 "cmdl_grammar.y"
+#line 233 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy4;
 }
-#line 1232 "cmdl_grammar.c"
+#line 1255 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 14: /* conjunction ::= expression AND expression */
-#line 223 "cmdl_grammar.y"
+#line 236 "cmdl_grammar.y"
 {
 	yylhsminor.yy4 = new conjunction_expression();
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1243 "cmdl_grammar.c"
+#line 1266 "cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-1].minor);
   yymsp[-2].minor.yy4 = yylhsminor.yy4;
         break;
       case 15: /* conjunction ::= conjunction AND expression */
-#line 229 "cmdl_grammar.y"
+#line 242 "cmdl_grammar.y"
 {
 	yylhsminor.yy4 = yymsp[-2].minor.yy4;
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1253 "cmdl_grammar.c"
+#line 1276 "cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-1].minor);
   yymsp[-2].minor.yy4 = yylhsminor.yy4;
         break;
       case 16: /* expression ::= disjunction */
-#line 239 "cmdl_grammar.y"
+#line 253 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy72;
 }
-#line 1262 "cmdl_grammar.c"
+#line 1285 "cmdl_grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 17: /* disjunction ::= expression OR expression */
-#line 242 "cmdl_grammar.y"
+#line 256 "cmdl_grammar.y"
 {
 	yylhsminor.yy72 = new disjunction_expression();
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1273 "cmdl_grammar.c"
+#line 1296 "cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy72 = yylhsminor.yy72;
         break;
       case 18: /* disjunction ::= disjunction OR expression */
-#line 248 "cmdl_grammar.y"
+#line 262 "cmdl_grammar.y"
 {
 	yylhsminor.yy72 = yymsp[-2].minor.yy72;
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1283 "cmdl_grammar.c"
+#line 1306 "cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy72 = yylhsminor.yy72;
         break;
       case 19: /* expression ::= NOT expression */
 {  yy_destructor(yypParser,15,&yymsp[-1].minor);
-#line 254 "cmdl_grammar.y"
+#line 268 "cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy53 = new not_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1293 "cmdl_grammar.c"
+#line 1316 "cmdl_grammar.c"
 }
         break;
       case 20: /* expression ::= MINUS expression */
 {  yy_destructor(yypParser,11,&yymsp[-1].minor);
-#line 259 "cmdl_grammar.y"
+#line 273 "cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy53 = new minus_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1302 "cmdl_grammar.c"
+#line 1325 "cmdl_grammar.c"
 }
         break;
       case 21: /* expression ::= expression EXP expression */
-#line 264 "cmdl_grammar.y"
+#line 278 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new exponentiation_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1310 "cmdl_grammar.c"
+#line 1333 "cmdl_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 22: /* expression ::= expression EQUAL expression */
-#line 270 "cmdl_grammar.y"
+#line 284 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_equal);
 }
-#line 1319 "cmdl_grammar.c"
+#line 1342 "cmdl_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 23: /* expression ::= expression NOT_EQUAL expression */
-#line 273 "cmdl_grammar.y"
+#line 287 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_not_equal);
 }
-#line 1328 "cmdl_grammar.c"
+#line 1351 "cmdl_grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 24: /* expression ::= expression GREATER expression */
-#line 276 "cmdl_grammar.y"
+#line 290 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_greater);
 }
-#line 1337 "cmdl_grammar.c"
+#line 1360 "cmdl_grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 25: /* expression ::= expression GREATER_EQUAL expression */
-#line 279 "cmdl_grammar.y"
+#line 293 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_greater_equal);
 }
-#line 1346 "cmdl_grammar.c"
+#line 1369 "cmdl_grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 26: /* expression ::= expression LESS expression */
-#line 282 "cmdl_grammar.y"
+#line 296 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_less);
 }
-#line 1355 "cmdl_grammar.c"
+#line 1378 "cmdl_grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 27: /* expression ::= expression LESS_EQUAL expression */
-#line 285 "cmdl_grammar.y"
+#line 299 "cmdl_grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_less_equal);
 }
-#line 1364 "cmdl_grammar.c"
+#line 1387 "cmdl_grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 28: /* assignment ::= IDENTIFIER ASSIGN expression SEMICOLON */
-#line 290 "cmdl_grammar.y"
+#line 304 "cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-3].minor.yy0 and yymsp[-1].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1374,15 +1397,16 @@ static void yy_reduce(
 	yymsp[-3].minor.yy0 = nullptr;
 	yymsp[-1].minor.yy53 = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), e_temp->eval(parseTree->get_lookup()));
+	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
+	e_temp = nullptr;
 }
-#line 1381 "cmdl_grammar.c"
+#line 1405 "cmdl_grammar.c"
   yy_destructor(yypParser,20,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 29: /* assignment ::= IDENTIFIER ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 301 "cmdl_grammar.y"
+#line 316 "cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy0 and yymsp[-2].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1393,14 +1417,14 @@ static void yy_reduce(
 
 	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), std::unique_ptr<expression_base>(e_temp));
 }
-#line 1397 "cmdl_grammar.c"
+#line 1421 "cmdl_grammar.c"
   yy_destructor(yypParser,20,&yymsp[-4].minor);
   yy_destructor(yypParser,21,&yymsp[-3].minor);
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 30: /* reaction ::= reactionSide ARROW reactionSide COMMA expression SEMICOLON */
-#line 314 "cmdl_grammar.y"
+#line 329 "cmdl_grammar.y"
 {
 	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy43, yymsp[-3].minor.yy43 and yymsp[-1].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1411,16 +1435,17 @@ static void yy_reduce(
 	yymsp[-3].minor.yy43 = nullptr;
 	yymsp[-1].minor.yy53 = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), e_temp->eval(parseTree->get_lookup()));
+	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
+	e_temp = nullptr;
 }
-#line 1418 "cmdl_grammar.c"
+#line 1443 "cmdl_grammar.c"
   yy_destructor(yypParser,23,&yymsp[-4].minor);
   yy_destructor(yypParser,24,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 31: /* reaction ::= reactionSide ARROW reactionSide COMMA LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 327 "cmdl_grammar.y"
+#line 343 "cmdl_grammar.y"
 {
 	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-7].minor.yy43, yymsp[-5].minor.yy43 and yymsp[-2].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1433,54 +1458,92 @@ static void yy_reduce(
 
 	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), std::unique_ptr<expression_base>(e_temp));
 }
-#line 1437 "cmdl_grammar.c"
+#line 1462 "cmdl_grammar.c"
   yy_destructor(yypParser,23,&yymsp[-6].minor);
   yy_destructor(yypParser,24,&yymsp[-4].minor);
   yy_destructor(yypParser,21,&yymsp[-3].minor);
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
-      case 32: /* reactionSide ::= sum */
-#line 344 "cmdl_grammar.y"
-{
-	yylhsminor.yy43 = yymsp[0].minor.yy43;
-}
-#line 1449 "cmdl_grammar.c"
-  yymsp[0].minor.yy43 = yylhsminor.yy43;
-        break;
-      case 33: /* reactionSide ::= expression */
-#line 347 "cmdl_grammar.y"
-{
-	yylhsminor.yy43 = new sum_expression();
-	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
-}
-#line 1458 "cmdl_grammar.c"
-  yymsp[0].minor.yy43 = yylhsminor.yy43;
-        break;
-      case 34: /* reactionSide ::= */
-#line 351 "cmdl_grammar.y"
+      case 32: /* reactionSide ::= */
+#line 361 "cmdl_grammar.y"
 {
 	yymsp[1].minor.yy43 = new sum_expression();
 }
-#line 1466 "cmdl_grammar.c"
+#line 1474 "cmdl_grammar.c"
         break;
-      case 42: /* freeExpression ::= expression SEMICOLON */
-{  yy_destructor(yypParser,32,&yymsp[-1].minor);
-#line 356 "cmdl_grammar.y"
+      case 33: /* reactionSide ::= reactionComponent */
+#line 364 "cmdl_grammar.y"
 {
+	yylhsminor.yy43 = new sum_expression();
+	yylhsminor.yy43->push_back(false, std::unique_ptr<product_expression>(yymsp[0].minor.yy47));
 }
-#line 1473 "cmdl_grammar.c"
-  yy_destructor(yypParser,1,&yymsp[0].minor);
+#line 1482 "cmdl_grammar.c"
+  yymsp[0].minor.yy43 = yylhsminor.yy43;
+        break;
+      case 34: /* reactionSide ::= reactionSide PLUS reactionComponent */
+#line 368 "cmdl_grammar.y"
+{
+	yylhsminor.yy43 = yymsp[-2].minor.yy43;
+	yylhsminor.yy43->push_back(false, std::unique_ptr<product_expression>(yymsp[0].minor.yy47));
 }
+#line 1491 "cmdl_grammar.c"
+  yy_destructor(yypParser,10,&yymsp[-1].minor);
+  yymsp[-2].minor.yy43 = yylhsminor.yy43;
+        break;
+      case 35: /* reactionSide ::= expression */
+#line 373 "cmdl_grammar.y"
+{
+	delete(yymsp[0].minor.yy53);
+	yymsp[0].minor.yy53=nullptr;
+	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+#line 1502 "cmdl_grammar.c"
+        break;
+      case 36: /* reactionSide ::= reactionSide PLUS expression */
+#line 378 "cmdl_grammar.y"
+{
+	delete(yymsp[0].minor.yy53);
+	yymsp[0].minor.yy53=nullptr;
+	delete(yymsp[-2].minor.yy43);
+	yymsp[-2].minor.yy43=nullptr;
+	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+#line 1513 "cmdl_grammar.c"
+  yy_destructor(yypParser,10,&yymsp[-1].minor);
+        break;
+      case 37: /* reactionComponent ::= IDENTIFIER */
+#line 391 "cmdl_grammar.y"
+{
+	yylhsminor.yy47 = new product_expression();
+	yylhsminor.yy47->push_back(false, std::make_unique<number_expression>(1));
+	yylhsminor.yy47->push_back(false, std::make_unique<variable_expression>(*yymsp[0].minor.yy0));
+	delete yymsp[0].minor.yy0;
+	yymsp[0].minor.yy0 = nullptr;
+}
+#line 1525 "cmdl_grammar.c"
+  yymsp[0].minor.yy47 = yylhsminor.yy47;
+        break;
+      case 38: /* reactionComponent ::= expression MULTIPLY IDENTIFIER */
+#line 399 "cmdl_grammar.y"
+{
+	yylhsminor.yy47 = new product_expression();
+	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
+	yylhsminor.yy47->push_back(false, std::make_unique<variable_expression>(*yymsp[0].minor.yy0));
+	delete yymsp[0].minor.yy0;
+	yymsp[0].minor.yy0 = nullptr;
+}
+#line 1537 "cmdl_grammar.c"
+  yy_destructor(yypParser,12,&yymsp[-1].minor);
+  yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       default:
-      /* (35) model ::= statements */ yytestcase(yyruleno==35);
-      /* (36) statements ::= statements statement */ yytestcase(yyruleno==36);
-      /* (37) statements ::= */ yytestcase(yyruleno==37);
-      /* (38) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=38);
-      /* (39) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=39);
-      /* (40) statement ::= freeExpression (OPTIMIZED OUT) */ assert(yyruleno!=40);
-      /* (41) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=41);
+      /* (39) model ::= statements */ yytestcase(yyruleno==39);
+      /* (40) statements ::= statements statement */ yytestcase(yyruleno==40);
+      /* (41) statements ::= */ yytestcase(yyruleno==41);
+      /* (42) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=42);
+      /* (43) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=43);
+      /* (44) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=44);
         break;
 /********** End reduce actions ************************************************/
   };
@@ -1527,7 +1590,7 @@ static void yy_parse_failed(
 /************ Begin %parse_failure code ***************************************/
 #line 4 "cmdl_grammar.y"
 throw std::exception("Syntax error.");
-#line 1531 "cmdl_grammar.c"
+#line 1594 "cmdl_grammar.c"
 /************ End %parse_failure code *****************************************/
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }

@@ -4,7 +4,7 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
     % then configuring this class by adding states and reactions to the
     % simulation, and similar.
     properties (SetAccess = private, GetAccess=public, Hidden = true, Transient=true)
-        objectHandle; % Handle to the underlying C++ class instance
+        objectHandle = []; % Handle to the underlying C++ class instance
     end
      methods(Static, Hidden = true)
         function className = getClassName()
@@ -180,13 +180,12 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
             %
             % If no file name for the model is provided, an empty model is
             % constructed.
-            
+            this.objectHandle = [];
             if nargin >= 1 && ~isempty(fileName)
                 if nargin < 2
                     externalParameters = [];
                 end
 				this.objectHandle = matstochsim('new', fileName);
-                %this = stochParseModel(fileName, externalParameters, this);
 			else
 				this.objectHandle = matstochsim('new');
             end
@@ -200,7 +199,7 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
             %  delete(this)
             
 			matstochsim('delete', this.objectHandle);
-			this.objectHandle = 0;
+			this.objectHandle = [];
         end
         %% Validity
         function valid = check(this)
@@ -211,7 +210,7 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
             % Returns:
             %   valid - True if the simulation is in a valid state and can
             %           be run/edited, false otherwise.
-            valid = isvalid(this) && this.objectHandle~=0;
+            valid = isvalid(this) && ~isempty(this.objectHandle);
         end
         %% States
         function state = createState(this, name, initialCondition)

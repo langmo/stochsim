@@ -152,7 +152,7 @@ namespace stochsim
 						Stochiometry stochiometry;
 						try
 						{
-							auto number = product->eval(lookup);
+							auto number = product->simplify(lookup)->eval();
 							if (number + 0.5 < 0)
 							{
 								std::stringstream errorMessage;
@@ -289,7 +289,7 @@ namespace stochsim
 				return reactions_.cend();
 			}
 		public:
-			parse_tree() :lookup_(std::bind(&parse_tree::variable_value, this, std::placeholders::_1))
+			parse_tree() : defaultVariables_(create_default_variables()), defaultFunctions_(create_default_functions())
 			{
 			}
 			/// <summary>
@@ -326,70 +326,118 @@ namespace stochsim
 			}
 			void create_reaction(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate)
 			{
-				reactions_[*name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate), this->get_lookup());
+				reactions_[*name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate), get_variable_lookup());
 			}
-			/// <summary>
-			/// Finds the variable with the given name, evaluates its expression and returns the result.
-			/// If no variable with the given name exists, or if the expression could not be evaluated, throws a std::exception.
-			/// </summary>
-			/// <param name="name">Name of the variable to evaluate.</param>
-			/// <returns>Value of the variable.</returns>
-			expression::number variable_value(const expression::identifier& name) const
-			{
-				return variable_expression(name)->eval(lookup_);
-			}
-			static expression::expression_base* get_default_variable(const expression::identifier& name) noexcept
-			{
-				static std::map<expression::identifier, expression::number_expression> defaultVariables(
-				{
-					std::make_pair(expression::identifier("true"), expression::number_true),
-					std::make_pair(expression::identifier("false"), expression::number_false),
-					std::make_pair(expression::identifier("pi"), expression::number(3.141592653589793)),
-					std::make_pair(expression::identifier("e"), expression::number(2.718281828459046))
-				});
-				auto search = defaultVariables.find(name);
-				if (search != defaultVariables.end())
-				{
-					return &search->second;
-				}
-				else
-					return nullptr;
-			}
+
 			/// <summary>
 			/// Finds the variable with the given name and returns its expression.
 			/// If no variable with the given name exists, throws a std::exception.
 			/// </summary>
 			/// <param name="name">Name of the variable to evaluate.</param>
 			/// <returns>Expression of the variable.</returns>
-			const expression::expression_base* variable_expression(const expression::identifier& name) const
+			const expression::expression_base* get_variable_expression(const expression::identifier name) const
 			{
 				auto search = variables_.find(name);
 				if (search != variables_.end())
 				{
 					return search->second.get();
 				}
-				auto default_var = get_default_variable(name);
-				if (default_var)
-					return default_var;
-				
+				auto default_search = defaultVariables_.find(name);
+				if (default_search != defaultVariables_.end())
+					return default_search->second.get();
+
 				std::stringstream errorMessage;
 				errorMessage << "Variable with name \"" << name << "\" not defined";
 				throw std::exception(errorMessage.str().c_str());
 			}
+
+			const expression::function_holder_base* get_function_handler(const expression::identifier& name) const
+			{
+				auto search = functions_.find(name);
+				if (search != functions_.end())
+				{
+					return search->second.get();
+				}
+				auto default_search = defaultFunctions_.find(name);
+				if (default_search != defaultFunctions_.end())
+					return default_search->second.get();
+
+				std::stringstream errorMessage;
+				errorMessage << "Function with name \"" << name << "\" not defined";
+				throw std::exception(errorMessage.str().c_str());
+			}
+
+			/// <summary>
+			/// Takes an expression and evaluates it. If the expression could not be evaluated, throws a std::exception.
+			/// </summary>
+			/// <param name="expression">Expression to evaluate.</param>
+			/// <returns>Value of expression.</returns>
+			expression::number get_expression_value(const expression::expression_base* expression) const
+			{
+				//typedef std::function<const expression_base* (const identifier& variableName)> variable_expression_lookup;
+				expression::variable_lookup lookup = get_variable_lookup();
+				auto simpExpression = expression->simplify(lookup);
+				auto numberExpression = dynamic_cast<expression::number_expression*>(simpExpression.get());
+				if (numberExpression)
+				{
+					return numberExpression->get_number();
+				}
+				else
+				{
+					throw std::exception("Error while determining value of expression.");
+				}
+			}
+
+			/// <summary>
+			/// Finds the variable with the given name, evaluates its expression and returns the result.
+			/// If no variable with the given name exists, or if the expression could not be evaluated, throws a std::exception.
+			/// </summary>
+			/// <param name="name">Name of the variable to evaluate.</param>
+			/// <returns>Value of the variable.</returns>
+			expression::number get_variable_value(const expression::identifier& name) const
+			{
+				return get_expression_value(get_variable_expression(name));
+			}
+			static std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> create_default_variables() noexcept
+			{
+				std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> defaultVariables;
+				defaultVariables.emplace(expression::identifier("true"), std::unique_ptr<expression::expression_base>(new expression::number_expression(expression::number_true)));
+				defaultVariables.emplace(expression::identifier("false"), std::unique_ptr<expression::expression_base>(new expression::number_expression(expression::number_false)));
+				defaultVariables.emplace(expression::identifier("pi"), std::unique_ptr<expression::expression_base>(new expression::number_expression(expression::number(3.141592653589793))));
+				defaultVariables.emplace(expression::identifier("e"), std::unique_ptr<expression::expression_base>(new expression::number_expression(expression::number(2.718281828459046))));
+				return std::move(defaultVariables);
+			}
+
+			static std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> create_default_functions() noexcept
+			{
+				std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> defaultFunctions;
+				defaultFunctions.emplace("max", expression::make_function_holder(
+					static_cast<std::function<expression::number(expression::number, expression::number)>>(
+						[](expression::number n1, const expression::number n2) -> expression::number
+						{
+							return n1 > n2 ? n1 : n2;
+						}
+						)));
+				return std::move(defaultFunctions);
+			}
+		private:
 			/// <summary>
 			/// Returns a function to lookup the value of a variable.
 			/// Calling this->get_lookup()(variableName) is equivalent to calling
 			/// this->variable_value(variableName).
 			/// </summary>
 			/// <returns>Function to lookup variable values.</returns>
-			const expression::variable_lookup& get_lookup() const noexcept
+			const expression::variable_lookup get_variable_lookup() const noexcept
 			{
-				return lookup_;
+				return std::bind(&parse_tree::get_variable_expression, this, std::placeholders::_1);
 			}
+			
 		private:
 			std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> variables_;
+			std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> defaultVariables_;
+			std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> functions_;
+			std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> defaultFunctions_;
 			std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>> reactions_;
-			expression::variable_lookup lookup_;
 		};
 
 		/// <summary>
