@@ -140,7 +140,12 @@ namespace stochsim
 			/// Creates a one to one copy of this object.
 			/// </summary>
 			/// <returns>Copy of this object.</returns>
-			virtual std::unique_ptr<function_holder_base> clone() const noexcept = 0;
+			virtual std::unique_ptr<function_holder_base> clone() const = 0;
+			/// <summary>
+			/// Returns false if the function is guaranteed to always return the same value whenever called with the same arguments. Returns false otherwise.
+			/// </summary>
+			/// <returns>True if value might be different when called with the same arguments at different times, false if the result is guaranteed to always be the same.</returns>
+			virtual bool is_mutable() const noexcept = 0;
 		};
 		/// <summary>
 		/// Specialization of function_holder_base to hold a function having a specific number of arguments, parametrized by Args.
@@ -153,15 +158,15 @@ namespace stochsim
 			/// Creates a function holder for the given function, which simply stores the function.
 			/// </summary>
 			/// <param name="function">Function to be stored.</param>
-			function_holder(std::function<number(Args...)>&& function) : function_(std::move(function))
+			function_holder(std::function<number(Args...)>&& function, bool mutableFunction) : function_(std::move(function)), mutableFunction_(mutableFunction)
 			{
 			}
-			function_holder(const std::function<number(Args...)>& function) : function_(function)
+			function_holder(const std::function<number(Args...)>& function, bool mutableFunction) : function_(function), mutableFunction_(mutableFunction)
 			{
 			}
-			virtual std::unique_ptr<function_holder_base> clone() const noexcept override
+			virtual std::unique_ptr<function_holder_base> clone() const override
 			{
-				return std::unique_ptr<function_holder_base>(new function_holder<Args...>(function_)); 
+				return std::unique_ptr<function_holder_base>(new function_holder<Args...>(function_, mutableFunction_));
 			}
 			virtual number operator()(const std::vector<number>& arguments) override
 			{
@@ -173,9 +178,14 @@ namespace stochsim
 			{
 				return static_cast<size_t>(sizeof...(Args));
 			}
+			virtual bool is_mutable() const noexcept
+			{
+				return mutableFunction_;
+			}
 
 		private:
 			std::function<number(Args...)> function_;
+			bool mutableFunction_;
 			template<size_t... Is> number call_helper(const std::vector<number>& args, indices<Is...>)
 			{
 				return function_(args[Is]...); // expand the indices pack
@@ -195,24 +205,50 @@ namespace stochsim
 		/// number sum = (*sum_holder)(numbers); // sum is now 7.
 		/// </summary>
 		/// <param name="function">A function with various arguments whose number of arguments should be made transparent.</param>
+		/// <param name="mutableFunction">False if the function is guaranteed to always return the same value when called with the same argument (e.g. max). True otherwise (e.g. rand).</param>
 		/// <returns>A pointer to handler for this function, where the number of arguments of the original function became transparent.</returns>
-		template<typename ...Args> std::unique_ptr<function_holder_base> make_function_holder(std::function<number(Args...)> function)
+		template<typename ...Args> std::unique_ptr<function_holder_base> make_function_holder(std::function<number(Args...)> function, bool mutableFunction)
 		{
 			static_assert(is_numbers<Args...>::value, "All function arguments must be of type stochsim::expression::number.");
-			return std::unique_ptr<function_holder_base>(new function_holder<Args...>(std::move(function)));
+			return std::unique_ptr<function_holder_base>(new function_holder<Args...>(std::move(function), mutableFunction));
+		}
+
+		/// <summary>
+		/// Takes a function, e.g. a lambda, which takes an arbitrary amount of numbers as arguments and returns a number. Then, it returns a pointer
+		/// to a a class storing this function. Importantly, in this process the number of arguments with thich the original function must be called becomes hidden,
+		/// such that the pointer can be easily stored and passed around. Having this pointer, the number of arguments can be obtained by calling 
+		/// function_holder_base::num_arguments();
+		/// The original function can be called by using a vector of these arguments by calling the operator() implementation.
+		/// Example: 
+		/// std::function&lt;number(number, number)&gt; sum_fun = [](number a1, number a2)->number {return a1 + a2; };
+		/// std::unique_ptr&lt;function_holder_base&gt; sum_holder= make_function_holder(sum_fun);
+		/// // later...
+		/// std::vector&lt;number&gt; numbers = { 2,5};
+		/// number sum = (*sum_holder)(numbers); // sum is now 7.
+		/// </summary>
+		/// <param name="function">A function with various arguments whose number of arguments should be made transparent.</param>
+		/// <param name="mutableFunction">False if the function is guaranteed to always return the same value when called with the same argument (e.g. max). True otherwise (e.g. rand).</param>
+		/// <returns>A pointer to handler for this function, where the number of arguments of the original function became transparent.</returns>
+		template<typename ...Args> std::unique_ptr<function_holder_base> make_function_holder(number (*function)(Args...), bool mutableFunction)
+		{
+			static_assert(is_numbers<Args...>::value, "All function arguments must be of type stochsim::expression::number.");
+			std::function<number(Args...)> temp = function;
+			return std::unique_ptr<function_holder_base>(new function_holder<Args...>(std::move(temp), mutableFunction));
 		}
 
 		/// <summary>
 		/// Takes the name of a variable and returns its expression, for example a number wrapped in a number_expression. 
 		/// Throws a std::exception if a variable with the given name does not
 		/// exist. If variables are directly saved by value, a corresponding number_expression is returned.
-		/// To store the handler, call clone() on the returned pointer.
 		/// </summary>
-		typedef std::function<const expression_base* (const identifier variableName)> variable_lookup;
-
+		typedef std::function<std::unique_ptr<expression_base> (const identifier variableName)> variable_lookup;
+		/// <summary>
+		/// Returns a default variable lookup which always throws an error for every querry.
+		/// </summary>
+		/// <returns>Empty variable lookup</returns>
 		inline const variable_lookup get_empty_variable_lookup()
 		{
-			return [](const identifier variableName) ->const expression_base*
+			return [](const identifier variableName) ->std::unique_ptr<expression_base>
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Variable with name \"" << variableName << "\" is not defined.";
@@ -220,20 +256,15 @@ namespace stochsim
 			};
 		}
 		/// <summary>
-		/// Takes the name of a function and returns (a handler) to it. This handler can then be used to evaluate the function during runtime. 
-		/// Throws a std::exception if a function with the given name does not exist.
+		/// Takes the name of a variable or function and returns its binding, a function handler which can be evaluated to return the value of the variable or function.
+		/// For variables, the name has to correspond to the name of the variable, whereas for functions, the name has to be suceeded by a an opening and closing round bracket, without spaces
+		/// (independently of the number of arguments of the function). 
+		/// Throws a std::exception if a variable with the given name does not
+		/// exist. 
 		/// To store the handler, call clone() on the returned pointer.
 		/// </summary>
-		typedef std::function<const function_holder_base* (const identifier& functionName)> function_lookup;
-		inline const function_lookup get_empty_function_lookup()
-		{
-			return [](const identifier& variableName) ->const function_holder_base*
-			{
-				std::stringstream errorMessage;
-				errorMessage << "Function with name \"" << variableName << "\" is not defined.";
-				throw std::exception(errorMessage.str().c_str());
-			};
-		}
+		typedef std::function<std::unique_ptr<function_holder_base> (const identifier name)> binding_lookup;
+		
 		/// <summary>
 		/// Abstract base class of all expressions.
 		/// </summary>
@@ -248,7 +279,7 @@ namespace stochsim
 			}
 			/// <summary>
 			/// Evaluates the expression. If an error occurs, e.g. because this expression or a child expression corresponds to a variable
-			/// not defined in the lookup, throws an std::exception.
+			/// or function which is not bound, throws an std::exception.
 			/// </summary>
 			/// <param name="lookup">Function to lookup the value of variables based on their name.</param>
 			/// <returns>Value of expression</returns>
@@ -257,19 +288,33 @@ namespace stochsim
 			/// Creates a clone/copy of this expression.
 			/// </summary>
 			/// <returns>Copy of this expression</returns>
-			virtual std::unique_ptr<expression_base> clone() const noexcept = 0;
+			virtual std::unique_ptr<expression_base> clone() const = 0;
 			/// <summary>
-			/// Creates a new expression which is a simplified version of the current expression. For this, all variables defined in the partial lookup
+			/// Creates a new expression which is a simplified version of the current expression. For this, all variables defined in the lookup
 			/// are replaced by their corresponding expressions. It is guaranteed that the new expression, and all of its subexpressions, do not contain
 			/// variables defined in the partial lookup. Variables not defined as a partial lookup are kept as name references. For this function, the simplest
 			/// possible return value is considered to be a number_expression.
 			/// This function may throw a std::exception if the simplification is mathematically incorrect, e.g. for division by zero errors and similar.
 			/// </summary>
-			/// <param name="variableLookup">A (partial) lookup for the variables which should be replaced by their corresponding expressions or which should be bound.</param>
-			/// <param name="variableLookup">A (partial) lookup for the functions which should be bound.</param>
+			/// <param name="variableLookup">A (partial) lookup for the variables which should be replaced by their corresponding expressions.</param>
 			/// <returns>A simplified version of this expression. If simplification is not possible, returns a clone/copy of this expression.</returns>
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept = 0;
-			
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const = 0;
+			/// <summary>
+			/// Creates a new expression which is a simplified version of the current expression.
+			/// This function may throw a std::exception if the simplification is mathematically incorrect, e.g. for division by zero errors and similar.
+			/// </summary>
+			/// <returns>A simplified version of this expression. If simplification is not possible, returns a clone/copy of this expression.</returns>
+			virtual std::unique_ptr<expression_base> simplify() const
+			{
+				return simplify(get_empty_variable_lookup());
+			}
+			/// <summary>
+			/// Binds all variables or functions to their corresponding function bindings which are used to evaluate their expression when evaluated. Variables or functions not 
+			/// defined in the binding lookup are not bound.
+			/// </summary>
+			/// <param name="bindingLookup">Lookup to determine binding function given a function or variable name.</param>
+			virtual void bind(const binding_lookup& bindingLookup) = 0;
+
 			/// <summary>
 			/// Prints a string representation in CMDL of this expression to the stream.
 			/// </summary>
@@ -339,11 +384,11 @@ namespace stochsim
 			{
 				return number_;
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<number_expression>(number_);
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
 				// we are already the most simple possible expression...
 				return clone();
@@ -360,6 +405,10 @@ namespace stochsim
 			{
 				return stream << number_;
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				// do nothing
+			}
 		private:
 			number number_;
 		};
@@ -369,27 +418,36 @@ namespace stochsim
 		class variable_expression : public expression_base
 		{
 		public:
-			variable_expression(identifier name) : name_(name)
+			variable_expression(identifier name, std::unique_ptr<function_holder_base> evalFunction=nullptr) : name_(name), evalFunction_(std::move(evalFunction))
 			{
 			}
 			virtual number eval() const override
 			{
+				if (evalFunction_)
+				{
+					std::vector<number> empty;
+					return evalFunction_->operator()(empty);
+				}
 				std::stringstream errorMessage;
 				errorMessage << "Expression contains unbound variable with name \"" << name_ << "\".";
 				throw std::exception(errorMessage.str().c_str());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				const expression_base* value;
 				try
 				{
-					value = variableLookup(name_);
+					return variableLookup(name_)->simplify(variableLookup);
 				}
 				catch (...)
 				{
-					return clone();
+					// do nothing, means variable is not defined in lookup.
 				}
-				return value->simplify(variableLookup, functionLookup);
+				if (evalFunction_ && !evalFunction_->is_mutable())
+				{
+					std::vector<number> empty;
+					return std::make_unique<number_expression>(evalFunction_->operator()(empty));
+				}
+				return clone();
 			}
 			identifier get_identifier() const noexcept
 			{
@@ -399,47 +457,30 @@ namespace stochsim
 			{
 				return name_;
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
-				return std::make_unique<variable_expression>(name_);
+				return std::make_unique<variable_expression>(name_, evalFunction_ ? evalFunction_->clone() : nullptr);
 			}
 			virtual std::ostream& printCmdl(std::ostream& stream) const noexcept override
 			{
 				return stream << name_;
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				try
+				{
+					evalFunction_ = bindingLookup(name_);
+				}
+				catch (...)
+				{
+					// do nothing. There is simply no binding for this variable...
+				}
+			}
 		private:
 			identifier name_;
+			std::unique_ptr<function_holder_base> evalFunction_;
 		};
 
-		
-
-		/// <summary>
-		/// A variable expression which is bound to a function. This function is called to obtain the value for this variable whenever eval is called.
-		/// This is useful if the value of a variable is not constant but might change at runtime (note that in the former case, the variable should rather
-		/// be replaced by the constant value by an appropriate call to simplify, providing the constant value in the variableLookup).
-		/// Note, that once a variable is bound, it cannot be bound or simplified again.
-		/// </summary>
-		template<typename T> class bound_variable_expression : public variable_expression
-		{
-		public:
-			bound_variable_expression(identifier name, std::function<T()> evalFunction) : variable_expression(std::move(name)), evalFunction_(std::move(evalFunction))
-			{
-			}
-			virtual number eval() const override
-			{
-				return static_cast<number>(evalFunction_());
-			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup = get_empty_function_lookup()) const noexcept override
-			{
-				return clone();
-			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
-			{
-				return std::make_unique<bound_variable_expression>(get_identifier(), evalFunction_);
-			}
-		private:
-			std::function<T()> evalFunction_;
-		};
 		/// <summary>
 		/// Prints the a description of the expression in cmdl to the stream, surrounding it by brackets if necessary.
 		/// </summary>
@@ -476,67 +517,45 @@ namespace stochsim
 				else
 					return expressionIfFalse_->eval();
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<conditional_expression>(condition_->clone(), expressionIfTrue_->clone(), expressionIfFalse_->clone());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpCondition = condition_->simplify(variableLookup, functionLookup);
+				auto simpCondition = condition_->simplify(variableLookup);
 				if (dynamic_cast<number_expression*>(simpCondition.get()))
 				{
 					if (dynamic_cast<number_expression*>(simpCondition.get())->get_number() != 0)
 					{
-						return expressionIfTrue_->simplify(variableLookup, functionLookup);
+						return expressionIfTrue_->simplify(variableLookup);
 					}
 					else
 					{
-						return expressionIfFalse_->simplify(variableLookup, functionLookup);
+						return expressionIfFalse_->simplify(variableLookup);
 					}
 				}
 				else
 				{
-					return std::make_unique<conditional_expression>(std::move(simpCondition), expressionIfTrue_->simplify(variableLookup, functionLookup), expressionIfFalse_->simplify(variableLookup, functionLookup));
+					return std::make_unique<conditional_expression>(std::move(simpCondition), expressionIfTrue_->simplify(variableLookup), expressionIfFalse_->simplify(variableLookup));
 				}
 			}
 			virtual std::ostream& printCmdl(std::ostream& stream) const noexcept override
 			{
 				return stream << print_in_brackets(condition_) << " ? " << print_in_brackets(expressionIfTrue_) << " : "<< print_in_brackets(expressionIfFalse_);
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				condition_->bind(bindingLookup);
+				expressionIfTrue_->bind(bindingLookup);
+				expressionIfFalse_->bind(bindingLookup);
+			}
 		private:
 			std::unique_ptr<expression_base> condition_;
 			std::unique_ptr<expression_base> expressionIfTrue_;
 			std::unique_ptr<expression_base> expressionIfFalse_;
 		};
-		/// <summary>
-		/// Takes an expression as an input, and binds all variables which have names defined in the provided map to their corresponding functions. These functions are
-		/// called during runtime to determine the value of the respective variable when calling the eval function.
-		/// If a variable is not defined in the map, it is not bound to any function.
-		/// </summary>
-		/// <param name="expression">Expression in which the variables should be bound.</param>
-		/// <param name="variables">Map of functions which should be bound to the variables with the corresponding identifiers.</param>
-		/// <returns>Copy of the expression, in which all variables defined in the map are bound.</returns>
-		template<typename T> std::unique_ptr<expression_base> bind_variables(const expression_base* expression, std::map<identifier, std::function<T()>> variables)
-		{
-			std::map<expression::identifier, bound_variable_expression<T>> boundVariables;
-			for (auto& variable : variables)
-			{
-				boundVariables.emplace(variable.first, bound_variable_expression<T>(variable.first, std::move(variable.second)));
-			}
-			auto expression_lookup = [boundVariables{std::move(boundVariables)}](const identifier variableName) -> const expression_base*
-			{
-				auto search = boundVariables.find(variableName);
-				if (search != boundVariables.end())
-					return &search->second;
-				else
-				{
-					std::stringstream errorMessage;
-					errorMessage << "Variable with name \"" << variableName << "\" not defined.";
-					throw std::exception(errorMessage.str().c_str());
-				}
-			};
-			return expression->simplify(expression_lookup);
-		}
+	
 		/// <summary>
 		/// An variadic expression is an expression which contains a variable number of sub-expressions, which are referred to as its elements.
 		/// Examples for variadic expressions are sums, products and similar.
@@ -683,6 +702,13 @@ namespace stochsim
 			{
 				return elems_.cend();
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				for (auto& elem : elems_)
+				{
+					elem.get_expression()->bind(bindingLookup);
+				}
+			}
 		public:
 			/// <summary>
 			/// Function returning the value of the null element of the respective variadic function. For example, the null element for a sum
@@ -695,7 +721,7 @@ namespace stochsim
 			/// Function returning the unary inverse of the respective expression, for example -expression in the case of a sum.
 			/// </summary>
 			/// <returns>Unary inverse of expression.</returns>
-			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const noexcept = 0;
+			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const = 0;
 		protected:
 			std::vector<element> elems_;
 			number baseValue_;
@@ -716,13 +742,13 @@ namespace stochsim
 			{
 				return -expression_->eval();
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<minus_expression>(expression_->clone());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpExpression = expression_->simplify(variableLookup, functionLookup);
+				auto simpExpression = expression_->simplify(variableLookup);
 				auto numExpression = dynamic_cast<number_expression*>(simpExpression.get());
 				if (numExpression)
 				{
@@ -748,6 +774,10 @@ namespace stochsim
 			{
 				return expression_.get();
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				expression_->bind(bindingLookup);
+			}
 		private:
 			std::unique_ptr<expression_base> expression_;
 		};
@@ -767,7 +797,7 @@ namespace stochsim
 			{
 				return null_element;
 			}
-			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const noexcept override
+			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const override
 			{
 				return std::make_unique<minus_expression>(expression->clone());
 			}
@@ -783,13 +813,13 @@ namespace stochsim
 				}
 				return sum;
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
 				auto value = baseValue_;
 				std::vector<element> simElems;
 				for (auto& elem : elems_)
 				{
-					auto simElem = elem.get_expression()->simplify(variableLookup, functionLookup);
+					auto simElem = elem.get_expression()->simplify(variableLookup);
 					if (dynamic_cast<number_expression*>(simElem.get()))
 					{
 						if (elem.is_not_inverse())
@@ -836,7 +866,7 @@ namespace stochsim
 					return returnVal;
 				}
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				auto val = std::make_unique<sum_expression>(baseValue_);
 				for (auto& elem : elems_)
@@ -920,13 +950,13 @@ namespace stochsim
 			{
 				return 1/expression_->eval();
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<divide_expression>(expression_->clone());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpExpression = expression_->simplify(variableLookup, functionLookup);
+				auto simpExpression = expression_->simplify(variableLookup);
 				auto numExpression = dynamic_cast<number_expression*>(simpExpression.get());
 				if (numExpression)
 				{
@@ -952,6 +982,10 @@ namespace stochsim
 			{
 				return expression_.get();
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				expression_->bind(bindingLookup);
+			}
 		private:
 			std::unique_ptr<expression_base> expression_;
 		};
@@ -971,7 +1005,7 @@ namespace stochsim
 			{
 				return null_element;
 			}
-			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const noexcept override
+			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const override
 			{
 				return std::make_unique<divide_expression>(expression->clone());
 			}
@@ -987,13 +1021,13 @@ namespace stochsim
 				}
 				return sum;
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
 				auto value = baseValue_;
 				std::vector<element> simElems;
 				for (auto& elem : elems_)
 				{
-					auto simElem = elem.get_expression()->simplify(variableLookup, functionLookup);
+					auto simElem = elem.get_expression()->simplify(variableLookup);
 					if (dynamic_cast<number_expression*>(simElem.get()))
 					{
 						if (elem.is_not_inverse())
@@ -1040,7 +1074,7 @@ namespace stochsim
 					return returnVal;
 				}
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				auto val = std::make_unique<product_expression>(baseValue_);
 				for (auto& elem : elems_)
@@ -1094,13 +1128,13 @@ namespace stochsim
 			{
 				return is_true(expression_->eval()) ? number_false : number_true;
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<not_expression>(expression_->clone());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpExpression = expression_->simplify(variableLookup, functionLookup);
+				auto simpExpression = expression_->simplify(variableLookup);
 				auto numExpression = dynamic_cast<number_expression*>(simpExpression.get());
 				if (numExpression)
 				{
@@ -1126,6 +1160,10 @@ namespace stochsim
 			{
 				return expression_.get();
 			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				expression_->bind(bindingLookup);
+			}
 		private:
 			std::unique_ptr<expression_base> expression_;
 		};
@@ -1145,7 +1183,7 @@ namespace stochsim
 			{
 				return null_element;
 			}
-			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const noexcept override
+			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const override
 			{
 				return std::make_unique<not_expression>(expression->clone());
 			}
@@ -1163,7 +1201,7 @@ namespace stochsim
 				}
 				return value ? number_true : number_false;
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
 				bool value = is_true(baseValue_);
 				std::vector<element> simElems;
@@ -1171,7 +1209,7 @@ namespace stochsim
 				{
 					if (!value)
 						return std::make_unique<number_expression>(number_false);
-					auto simElem = elem.get_expression()->simplify(variableLookup, functionLookup);
+					auto simElem = elem.get_expression()->simplify(variableLookup);
 					if (dynamic_cast<number_expression*>(simElem.get()))
 					{
 						if (elem.is_not_inverse())
@@ -1219,7 +1257,7 @@ namespace stochsim
 					return returnVal;
 				}
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				auto val = std::make_unique<conjunction_expression>(baseValue_);
 				for (auto& elem : elems_)
@@ -1275,7 +1313,7 @@ namespace stochsim
 			{
 				return null_element;
 			}
-			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const noexcept override
+			virtual std::unique_ptr<expression_base> get_unary_inverse(const expression_base* expression) const override
 			{
 				return std::make_unique<not_expression>(expression->clone());
 			}
@@ -1293,7 +1331,7 @@ namespace stochsim
 				}
 				return value ? number_true : number_false;
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
 				bool value = is_true(baseValue_);
 				std::vector<element> simElems;
@@ -1301,7 +1339,7 @@ namespace stochsim
 				{
 					if (value)
 						return std::make_unique<number_expression>(number_true);
-					auto simElem = elem.get_expression()->simplify(variableLookup, functionLookup);
+					auto simElem = elem.get_expression()->simplify(variableLookup);
 					if (dynamic_cast<number_expression*>(simElem.get()))
 					{
 						if (elem.is_not_inverse())
@@ -1349,7 +1387,7 @@ namespace stochsim
 					return returnVal;
 				}
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				auto val = std::make_unique<disjunction_expression>(baseValue_);
 				for (auto& elem : elems_)
@@ -1406,14 +1444,14 @@ namespace stochsim
 			{
 				return ::pow(base_->eval(), exponent_->eval());
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<exponentiation_expression>(base_->clone(), exponent_->clone());
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpBase = base_->simplify(variableLookup, functionLookup);
-				auto simpExponent = exponent_->simplify(variableLookup, functionLookup);
+				auto simpBase = base_->simplify(variableLookup);
+				auto simpExponent = exponent_->simplify(variableLookup);
 				auto numBase = dynamic_cast<number_expression*>(simpBase.get());
 				auto numExponent = dynamic_cast<number_expression*>(simpExponent.get());
 				if (numBase && numExponent)
@@ -1446,6 +1484,11 @@ namespace stochsim
 			virtual std::ostream& printCmdl(std::ostream& stream) const noexcept override
 			{
 				return stream << print_in_brackets(base_) << "^" << print_in_brackets(exponent_);
+			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				base_->bind(bindingLookup);
+				exponent_->bind(bindingLookup);
 			}
 		private:
 			std::unique_ptr<expression_base> base_;
@@ -1495,14 +1538,14 @@ namespace stochsim
 			{
 				return eval_int(left_->eval(), right_->eval(), type_) ? 1 : 0;
 			}
-			virtual std::unique_ptr<expression_base> clone() const noexcept override
+			virtual std::unique_ptr<expression_base> clone() const override
 			{
 				return std::make_unique<comparison_expression>(left_->clone(), right_->clone(), type_);
 			}
-			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup = get_empty_variable_lookup(), const function_lookup& functionLookup= get_empty_function_lookup()) const noexcept override
+			virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
 			{
-				auto simpLeft = left_->simplify(variableLookup, functionLookup);
-				auto simpRight = right_->simplify(variableLookup, functionLookup);
+				auto simpLeft = left_->simplify(variableLookup);
+				auto simpRight = right_->simplify(variableLookup);
 				auto numLeft = dynamic_cast<number_expression*>(simpLeft.get());
 				auto numRight = dynamic_cast<number_expression*>(simpRight.get());
 				if (numLeft && numRight)
@@ -1531,6 +1574,11 @@ namespace stochsim
 					symbol = "<=";
 				}
 				return stream << print_in_brackets(left_) << " " << symbol << " " << print_in_brackets(right_);
+			}
+			virtual void bind(const binding_lookup& bindingLookup)
+			{
+				left_->bind(bindingLookup);
+				right_->bind(bindingLookup);
 			}
 		private:
 			std::unique_ptr<expression_base> left_;

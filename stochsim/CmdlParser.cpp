@@ -292,7 +292,7 @@ namespace stochsim
 		for (auto& state : states)
 		{
 			auto expression = parseTree.get_variable_expression(state.first);
-			if (dynamic_cast<const expression::conditional_expression*>(expression))
+			if (dynamic_cast<const expression::conditional_expression*>(expression.get()))
 			{
 				// TODO: Handle conditional.
 				throw std::exception("Not yet implemented.");
@@ -310,7 +310,7 @@ namespace stochsim
 			}
 			else
 			{
-				auto initialCondition = parseTree.get_expression_value(expression);
+				auto initialCondition = parseTree.get_expression_value(expression.get());
 				if (initialCondition + 0.5 < 0)
 				{
 					std::stringstream errorMessage;
@@ -330,7 +330,7 @@ namespace stochsim
 			}
 		}
 		// Create reactions
-		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier variableName) -> const stochsim::expression::expression_base*
+		auto partialLookup = [&parseTree, &states](const stochsim::expression::identifier variableName) -> std::unique_ptr<stochsim::expression::expression_base>
 		{
 			// We want to simplify everything away which is not a state name, and not one of the standard variables.
 			if (states.find(variableName) == states.end())

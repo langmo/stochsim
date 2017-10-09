@@ -30,12 +30,27 @@ namespace stochsim
 		/// <param name="reactants">Reactants of the reaction.</param>
 		ReactionRate(const expression::expression_base* rateExpression, const std::vector<std::shared_ptr<IState>>& reactants)
 		{
-			std::map<std::string, std::function<size_t()>> varMap;
-			for (auto reactant : reactants)
+			expression::binding_lookup bindings = [&reactants](const expression::identifier name) -> std::unique_ptr<expression::function_holder_base>
 			{
-				varMap[reactant->GetName()] = std::bind(&IState::Num, std::move(reactant));
-			}
-			boundRateExpession_ = expression::bind_variables(rateExpression, std::move(varMap));
+				for (auto reactant : reactants)
+				{
+					if (reactant->GetName() == name)
+					{
+						std::function<expression::number()> holder = [reactant]() -> expression::number
+						{
+							return static_cast<expression::number>(reactant->Num());
+						};
+						return expression::make_function_holder(holder, true);
+					}
+				}
+				std::stringstream errorMessage;
+				errorMessage << "State or function with name \"" << name << "\" is not defined.";
+				throw std::exception(errorMessage.str().c_str());
+			};
+			boundRateExpession_ = rateExpression->clone();
+			boundRateExpession_->bind(bindings);
+			boundRateExpession_ = boundRateExpession_->simplify();
+
 		}
 		/// <summary>
 		/// Copy constructor.

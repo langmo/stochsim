@@ -100,7 +100,7 @@ namespace stochsim
 		public:
 			typedef std::unordered_map<expression::identifier, reaction_component> reaction_components;
 		private:
-			static reaction_components parse_components(std::unique_ptr<expression::sum_expression>& componentRaws, const expression::variable_lookup& lookup)
+			static reaction_components parse_components(std::unique_ptr<expression::sum_expression>& componentRaws, const expression::binding_lookup& lookup)
 			{
 				reaction_components components;
 				for (auto& componentRaw : *componentRaws)
@@ -152,7 +152,8 @@ namespace stochsim
 						Stochiometry stochiometry;
 						try
 						{
-							auto number = product->simplify(lookup)->eval();
+							product->bind(lookup);
+							auto number = product->eval();
 							if (number + 0.5 < 0)
 							{
 								std::stringstream errorMessage;
@@ -202,7 +203,7 @@ namespace stochsim
 				}
 			}
 		public:
-			reaction_definition(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate, const expression::variable_lookup& lookup) :
+			reaction_definition(std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate, const expression::binding_lookup& lookup) :
 				reactants_(parse_components(reactants, lookup)),
 				products_(parse_components(products, lookup)),
 				rate_(std::move(rate))
@@ -326,7 +327,7 @@ namespace stochsim
 			}
 			void create_reaction(std::unique_ptr<terminal_symbol> name, std::unique_ptr<expression::sum_expression> reactants, std::unique_ptr<expression::sum_expression> products, std::unique_ptr<expression::expression_base> rate)
 			{
-				reactions_[*name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate), get_variable_lookup());
+				reactions_[*name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate), get_binding_lookup());
 			}
 
 			/// <summary>
@@ -335,16 +336,16 @@ namespace stochsim
 			/// </summary>
 			/// <param name="name">Name of the variable to evaluate.</param>
 			/// <returns>Expression of the variable.</returns>
-			const expression::expression_base* get_variable_expression(const expression::identifier name) const
+			std::unique_ptr<expression::expression_base> get_variable_expression(const expression::identifier name) const
 			{
 				auto search = variables_.find(name);
 				if (search != variables_.end())
 				{
-					return search->second.get();
+					return search->second->clone();
 				}
 				auto default_search = defaultVariables_.find(name);
 				if (default_search != defaultVariables_.end())
-					return default_search->second.get();
+					return default_search->second->clone();
 
 				std::stringstream errorMessage;
 				errorMessage << "Variable with name \"" << name << "\" not defined";
@@ -374,18 +375,10 @@ namespace stochsim
 			/// <returns>Value of expression.</returns>
 			expression::number get_expression_value(const expression::expression_base* expression) const
 			{
-				//typedef std::function<const expression_base* (const identifier& variableName)> variable_expression_lookup;
-				expression::variable_lookup lookup = get_variable_lookup();
-				auto simpExpression = expression->simplify(lookup);
-				auto numberExpression = dynamic_cast<expression::number_expression*>(simpExpression.get());
-				if (numberExpression)
-				{
-					return numberExpression->get_number();
-				}
-				else
-				{
-					throw std::exception("Error while determining value of expression.");
-				}
+				auto clone = expression->clone();
+				auto bindings = get_binding_lookup();
+				clone->bind(bindings);
+				return clone->eval();
 			}
 
 			/// <summary>
@@ -396,7 +389,26 @@ namespace stochsim
 			/// <returns>Value of the variable.</returns>
 			expression::number get_variable_value(const expression::identifier& name) const
 			{
-				return get_expression_value(get_variable_expression(name));
+				auto search = variables_.find(name);
+				if (search != variables_.end())
+				{
+					auto clone = search->second->clone();
+					auto bindings = get_binding_lookup();
+					clone->bind(bindings);
+					return clone->eval();
+				}
+				auto default_search = defaultVariables_.find(name);
+				if (default_search != defaultVariables_.end())
+				{
+					auto clone = default_search->second->clone();
+					auto bindings = get_binding_lookup();
+					clone->bind(bindings);
+					return clone->eval();
+				}
+
+				std::stringstream errorMessage;
+				errorMessage << "Variable with name \"" << name << "\" not defined";
+				throw std::exception(errorMessage.str().c_str());
 			}
 			static std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> create_default_variables() noexcept
 			{
@@ -417,19 +429,21 @@ namespace stochsim
 						{
 							return n1 > n2 ? n1 : n2;
 						}
-						)));
+						), false));
 				return std::move(defaultFunctions);
 			}
 		private:
 			/// <summary>
-			/// Returns a function to lookup the value of a variable.
-			/// Calling this->get_lookup()(variableName) is equivalent to calling
-			/// this->variable_value(variableName).
+			/// Returns a binding for all defined variable.
 			/// </summary>
 			/// <returns>Function to lookup variable values.</returns>
-			const expression::variable_lookup get_variable_lookup() const noexcept
+			const expression::binding_lookup get_binding_lookup() const noexcept
 			{
-				return std::bind(&parse_tree::get_variable_expression, this, std::placeholders::_1);
+				return [this](const expression::identifier name)->std::unique_ptr<expression::function_holder_base>
+				{
+					std::function<expression::number()> binding = [this, name]()->expression::number {return this->get_variable_value(name); };
+					return expression::make_function_holder(binding, false);
+				};
 			}
 			
 		private:
