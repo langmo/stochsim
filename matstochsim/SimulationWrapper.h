@@ -2,7 +2,7 @@
 #include <string>
 #include <memory>
 
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include "Simulation.h"
 #include "mex.h"
 #include "MatlabParams.h"

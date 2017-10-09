@@ -2,7 +2,7 @@
 #include "ComplexState.h"
 #include "ComposedState.h"
 #include <memory>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 
 namespace stochsim
 {

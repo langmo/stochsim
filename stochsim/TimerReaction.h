@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include <vector>
 #include <string>
 namespace stochsim

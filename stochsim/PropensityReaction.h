@@ -1,5 +1,5 @@
 #pragma once
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include <vector>
 #include <memory>
 #include <map>
@@ -7,7 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include "ReactionRate.h"
-#include "expression.h"
+#include "expression/expression.h"
 namespace stochsim
 {
 	/// <summary>

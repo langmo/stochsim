@@ -1,5 +1,5 @@
 #pragma once
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include <iostream>
 #include <iomanip>
 namespace stochsim

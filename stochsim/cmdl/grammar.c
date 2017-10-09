@@ -24,50 +24,75 @@
 */
 #include <stdio.h>
 /************ Begin %include sections from the grammar ************************/
-#line 13 "cmdl_grammar.y"
-#include "cmdl_grammar_definitions.h"
-#line 14 "cmdl_grammar.y"
+#line 14 "cmdl/grammar.y"
+#include "../expression/expression.h"
+#line 15 "cmdl/grammar.y"
+#include "../expression/comparison_expression.h"
+#line 16 "cmdl/grammar.y"
+#include "../expression/conditional_expression.h"
+#line 17 "cmdl/grammar.y"
+#include "../expression/exponentiation_expression.h"
+#line 18 "cmdl/grammar.y"
+#include "../expression/logical_expression.h"
+#line 19 "cmdl/grammar.y"
+#include "../expression/number_expression.h"
+#line 20 "cmdl/grammar.y"
+#include "../expression/product_expression.h"
+#line 21 "cmdl/grammar.y"
+#include "../expression/sum_expression.h"
+#line 22 "cmdl/grammar.y"
+#include "../expression/variable_expression.h"
+#line 23 "cmdl/grammar.y"
+#include "../expression/function_expression.h"
+#line 25 "cmdl/grammar.y"
+#include "symbols.h"
+#line 26 "cmdl/grammar.y"
+#include "parse_tree.h"
+#line 27 "cmdl/grammar.y"
+#include "parser.h"
+#line 29 "cmdl/grammar.y"
 #include  <assert.h>
-#line 15 "cmdl_grammar.y"
-using namespace stochsim::expression;
-#line 16 "cmdl_grammar.y"
-using namespace stochsim::cmdl;
-#line 17 "cmdl_grammar.y"
+#line 30 "cmdl/grammar.y"
+using namespace expression;
+#line 31 "cmdl/grammar.y"
+using namespace cmdl;
+#line 32 "cmdl/grammar.y"
 #undef NDEBUG
-#line 19 "cmdl_grammar.y"
+#line 34 "cmdl/grammar.y"
 
 	// Forward declaration parser functions.
-	void Parse(
+	void internal_Parse(
 		void *yyp,                   /* The parser */
 		int yymajor,                 /* The major token code number */
 		terminal_symbol* yyminor,       /* The value for the token */
 		parse_tree* parse_tree               /* Optional %extra_argument parameter */
 	);
 
-	void *ParseAlloc(void* (*mallocProc)(size_t));
+	void *internal_ParseAlloc(void* (*mallocProc)(size_t));
 
-	void ParseFree(
+	void internal_ParseFree(
 		void *p,                    /* The parser to be deleted */
 		void(*freeProc)(void*)     /* Function used to reclaim memory */
 	);
-	void ParseTrace(FILE *TraceFILE, char *zTracePrompt);
-	stochsim::cmdl::parser::parser(std::string errorFileName)
+	void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+	void cmdl::parser::initialize_internal()
 	{
-		if (errorFileName.empty())
+		uninitialize_internal();
+		if (logFilePath_.empty())
 		{
-			traceFile_ = nullptr;
+			logFile_ = nullptr;
 		}
 		else
 		{
-			fopen_s(&traceFile_, errorFileName.c_str(), "w");
-			if(traceFile_)
-				ParseTrace(traceFile_, "cmdl_");
+			fopen_s(&logFile_, logFilePath_.c_str(), "w");
+			if(logFile_)
+				internal_ParseTrace(logFile_, "cmdl_");
 			else
-				ParseTrace(0, "cmdl_");
+				internal_ParseTrace(0, "cmdl_");
 		}
 		try
 		{
-			handle_ = ParseAlloc(malloc);
+			handle_ = internal_ParseAlloc(malloc);
 		}
 		catch (...)
 		{
@@ -78,18 +103,19 @@ using namespace stochsim::cmdl;
 			throw std::exception("Could not create cmdl parser.");
 		}
 	}
-	stochsim::cmdl::parser::~parser()
+	void cmdl::parser::uninitialize_internal()
 	{
-		ParseTrace(0, "cmdl_");
-		if(handle_)
-			ParseFree(handle_, free); 
+		if(!handle_)
+			return;
+		internal_ParseTrace(0, "cmdl_");
+		internal_ParseFree(handle_, free); 
 		handle_ = nullptr;
-		if (traceFile_)
-			fclose(traceFile_);
-		traceFile_ = nullptr;
+		if (logFile_)
+			fclose(logFile_);
+		logFile_ = nullptr;
 	}
 
-	void stochsim::cmdl::parser::operator()(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
+	void cmdl::parser::parse_token(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
 	{
 		if (!handle_)
 		{
@@ -97,7 +123,7 @@ using namespace stochsim::cmdl;
 		}
 		try
 		{
-			Parse(handle_, tokenID, token, &parseTree);
+			internal_Parse(handle_, tokenID, token, &parseTree);
 		}
 		catch (const std::exception& ex)
 		{
@@ -108,7 +134,7 @@ using namespace stochsim::cmdl;
 			throw std::exception("Unknown error");
 		}
 	}
-#line 112 "cmdl_grammar.c"
+#line 138 "cmdl/grammar.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -132,7 +158,7 @@ using namespace stochsim::cmdl;
 **    YYACTIONTYPE       is the data type used for "action codes" - numbers
 **                       that indicate what to do in response to the next
 **                       token.
-**    ParseTOKENTYPE     is the data type used for minor type for terminal
+**    internal_ParseTOKENTYPE     is the data type used for minor type for terminal
 **                       symbols.  Background: A "minor type" is a semantic
 **                       value associated with a terminal or non-terminal
 **                       symbols.  For example, for an "ID" terminal symbol,
@@ -143,14 +169,14 @@ using namespace stochsim::cmdl;
 **                       symbols.
 **    YYMINORTYPE        is the data type used for all minor types.
 **                       This is typically a union of many types, one of
-**                       which is ParseTOKENTYPE.  The entry in the union
+**                       which is internal_ParseTOKENTYPE.  The entry in the union
 **                       for terminal symbols is called "yy0".
 **    YYSTACKDEPTH       is the maximum depth of the parser's stack.  If
 **                       zero the stack is dynamically sized using realloc()
-**    ParseARG_SDECL     A static variable declaration for the %extra_argument
-**    ParseARG_PDECL     A parameter declaration for the %extra_argument
-**    ParseARG_STORE     Code to store %extra_argument into yypParser
-**    ParseARG_FETCH     Code to extract %extra_argument from yypParser
+**    internal_ParseARG_SDECL     A static variable declaration for the %extra_argument
+**    internal_ParseARG_PDECL     A parameter declaration for the %extra_argument
+**    internal_ParseARG_STORE     Code to store %extra_argument into yypParser
+**    internal_ParseARG_FETCH     Code to extract %extra_argument from yypParser
 **    YYERRORSYMBOL      is the code number of the error symbol.  If not
 **                       defined, then do no error processing.
 **    YYNSTATE           the combined number of states.
@@ -170,11 +196,13 @@ using namespace stochsim::cmdl;
 #define YYCODETYPE unsigned char
 #define YYNOCODE 39
 #define YYACTIONTYPE unsigned char
-#define ParseTOKENTYPE terminal_symbol*
+#define internal_ParseTOKENTYPE terminal_symbol*
 typedef union {
   int yyinit;
-  ParseTOKENTYPE yy0;
+  internal_ParseTOKENTYPE yy0;
   conjunction_expression* yy4;
+  reaction_component* yy30;
+  reaction_side* yy40;
   sum_expression* yy43;
   product_expression* yy47;
   expression_base* yy53;
@@ -184,22 +212,22 @@ typedef union {
 #ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
 #endif
-#define ParseARG_SDECL parse_tree* parseTree;
-#define ParseARG_PDECL ,parse_tree* parseTree
-#define ParseARG_FETCH parse_tree* parseTree = yypParser->parseTree
-#define ParseARG_STORE yypParser->parseTree = parseTree
+#define internal_ParseARG_SDECL parse_tree* parseTree;
+#define internal_ParseARG_PDECL ,parse_tree* parseTree
+#define internal_ParseARG_FETCH parse_tree* parseTree = yypParser->parseTree
+#define internal_ParseARG_STORE yypParser->parseTree = parseTree
 #define YYERRORSYMBOL 25
 #define YYERRSYMDT yy77
-#define YYNSTATE             70
-#define YYNRULE              45
-#define YY_MAX_SHIFT         69
-#define YY_MIN_SHIFTREDUCE   83
-#define YY_MAX_SHIFTREDUCE   127
-#define YY_MIN_REDUCE        128
-#define YY_MAX_REDUCE        172
-#define YY_ERROR_ACTION      173
-#define YY_ACCEPT_ACTION     174
-#define YY_NO_ACTION         175
+#define YYNSTATE             68
+#define YYNRULE              47
+#define YY_MAX_SHIFT         67
+#define YY_MIN_SHIFTREDUCE   87
+#define YY_MAX_SHIFTREDUCE   133
+#define YY_MIN_REDUCE        134
+#define YY_MAX_REDUCE        180
+#define YY_ERROR_ACTION      181
+#define YY_ACCEPT_ACTION     182
+#define YY_NO_ACTION         183
 /************* End control #defines *******************************************/
 
 /* Define the yytestcase() macro to be a no-op if is not already defined
@@ -271,45 +299,46 @@ typedef union {
 **  yy_default[]       Default action for each state.
 **
 *********** Begin parsing tables **********************************************/
-#define YY_ACTTAB_COUNT (361)
+#define YY_ACTTAB_COUNT (374)
 static const YYACTIONTYPE yy_action[] = {
  /*     0 */    24,   23,   21,   20,   19,   18,   17,   16,   29,   27,
- /*    10 */    26,   25,   22,   37,   58,   57,   65,   64,   55,  161,
- /*    20 */    59,  114,  113,   24,   23,   21,   20,   19,   18,   17,
+ /*    10 */    26,   25,   22,   37,  137,  142,  147,  150,   55,  167,
+ /*    20 */    57,  118,  117,   24,   23,   21,   20,   19,   18,   17,
  /*    30 */    16,   29,   27,   26,   25,   22,   24,   23,   21,   20,
  /*    40 */    19,   18,   17,   16,   29,   27,   26,   25,   22,   36,
- /*    50 */    58,   57,   65,   64,  112,  162,   60,   22,  111,   24,
+ /*    50 */   137,  142,  147,  150,  127,  168,   60,  125,  115,   24,
  /*    60 */    23,   21,   20,   19,   18,   17,   16,   29,   27,   26,
  /*    70 */    25,   22,   24,   23,   21,   20,   19,   18,   17,   16,
- /*    80 */    29,   27,   26,   25,   22,   26,   25,   22,   13,   85,
- /*    90 */   174,    1,   24,   23,   21,   20,   19,   18,   17,   16,
- /*   100 */    14,   27,    7,   25,   22,   23,   21,   20,   19,   18,
- /*   110 */    17,   16,   29,   27,   26,   25,   22,  130,  168,   15,
- /*   120 */    10,  168,  168,  168,   37,   58,   57,   65,   64,   56,
- /*   130 */   161,   21,   20,   19,   18,   17,   16,   29,   27,   26,
- /*   140 */    25,   22,  173,  173,  173,  173,  173,  173,   29,   27,
- /*   150 */    26,   25,   22,  167,  130,   11,   28,    9,  130,   12,
- /*   160 */    83,   84,   30,  130,   11,    6,  130,  130,   12,   54,
- /*   170 */    84,   30,   11,  130,  130,  130,   12,   83,   84,   30,
- /*   180 */    11,  130,    8,  130,   12,   48,   84,   30,  165,  130,
- /*   190 */   130,   32,   58,   57,   65,   64,   34,   58,   57,   65,
- /*   200 */    64,  165,  165,   11,  166,  130,  130,   12,   83,   84,
- /*   210 */    30,   31,   58,   57,   65,   64,  130,  166,  166,   11,
- /*   220 */   130,  130,  130,   12,   49,   84,   30,   69,   58,   57,
- /*   230 */    65,   64,   33,   58,   57,   65,   64,    3,  130,   51,
- /*   240 */    58,   57,   65,   64,   61,   58,   57,   65,   64,  130,
- /*   250 */     2,   62,   58,   57,   65,   64,   63,   58,   57,   65,
- /*   260 */    64,   40,   58,   57,   65,   64,   38,   58,   57,   65,
- /*   270 */    64,   66,   58,   57,   65,   64,   41,   58,   57,   65,
- /*   280 */    64,  130,  130,   42,   58,   57,   65,   64,   43,   58,
- /*   290 */    57,   65,   64,   44,   58,   57,   65,   64,   45,   58,
- /*   300 */    57,   65,   64,   46,   58,   57,   65,   64,   67,   58,
- /*   310 */    57,   65,   64,  130,  130,   47,   58,   57,   65,   64,
- /*   320 */    39,   58,   57,   65,   64,   68,   58,   57,   65,   64,
- /*   330 */    52,   58,   57,   65,   64,   53,   58,   57,   65,   64,
- /*   340 */    50,   58,   57,   65,   64,  165,    3,   35,   58,   57,
- /*   350 */    65,   64,  130,  130,  130,    5,  130,  130,  165,  130,
- /*   360 */     4,
+ /*    80 */    29,   27,   26,   25,   22,   26,   25,   22,  116,   89,
+ /*    90 */   182,    1,   24,   23,   21,   20,   19,   18,   17,   16,
+ /*   100 */    22,   27,    7,   25,   22,   23,   21,   20,   19,   18,
+ /*   110 */    17,   16,   29,   27,   26,   25,   22,  136,  176,  136,
+ /*   120 */   136,  176,  176,  176,   37,  137,  142,  147,  150,   56,
+ /*   130 */   167,   21,   20,   19,   18,   17,   16,   29,   27,   26,
+ /*   140 */    25,   22,  181,  181,  181,  181,  181,  181,   29,   27,
+ /*   150 */    26,   25,   22,  175,  136,   11,  136,  136,  136,   12,
+ /*   160 */    87,   88,   30,  136,   11,    6,  136,  136,   12,   50,
+ /*   170 */    88,   30,   11,  136,  136,  136,   12,   87,   88,   30,
+ /*   180 */    11,  136,    8,  136,   12,   48,   88,   30,    3,  136,
+ /*   190 */   136,   32,  137,  142,  147,  150,   34,  137,  142,  147,
+ /*   200 */   150,  136,    4,   11,    3,  136,  136,   12,   87,   88,
+ /*   210 */    30,   31,  137,  142,  147,  150,  136,    2,  136,   11,
+ /*   220 */   136,  136,  136,   12,   49,   88,   30,   67,  137,  142,
+ /*   230 */   147,  150,   33,  137,  142,  147,  150,  136,  136,   52,
+ /*   240 */   137,  142,  147,  150,   61,  137,  142,  147,  150,  136,
+ /*   250 */   136,   62,  137,  142,  147,  150,   63,  137,  142,  147,
+ /*   260 */   150,   40,  137,  142,  147,  150,   38,  137,  142,  147,
+ /*   270 */   150,   64,  137,  142,  147,  150,   41,  137,  142,  147,
+ /*   280 */   150,  136,  136,   42,  137,  142,  147,  150,   43,  137,
+ /*   290 */   142,  147,  150,   44,  137,  142,  147,  150,   45,  137,
+ /*   300 */   142,  147,  150,   46,  137,  142,  147,  150,   65,  137,
+ /*   310 */   142,  147,  150,  136,  136,   47,  137,  142,  147,  150,
+ /*   320 */    39,  137,  142,  147,  150,   66,  137,  142,  147,  150,
+ /*   330 */    53,  137,  142,  147,  150,   54,  137,  142,  147,  150,
+ /*   340 */    51,  137,  142,  147,  150,  171,  136,   35,  137,  142,
+ /*   350 */   147,  150,  173,  136,  136,  136,   59,  136,  171,  171,
+ /*   360 */   171,  136,  136,   58,  136,  173,  173,  136,  136,  136,
+ /*   370 */     5,   59,  136,  171,
 };
 static const YYCODETYPE yy_lookahead[] = {
  /*     0 */     2,    3,    4,    5,    6,    7,    8,    9,   10,   11,
@@ -317,27 +346,27 @@ static const YYCODETYPE yy_lookahead[] = {
  /*    20 */    22,    1,    1,    2,    3,    4,    5,    6,    7,    8,
  /*    30 */     9,   10,   11,   12,   13,   14,    2,    3,    4,    5,
  /*    40 */     6,    7,    8,    9,   10,   11,   12,   13,   14,   31,
- /*    50 */    32,   33,   34,   35,    1,   37,   22,   14,    1,    2,
+ /*    50 */    32,   33,   34,   35,   22,   37,   22,   22,    1,    2,
  /*    60 */     3,    4,    5,    6,    7,    8,    9,   10,   11,   12,
  /*    70 */    13,   14,    2,    3,    4,    5,    6,    7,    8,    9,
- /*    80 */    10,   11,   12,   13,   14,   12,   13,   14,    3,   19,
+ /*    80 */    10,   11,   12,   13,   14,   12,   13,   14,    1,   19,
  /*    90 */    26,   27,    2,    3,    4,    5,    6,    7,    8,    9,
- /*   100 */     2,   11,   12,   13,   14,    3,    4,    5,    6,    7,
- /*   110 */     8,    9,   10,   11,   12,   13,   14,   38,   25,   12,
- /*   120 */    13,   28,   29,   30,   31,   32,   33,   34,   35,   36,
+ /*   100 */    14,   11,   12,   13,   14,    3,    4,    5,    6,    7,
+ /*   110 */     8,    9,   10,   11,   12,   13,   14,   38,   25,   38,
+ /*   120 */    38,   28,   29,   30,   31,   32,   33,   34,   35,   36,
  /*   130 */    37,    4,    5,    6,    7,    8,    9,   10,   11,   12,
  /*   140 */    13,   14,    4,    5,    6,    7,    8,    9,   10,   11,
- /*   150 */    12,   13,   14,    0,   38,   11,   10,   11,   38,   15,
+ /*   150 */    12,   13,   14,    0,   38,   11,   38,   38,   38,   15,
  /*   160 */    16,   17,   18,   38,   11,   21,   38,   38,   15,   16,
  /*   170 */    17,   18,   11,   38,   38,   38,   15,   16,   17,   18,
  /*   180 */    11,   38,   21,   38,   15,   16,   17,   18,   10,   38,
  /*   190 */    38,   31,   32,   33,   34,   35,   31,   32,   33,   34,
- /*   200 */    35,   23,   24,   11,   10,   38,   38,   15,   16,   17,
- /*   210 */    18,   31,   32,   33,   34,   35,   38,   23,   24,   11,
+ /*   200 */    35,   38,   24,   11,   10,   38,   38,   15,   16,   17,
+ /*   210 */    18,   31,   32,   33,   34,   35,   38,   23,   38,   11,
  /*   220 */    38,   38,   38,   15,   16,   17,   18,   31,   32,   33,
- /*   230 */    34,   35,   31,   32,   33,   34,   35,   10,   38,   31,
+ /*   230 */    34,   35,   31,   32,   33,   34,   35,   38,   38,   31,
  /*   240 */    32,   33,   34,   35,   31,   32,   33,   34,   35,   38,
- /*   250 */    23,   31,   32,   33,   34,   35,   31,   32,   33,   34,
+ /*   250 */    38,   31,   32,   33,   34,   35,   31,   32,   33,   34,
  /*   260 */    35,   31,   32,   33,   34,   35,   31,   32,   33,   34,
  /*   270 */    35,   31,   32,   33,   34,   35,   31,   32,   33,   34,
  /*   280 */    35,   38,   38,   31,   32,   33,   34,   35,   31,   32,
@@ -346,22 +375,23 @@ static const YYCODETYPE yy_lookahead[] = {
  /*   310 */    33,   34,   35,   38,   38,   31,   32,   33,   34,   35,
  /*   320 */    31,   32,   33,   34,   35,   31,   32,   33,   34,   35,
  /*   330 */    31,   32,   33,   34,   35,   31,   32,   33,   34,   35,
- /*   340 */    31,   32,   33,   34,   35,   10,   10,   31,   32,   33,
- /*   350 */    34,   35,   38,   38,   38,   20,   38,   38,   23,   38,
- /*   360 */    24,
+ /*   340 */    31,   32,   33,   34,   35,   10,   38,   31,   32,   33,
+ /*   350 */    34,   35,   10,   38,   38,   38,   21,   38,   23,   24,
+ /*   360 */    10,   38,   38,   21,   38,   23,   24,   38,   38,   38,
+ /*   370 */    20,   21,   38,   23,
 };
-#define YY_SHIFT_USE_DFLT (361)
-#define YY_SHIFT_COUNT    (69)
+#define YY_SHIFT_USE_DFLT (374)
+#define YY_SHIFT_COUNT    (67)
 #define YY_SHIFT_MIN      (-2)
-#define YY_SHIFT_MAX      (336)
+#define YY_SHIFT_MAX      (350)
 static const short yy_shift_ofst[] = {
- /*     0 */   361,  153,  169,  169,  144,  161,  192,  208,  192,  192,
+ /*     0 */   374,  153,  169,  169,  144,  161,  192,  208,  192,  192,
  /*    10 */   192,  192,  192,  192,  192,  192,  192,  192,  192,  192,
  /*    20 */   192,  192,  192,  192,  192,  192,  192,  192,  192,  192,
  /*    30 */   192,   -2,   21,   34,   57,   70,   90,   90,  102,  102,
- /*    40 */   127,  138,  138,  138,  138,  138,  138,  127,  178,  194,
- /*    50 */    73,   73,   73,   73,  335,  336,  227,  107,  146,   20,
- /*    60 */    53,   43,   43,   43,   85,   98,   43,   43,   43,   43,
+ /*    40 */   127,  138,  138,  138,  138,  138,  138,  127,  335,  342,
+ /*    50 */   350,   73,   73,   73,   73,  178,  194,   20,   32,   35,
+ /*    60 */    87,   86,   86,   86,   86,   86,   86,   86,
 };
 #define YY_REDUCE_USE_DFLT (-19)
 #define YY_REDUCE_COUNT (30)
@@ -374,13 +404,13 @@ static const short yy_reduce_ofst[] = {
  /*    30 */   316,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */   169,  160,  160,  173,  173,  173,  173,  173,  173,  173,
- /*    10 */   173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
- /*    20 */   173,  173,  173,  173,  173,  173,  173,  173,  173,  173,
- /*    30 */   173,  173,  173,  173,  173,  173,  164,  163,  143,  142,
- /*    40 */   146,  155,  154,  153,  152,  151,  150,  145,  128,  128,
- /*    50 */   132,  135,  133,  134,  128,  173,  173,  136,  131,  173,
- /*    60 */   173,  140,  148,  147,  144,  141,  139,  149,  138,  137,
+ /*     0 */   177,  166,  166,  181,  181,  181,  181,  181,  181,  181,
+ /*    10 */   181,  181,  181,  181,  181,  181,  181,  181,  181,  181,
+ /*    20 */   181,  181,  181,  181,  181,  181,  181,  181,  181,  181,
+ /*    30 */   181,  181,  181,  181,  181,  181,  170,  169,  149,  148,
+ /*    40 */   152,  161,  160,  159,  158,  157,  156,  151,  134,  134,
+ /*    50 */   134,  138,  141,  139,  140,  181,  181,  181,  181,  181,
+ /*    60 */   181,  146,  154,  153,  145,  155,  144,  143,
 };
 /********** End of lemon-generated parsing tables *****************************/
 
@@ -438,7 +468,7 @@ struct yyParser {
 #ifndef YYNOERRORRECOVERY
   int yyerrcnt;                 /* Shifts left before out of the error */
 #endif
-  ParseARG_SDECL                /* A place to hold %extra_argument */
+  internal_ParseARG_SDECL                /* A place to hold %extra_argument */
 #if YYSTACKDEPTH<=0
   int yystksz;                  /* Current side of the stack */
   yyStackEntry *yystack;        /* The parser's stack */
@@ -474,7 +504,7 @@ static char *yyTracePrompt = 0;
 ** Outputs:
 ** None.
 */
-void ParseTrace(FILE *TraceFILE, char *zTracePrompt){
+void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt){
   yyTraceFILE = TraceFILE;
   yyTracePrompt = zTracePrompt;
   if( yyTraceFILE==0 ) yyTracePrompt = 0;
@@ -541,13 +571,15 @@ static const char *const yyRuleName[] = {
  /*  35 */ "reactionSide ::= expression",
  /*  36 */ "reactionSide ::= reactionSide PLUS expression",
  /*  37 */ "reactionComponent ::= IDENTIFIER",
- /*  38 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER",
- /*  39 */ "model ::= statements",
- /*  40 */ "statements ::= statements statement",
- /*  41 */ "statements ::=",
- /*  42 */ "statement ::= assignment",
- /*  43 */ "statement ::= reaction",
- /*  44 */ "statement ::= error",
+ /*  38 */ "reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
+ /*  39 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER",
+ /*  40 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
+ /*  41 */ "model ::= statements",
+ /*  42 */ "statements ::= statements statement",
+ /*  43 */ "statements ::=",
+ /*  44 */ "statement ::= assignment",
+ /*  45 */ "statement ::= reaction",
+ /*  46 */ "statement ::= error",
 };
 #endif /* NDEBUG */
 
@@ -586,7 +618,7 @@ static int yyGrowStack(yyParser *p){
 #endif
 
 /* Datatype of the argument to the memory allocated passed as the
-** second argument to ParseAlloc() below.  This can be changed by
+** second argument to internal_ParseAlloc() below.  This can be changed by
 ** putting an appropriate #define in the %include section of the input
 ** grammar.
 */
@@ -596,7 +628,7 @@ static int yyGrowStack(yyParser *p){
 
 /* Initialize a new parser that has already been allocated.
 */
-void ParseInit(void *yypParser){
+void internal_ParseInit(void *yypParser){
   yyParser *pParser = (yyParser*)yypParser;
 #ifdef YYTRACKMAXSTACKDEPTH
   pParser->yyhwm = 0;
@@ -621,7 +653,7 @@ void ParseInit(void *yypParser){
 #endif
 }
 
-#ifndef Parse_ENGINEALWAYSONSTACK
+#ifndef internal_Parse_ENGINEALWAYSONSTACK
 /* 
 ** This function allocates a new parser.
 ** The only argument is a pointer to a function which works like
@@ -632,15 +664,15 @@ void ParseInit(void *yypParser){
 **
 ** Outputs:
 ** A pointer to a parser.  This pointer is used in subsequent calls
-** to Parse and ParseFree.
+** to internal_Parse and internal_ParseFree.
 */
-void *ParseAlloc(void *(*mallocProc)(YYMALLOCARGTYPE)){
+void *internal_ParseAlloc(void *(*mallocProc)(YYMALLOCARGTYPE)){
   yyParser *pParser;
   pParser = (yyParser*)(*mallocProc)( (YYMALLOCARGTYPE)sizeof(yyParser) );
-  if( pParser ) ParseInit(pParser);
+  if( pParser ) internal_ParseInit(pParser);
   return pParser;
 }
-#endif /* Parse_ENGINEALWAYSONSTACK */
+#endif /* internal_Parse_ENGINEALWAYSONSTACK */
 
 
 /* The following function deletes the "minor type" or semantic value
@@ -655,7 +687,7 @@ static void yy_destructor(
   YYCODETYPE yymajor,     /* Type code for object to destroy */
   YYMINORTYPE *yypminor   /* The object to be destroyed */
 ){
-  ParseARG_FETCH;
+  internal_ParseARG_FETCH;
   switch( yymajor ){
     /* Here is inserted the actions which take place when a
     ** terminal or non-terminal is destroyed.  This can happen
@@ -694,64 +726,82 @@ static void yy_destructor(
     case 23: /* ARROW */
     case 24: /* COMMA */
 {
-#line 8 "cmdl_grammar.y"
+#line 8 "cmdl/grammar.y"
 
 	delete (yypminor->yy0);
 	(yypminor->yy0) = nullptr;
 
-#line 703 "cmdl_grammar.c"
+#line 735 "cmdl/grammar.c"
 }
       break;
     case 31: /* expression */
 {
-#line 149 "cmdl_grammar.y"
+#line 166 "cmdl/grammar.y"
  
 	delete (yypminor->yy53);
 	(yypminor->yy53) = nullptr;
 
-#line 713 "cmdl_grammar.c"
+#line 745 "cmdl/grammar.c"
 }
       break;
     case 32: /* sum */
-    case 36: /* reactionSide */
 {
-#line 170 "cmdl_grammar.y"
+#line 187 "cmdl/grammar.y"
  
 	delete (yypminor->yy43);
 	(yypminor->yy43) = nullptr;
 
-#line 724 "cmdl_grammar.c"
+#line 755 "cmdl/grammar.c"
 }
       break;
     case 33: /* product */
-    case 37: /* reactionComponent */
 {
-#line 199 "cmdl_grammar.y"
+#line 216 "cmdl/grammar.y"
  
 	delete (yypminor->yy47);
 	(yypminor->yy47) = nullptr;
 
-#line 735 "cmdl_grammar.c"
+#line 765 "cmdl/grammar.c"
 }
       break;
     case 34: /* conjunction */
 {
-#line 229 "cmdl_grammar.y"
+#line 246 "cmdl/grammar.y"
  
 	delete (yypminor->yy4);
 	(yypminor->yy4) = nullptr;
 
-#line 745 "cmdl_grammar.c"
+#line 775 "cmdl/grammar.c"
 }
       break;
     case 35: /* disjunction */
 {
-#line 249 "cmdl_grammar.y"
+#line 266 "cmdl/grammar.y"
  
 	delete (yypminor->yy72);
 	(yypminor->yy72) = nullptr;
 
-#line 755 "cmdl_grammar.c"
+#line 785 "cmdl/grammar.c"
+}
+      break;
+    case 36: /* reactionSide */
+{
+#line 374 "cmdl/grammar.y"
+ 
+	delete (yypminor->yy40);
+	(yypminor->yy40) = nullptr;
+
+#line 795 "cmdl/grammar.c"
+}
+      break;
+    case 37: /* reactionComponent */
+{
+#line 411 "cmdl/grammar.y"
+ 
+	delete (yypminor->yy30);
+	(yypminor->yy30) = nullptr;
+
+#line 805 "cmdl/grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -783,7 +833,7 @@ static void yy_pop_parser_stack(yyParser *pParser){
 /*
 ** Clear all secondary memory allocations from the parser
 */
-void ParseFinalize(void *p){
+void internal_ParseFinalize(void *p){
   yyParser *pParser = (yyParser*)p;
   while( pParser->yytos>pParser->yystack ) yy_pop_parser_stack(pParser);
 #if YYSTACKDEPTH<=0
@@ -791,7 +841,7 @@ void ParseFinalize(void *p){
 #endif
 }
 
-#ifndef Parse_ENGINEALWAYSONSTACK
+#ifndef internal_Parse_ENGINEALWAYSONSTACK
 /* 
 ** Deallocate and destroy a parser.  Destructors are called for
 ** all stack elements before shutting the parser down.
@@ -800,23 +850,23 @@ void ParseFinalize(void *p){
 ** is defined in a %include section of the input grammar) then it is
 ** assumed that the input pointer is never NULL.
 */
-void ParseFree(
+void internal_ParseFree(
   void *p,                    /* The parser to be deleted */
   void (*freeProc)(void*)     /* Function used to reclaim memory */
 ){
 #ifndef YYPARSEFREENEVERNULL
   if( p==0 ) return;
 #endif
-  ParseFinalize(p);
+  internal_ParseFinalize(p);
   (*freeProc)(p);
 }
-#endif /* Parse_ENGINEALWAYSONSTACK */
+#endif /* internal_Parse_ENGINEALWAYSONSTACK */
 
 /*
 ** Return the peak depth of the stack for a parser.
 */
 #ifdef YYTRACKMAXSTACKDEPTH
-int ParseStackPeak(void *p){
+int internal_ParseStackPeak(void *p){
   yyParser *pParser = (yyParser*)p;
   return pParser->yyhwm;
 }
@@ -920,7 +970,7 @@ static int yy_find_reduce_action(
 ** The following routine is called if the stack overflows.
 */
 static void yyStackOverflow(yyParser *yypParser){
-   ParseARG_FETCH;
+   internal_ParseARG_FETCH;
 #ifndef NDEBUG
    if( yyTraceFILE ){
      fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
@@ -930,11 +980,11 @@ static void yyStackOverflow(yyParser *yypParser){
    /* Here code is inserted which will execute if the parser
    ** stack every overflows */
 /******** Begin %stack_overflow code ******************************************/
-#line 5 "cmdl_grammar.y"
+#line 5 "cmdl/grammar.y"
 throw std::exception("Parser stack overflow while parsing cmdl file.");
-#line 936 "cmdl_grammar.c"
+#line 986 "cmdl/grammar.c"
 /******** End %stack_overflow code ********************************************/
-   ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
+   internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
 
 /*
@@ -964,7 +1014,7 @@ static void yy_shift(
   yyParser *yypParser,          /* The parser to be shifted */
   int yyNewState,               /* The new state to shift in */
   int yyMajor,                  /* The major token to shift in */
-  ParseTOKENTYPE yyMinor        /* The minor token to shift in */
+  internal_ParseTOKENTYPE yyMinor        /* The minor token to shift in */
 ){
   yyStackEntry *yytos;
   yypParser->yytos++;
@@ -1045,6 +1095,8 @@ static const struct {
   { 36, -3 },
   { 37, -1 },
   { 37, -3 },
+  { 37, -3 },
+  { 37, -5 },
   { 26, -1 },
   { 27, -2 },
   { 27, 0 },
@@ -1067,7 +1119,7 @@ static void yy_reduce(
   int yyact;                      /* The next action */
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
-  ParseARG_FETCH;
+  internal_ParseARG_FETCH;
   yymsp = yypParser->yytos;
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
@@ -1115,350 +1167,350 @@ static void yy_reduce(
 /********** Begin reduce actions **********************************************/
         YYMINORTYPE yylhsminor;
       case 0: /* expression ::= IDENTIFIER */
-#line 153 "cmdl_grammar.y"
+#line 170 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new variable_expression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1125 "cmdl_grammar.c"
+#line 1177 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 1: /* expression ::= VALUE */
-#line 158 "cmdl_grammar.y"
+#line 175 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new number_expression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1135 "cmdl_grammar.c"
+#line 1187 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 2: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
 {  yy_destructor(yypParser,18,&yymsp[-2].minor);
-#line 163 "cmdl_grammar.y"
+#line 180 "cmdl/grammar.y"
 {
 	yymsp[-2].minor.yy53 = yymsp[-1].minor.yy53;
 }
-#line 1144 "cmdl_grammar.c"
+#line 1196 "cmdl/grammar.c"
   yy_destructor(yypParser,19,&yymsp[0].minor);
 }
         break;
       case 3: /* expression ::= sum */
-#line 174 "cmdl_grammar.y"
+#line 191 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy43;
 }
-#line 1153 "cmdl_grammar.c"
+#line 1205 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 4: /* sum ::= expression PLUS expression */
-#line 177 "cmdl_grammar.y"
+#line 194 "cmdl/grammar.y"
 {
 	yylhsminor.yy43 = new sum_expression();
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1163 "cmdl_grammar.c"
+#line 1215 "cmdl/grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 5: /* sum ::= expression MINUS expression */
-#line 182 "cmdl_grammar.y"
+#line 199 "cmdl/grammar.y"
 {
 	yylhsminor.yy43 = new sum_expression();
 	yylhsminor.yy43->push_back(false,  std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy43->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1174 "cmdl_grammar.c"
+#line 1226 "cmdl/grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 6: /* sum ::= sum PLUS expression */
-#line 187 "cmdl_grammar.y"
+#line 204 "cmdl/grammar.y"
 {
 	yylhsminor.yy43 = yymsp[-2].minor.yy43;
 	yylhsminor.yy43->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1184 "cmdl_grammar.c"
+#line 1236 "cmdl/grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 7: /* sum ::= sum MINUS expression */
-#line 191 "cmdl_grammar.y"
+#line 208 "cmdl/grammar.y"
 {
 	yylhsminor.yy43 = yymsp[-2].minor.yy43;
 	yylhsminor.yy43->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1194 "cmdl_grammar.c"
+#line 1246 "cmdl/grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 8: /* expression ::= product */
-#line 203 "cmdl_grammar.y"
+#line 220 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy47;
 }
-#line 1203 "cmdl_grammar.c"
+#line 1255 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 9: /* product ::= expression MULTIPLY expression */
-#line 206 "cmdl_grammar.y"
+#line 223 "cmdl/grammar.y"
 {
 	yylhsminor.yy47 = new product_expression();
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1214 "cmdl_grammar.c"
+#line 1266 "cmdl/grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 10: /* product ::= expression DIVIDE expression */
-#line 212 "cmdl_grammar.y"
+#line 229 "cmdl/grammar.y"
 {
 	yylhsminor.yy47 = new product_expression();
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy47->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1226 "cmdl_grammar.c"
+#line 1278 "cmdl/grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 11: /* product ::= product MULTIPLY expression */
-#line 218 "cmdl_grammar.y"
+#line 235 "cmdl/grammar.y"
 {
 	yylhsminor.yy47 = yymsp[-2].minor.yy47;
 	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1236 "cmdl_grammar.c"
+#line 1288 "cmdl/grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 12: /* product ::= product DIVIDE expression */
-#line 222 "cmdl_grammar.y"
+#line 239 "cmdl/grammar.y"
 {
 	yylhsminor.yy47 = yymsp[-2].minor.yy47;
 	yylhsminor.yy47->push_back(true, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1246 "cmdl_grammar.c"
+#line 1298 "cmdl/grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy47 = yylhsminor.yy47;
         break;
       case 13: /* expression ::= conjunction */
-#line 233 "cmdl_grammar.y"
+#line 250 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy4;
 }
-#line 1255 "cmdl_grammar.c"
+#line 1307 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 14: /* conjunction ::= expression AND expression */
-#line 236 "cmdl_grammar.y"
+#line 253 "cmdl/grammar.y"
 {
 	yylhsminor.yy4 = new conjunction_expression();
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1266 "cmdl_grammar.c"
+#line 1318 "cmdl/grammar.c"
   yy_destructor(yypParser,2,&yymsp[-1].minor);
   yymsp[-2].minor.yy4 = yylhsminor.yy4;
         break;
       case 15: /* conjunction ::= conjunction AND expression */
-#line 242 "cmdl_grammar.y"
+#line 259 "cmdl/grammar.y"
 {
 	yylhsminor.yy4 = yymsp[-2].minor.yy4;
 	yylhsminor.yy4->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1276 "cmdl_grammar.c"
+#line 1328 "cmdl/grammar.c"
   yy_destructor(yypParser,2,&yymsp[-1].minor);
   yymsp[-2].minor.yy4 = yylhsminor.yy4;
         break;
       case 16: /* expression ::= disjunction */
-#line 253 "cmdl_grammar.y"
+#line 270 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = yymsp[0].minor.yy72;
 }
-#line 1285 "cmdl_grammar.c"
+#line 1337 "cmdl/grammar.c"
   yymsp[0].minor.yy53 = yylhsminor.yy53;
         break;
       case 17: /* disjunction ::= expression OR expression */
-#line 256 "cmdl_grammar.y"
+#line 273 "cmdl/grammar.y"
 {
 	yylhsminor.yy72 = new disjunction_expression();
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 
 }
-#line 1296 "cmdl_grammar.c"
+#line 1348 "cmdl/grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy72 = yylhsminor.yy72;
         break;
       case 18: /* disjunction ::= disjunction OR expression */
-#line 262 "cmdl_grammar.y"
+#line 279 "cmdl/grammar.y"
 {
 	yylhsminor.yy72 = yymsp[-2].minor.yy72;
 	yylhsminor.yy72->push_back(false, std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1306 "cmdl_grammar.c"
+#line 1358 "cmdl/grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy72 = yylhsminor.yy72;
         break;
       case 19: /* expression ::= NOT expression */
 {  yy_destructor(yypParser,15,&yymsp[-1].minor);
-#line 268 "cmdl_grammar.y"
+#line 285 "cmdl/grammar.y"
 {
-	yymsp[-1].minor.yy53 = new not_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
+	yymsp[-1].minor.yy53 = new unary_not_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1316 "cmdl_grammar.c"
+#line 1368 "cmdl/grammar.c"
 }
         break;
       case 20: /* expression ::= MINUS expression */
 {  yy_destructor(yypParser,11,&yymsp[-1].minor);
-#line 273 "cmdl_grammar.y"
+#line 290 "cmdl/grammar.y"
 {
-	yymsp[-1].minor.yy53 = new minus_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
+	yymsp[-1].minor.yy53 = new unary_minus_expression(std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1325 "cmdl_grammar.c"
+#line 1377 "cmdl/grammar.c"
 }
         break;
       case 21: /* expression ::= expression EXP expression */
-#line 278 "cmdl_grammar.y"
+#line 295 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new exponentiation_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53));
 }
-#line 1333 "cmdl_grammar.c"
+#line 1385 "cmdl/grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 22: /* expression ::= expression EQUAL expression */
-#line 284 "cmdl_grammar.y"
+#line 301 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_equal);
 }
-#line 1342 "cmdl_grammar.c"
+#line 1394 "cmdl/grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 23: /* expression ::= expression NOT_EQUAL expression */
-#line 287 "cmdl_grammar.y"
+#line 304 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_not_equal);
 }
-#line 1351 "cmdl_grammar.c"
+#line 1403 "cmdl/grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 24: /* expression ::= expression GREATER expression */
-#line 290 "cmdl_grammar.y"
+#line 307 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_greater);
 }
-#line 1360 "cmdl_grammar.c"
+#line 1412 "cmdl/grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 25: /* expression ::= expression GREATER_EQUAL expression */
-#line 293 "cmdl_grammar.y"
+#line 310 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_greater_equal);
 }
-#line 1369 "cmdl_grammar.c"
+#line 1421 "cmdl/grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 26: /* expression ::= expression LESS expression */
-#line 296 "cmdl_grammar.y"
+#line 313 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_less);
 }
-#line 1378 "cmdl_grammar.c"
+#line 1430 "cmdl/grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 27: /* expression ::= expression LESS_EQUAL expression */
-#line 299 "cmdl_grammar.y"
+#line 316 "cmdl/grammar.y"
 {
 	yylhsminor.yy53 = new comparison_expression(std::unique_ptr<expression_base>(yymsp[-2].minor.yy53), std::unique_ptr<expression_base>(yymsp[0].minor.yy53), comparison_expression::type_less_equal);
 }
-#line 1387 "cmdl_grammar.c"
+#line 1439 "cmdl/grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy53 = yylhsminor.yy53;
         break;
       case 28: /* assignment ::= IDENTIFIER ASSIGN expression SEMICOLON */
-#line 304 "cmdl_grammar.y"
+#line 321 "cmdl/grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-3].minor.yy0 and yymsp[-1].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto I_temp = yymsp[-3].minor.yy0;
-	auto e_temp = yymsp[-1].minor.yy53;
+	identifier name = *yymsp[-3].minor.yy0;
+	delete yymsp[-3].minor.yy0;
 	yymsp[-3].minor.yy0 = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(yymsp[-1].minor.yy53);
 	yymsp[-1].minor.yy53 = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), parseTree->get_expression_value(e_temp));
-	delete e_temp;
-	e_temp = nullptr;
+	parseTree->create_variable(std::move(name), parseTree->get_expression_value(e_temp.get()));
 }
-#line 1405 "cmdl_grammar.c"
+#line 1456 "cmdl/grammar.c"
   yy_destructor(yypParser,20,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 29: /* assignment ::= IDENTIFIER ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 316 "cmdl_grammar.y"
+#line 332 "cmdl/grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy0 and yymsp[-2].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto I_temp = yymsp[-5].minor.yy0;
-	auto e_temp = yymsp[-2].minor.yy53;
+	identifier name = *yymsp[-5].minor.yy0;
+	delete yymsp[-5].minor.yy0;
 	yymsp[-5].minor.yy0 = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(yymsp[-2].minor.yy53);
 	yymsp[-2].minor.yy53 = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), std::unique_ptr<expression_base>(e_temp));
+	parseTree->create_variable(std::move(name), std::move(e_temp));
 }
-#line 1421 "cmdl_grammar.c"
+#line 1473 "cmdl/grammar.c"
   yy_destructor(yypParser,20,&yymsp[-4].minor);
   yy_destructor(yypParser,21,&yymsp[-3].minor);
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 30: /* reaction ::= reactionSide ARROW reactionSide COMMA expression SEMICOLON */
-#line 329 "cmdl_grammar.y"
+#line 346 "cmdl/grammar.y"
 {
-	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy43, yymsp[-3].minor.yy43 and yymsp[-1].minor.yy53 by the parser. We thus have to make sure that
+	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy40, yymsp[-3].minor.yy40 and yymsp[-1].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = yymsp[-5].minor.yy43;
-	auto products_temp = yymsp[-3].minor.yy43;
+	auto reactants_temp = std::unique_ptr<reaction_side>(yymsp[-5].minor.yy40);
+	auto products_temp = std::unique_ptr<reaction_side>(yymsp[-3].minor.yy40);
 	auto e_temp = yymsp[-1].minor.yy53;
-	yymsp[-5].minor.yy43 = nullptr;
-	yymsp[-3].minor.yy43 = nullptr;
+	yymsp[-5].minor.yy40 = nullptr;
+	yymsp[-3].minor.yy40 = nullptr;
 	yymsp[-1].minor.yy53 = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), parseTree->get_expression_value(e_temp));
+	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
 	e_temp = nullptr;
 }
-#line 1443 "cmdl_grammar.c"
+#line 1495 "cmdl/grammar.c"
   yy_destructor(yypParser,23,&yymsp[-4].minor);
   yy_destructor(yypParser,24,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 31: /* reaction ::= reactionSide ARROW reactionSide COMMA LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 343 "cmdl_grammar.y"
+#line 360 "cmdl/grammar.y"
 {
-	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-7].minor.yy43, yymsp[-5].minor.yy43 and yymsp[-2].minor.yy53 by the parser. We thus have to make sure that
+	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-7].minor.yy40, yymsp[-5].minor.yy40 and yymsp[-2].minor.yy53 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = yymsp[-7].minor.yy43;
-	auto products_temp = yymsp[-5].minor.yy43;
+	auto reactants_temp = std::unique_ptr<reaction_side>(yymsp[-7].minor.yy40);
+	auto products_temp = std::unique_ptr<reaction_side>(yymsp[-5].minor.yy40);
 	auto e_temp = yymsp[-2].minor.yy53;
-	yymsp[-7].minor.yy43 = nullptr;
-	yymsp[-5].minor.yy43 = nullptr;
+	yymsp[-7].minor.yy40 = nullptr;
+	yymsp[-5].minor.yy40 = nullptr;
 	yymsp[-2].minor.yy53 = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), std::unique_ptr<expression_base>(e_temp));
+	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), std::unique_ptr<expression_base>(e_temp));
 }
-#line 1462 "cmdl_grammar.c"
+#line 1514 "cmdl/grammar.c"
   yy_destructor(yypParser,23,&yymsp[-6].minor);
   yy_destructor(yypParser,24,&yymsp[-4].minor);
   yy_destructor(yypParser,21,&yymsp[-3].minor);
@@ -1466,84 +1518,130 @@ static void yy_reduce(
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 32: /* reactionSide ::= */
-#line 361 "cmdl_grammar.y"
+#line 378 "cmdl/grammar.y"
 {
-	yymsp[1].minor.yy43 = new sum_expression();
+	yymsp[1].minor.yy40 = new reaction_side();
 }
-#line 1474 "cmdl_grammar.c"
+#line 1526 "cmdl/grammar.c"
         break;
       case 33: /* reactionSide ::= reactionComponent */
-#line 364 "cmdl_grammar.y"
+#line 381 "cmdl/grammar.y"
 {
-	yylhsminor.yy43 = new sum_expression();
-	yylhsminor.yy43->push_back(false, std::unique_ptr<product_expression>(yymsp[0].minor.yy47));
+	auto rc_temp = std::unique_ptr<reaction_component>(yymsp[0].minor.yy30);
+	yymsp[0].minor.yy30 = nullptr;
+
+	yylhsminor.yy40 = new reaction_side();
+	yylhsminor.yy40->push_back(std::move(rc_temp));
 }
-#line 1482 "cmdl_grammar.c"
-  yymsp[0].minor.yy43 = yylhsminor.yy43;
+#line 1537 "cmdl/grammar.c"
+  yymsp[0].minor.yy40 = yylhsminor.yy40;
         break;
       case 34: /* reactionSide ::= reactionSide PLUS reactionComponent */
-#line 368 "cmdl_grammar.y"
+#line 388 "cmdl/grammar.y"
 {
-	yylhsminor.yy43 = yymsp[-2].minor.yy43;
-	yylhsminor.yy43->push_back(false, std::unique_ptr<product_expression>(yymsp[0].minor.yy47));
+	yylhsminor.yy40 = yymsp[-2].minor.yy40;
+	yymsp[-2].minor.yy40 = nullptr;
+	auto rc_temp = std::unique_ptr<reaction_component>(yymsp[0].minor.yy30);
+	yymsp[0].minor.yy30 = nullptr;
+
+	yylhsminor.yy40->push_back(std::move(rc_temp));
 }
-#line 1491 "cmdl_grammar.c"
+#line 1550 "cmdl/grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
-  yymsp[-2].minor.yy43 = yylhsminor.yy43;
+  yymsp[-2].minor.yy40 = yylhsminor.yy40;
         break;
       case 35: /* reactionSide ::= expression */
-#line 373 "cmdl_grammar.y"
+#line 397 "cmdl/grammar.y"
 {
 	delete(yymsp[0].minor.yy53);
 	yymsp[0].minor.yy53=nullptr;
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1502 "cmdl_grammar.c"
+#line 1561 "cmdl/grammar.c"
         break;
       case 36: /* reactionSide ::= reactionSide PLUS expression */
-#line 378 "cmdl_grammar.y"
+#line 402 "cmdl/grammar.y"
 {
 	delete(yymsp[0].minor.yy53);
 	yymsp[0].minor.yy53=nullptr;
-	delete(yymsp[-2].minor.yy43);
-	yymsp[-2].minor.yy43=nullptr;
+	delete(yymsp[-2].minor.yy40);
+	yymsp[-2].minor.yy40=nullptr;
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1513 "cmdl_grammar.c"
+#line 1572 "cmdl/grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
         break;
       case 37: /* reactionComponent ::= IDENTIFIER */
-#line 391 "cmdl_grammar.y"
+#line 415 "cmdl/grammar.y"
 {
-	yylhsminor.yy47 = new product_expression();
-	yylhsminor.yy47->push_back(false, std::make_unique<number_expression>(1));
-	yylhsminor.yy47->push_back(false, std::make_unique<variable_expression>(*yymsp[0].minor.yy0));
+	identifier state = *yymsp[0].minor.yy0;
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
+	yylhsminor.yy30 = nullptr;
+
+	yylhsminor.yy30 = new reaction_component(state, 1, false);
 }
-#line 1525 "cmdl_grammar.c"
-  yymsp[0].minor.yy47 = yylhsminor.yy47;
+#line 1585 "cmdl/grammar.c"
+  yymsp[0].minor.yy30 = yylhsminor.yy30;
         break;
-      case 38: /* reactionComponent ::= expression MULTIPLY IDENTIFIER */
-#line 399 "cmdl_grammar.y"
+      case 38: /* reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
+#line 424 "cmdl/grammar.y"
 {
-	yylhsminor.yy47 = new product_expression();
-	yylhsminor.yy47->push_back(false, std::unique_ptr<expression_base>(yymsp[-2].minor.yy53));
-	yylhsminor.yy47->push_back(false, std::make_unique<variable_expression>(*yymsp[0].minor.yy0));
+	identifier state = *yymsp[-2].minor.yy0;
+	delete yymsp[-2].minor.yy0;
+	yymsp[-2].minor.yy0 = nullptr;
+	yylhsminor.yy30 = nullptr;
+
+	yylhsminor.yy30 = new reaction_component(state, 1, true);
+}
+#line 1598 "cmdl/grammar.c"
+  yy_destructor(yypParser,21,&yymsp[-1].minor);
+  yy_destructor(yypParser,22,&yymsp[0].minor);
+  yymsp[-2].minor.yy30 = yylhsminor.yy30;
+        break;
+      case 39: /* reactionComponent ::= expression MULTIPLY IDENTIFIER */
+#line 433 "cmdl/grammar.y"
+{
+	identifier state = *yymsp[0].minor.yy0;
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(yymsp[-2].minor.yy53);
+	yymsp[-2].minor.yy53 = nullptr;
+	yylhsminor.yy30 = nullptr;
+
+	auto stochiometry = parseTree->get_expression_value(e_temp.get());
+	yylhsminor.yy30 = new reaction_component(state, stochiometry, false);
 }
-#line 1537 "cmdl_grammar.c"
+#line 1616 "cmdl/grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
-  yymsp[-2].minor.yy47 = yylhsminor.yy47;
+  yymsp[-2].minor.yy30 = yylhsminor.yy30;
+        break;
+      case 40: /* reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
+#line 445 "cmdl/grammar.y"
+{
+	identifier state = *yymsp[-2].minor.yy0;
+	delete yymsp[-2].minor.yy0;
+	yymsp[-2].minor.yy0 = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(yymsp[-4].minor.yy53);
+	yymsp[-4].minor.yy53 = nullptr;
+	yylhsminor.yy30 = nullptr;
+
+	auto stochiometry = parseTree->get_expression_value(e_temp.get());
+	yylhsminor.yy30 = new reaction_component(state, stochiometry, true);
+}
+#line 1633 "cmdl/grammar.c"
+  yy_destructor(yypParser,12,&yymsp[-3].minor);
+  yy_destructor(yypParser,21,&yymsp[-1].minor);
+  yy_destructor(yypParser,22,&yymsp[0].minor);
+  yymsp[-4].minor.yy30 = yylhsminor.yy30;
         break;
       default:
-      /* (39) model ::= statements */ yytestcase(yyruleno==39);
-      /* (40) statements ::= statements statement */ yytestcase(yyruleno==40);
-      /* (41) statements ::= */ yytestcase(yyruleno==41);
-      /* (42) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=42);
-      /* (43) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=43);
-      /* (44) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=44);
+      /* (41) model ::= statements */ yytestcase(yyruleno==41);
+      /* (42) statements ::= statements statement */ yytestcase(yyruleno==42);
+      /* (43) statements ::= */ yytestcase(yyruleno==43);
+      /* (44) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=44);
+      /* (45) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=45);
+      /* (46) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=46);
         break;
 /********** End reduce actions ************************************************/
   };
@@ -1578,7 +1676,7 @@ static void yy_reduce(
 static void yy_parse_failed(
   yyParser *yypParser           /* The parser */
 ){
-  ParseARG_FETCH;
+  internal_ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sFail!\n",yyTracePrompt);
@@ -1588,11 +1686,11 @@ static void yy_parse_failed(
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
 /************ Begin %parse_failure code ***************************************/
-#line 4 "cmdl_grammar.y"
+#line 4 "cmdl/grammar.y"
 throw std::exception("Syntax error.");
-#line 1594 "cmdl_grammar.c"
+#line 1692 "cmdl/grammar.c"
 /************ End %parse_failure code *****************************************/
-  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 #endif /* YYNOERRORRECOVERY */
 
@@ -1602,13 +1700,13 @@ throw std::exception("Syntax error.");
 static void yy_syntax_error(
   yyParser *yypParser,           /* The parser */
   int yymajor,                   /* The major type of the error token */
-  ParseTOKENTYPE yyminor         /* The minor type of the error token */
+  internal_ParseTOKENTYPE yyminor         /* The minor type of the error token */
 ){
-  ParseARG_FETCH;
+  internal_ParseARG_FETCH;
 #define TOKEN yyminor
 /************ Begin %syntax_error code ****************************************/
 /************ End %syntax_error code ******************************************/
-  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -1617,7 +1715,7 @@ static void yy_syntax_error(
 static void yy_accept(
   yyParser *yypParser           /* The parser */
 ){
-  ParseARG_FETCH;
+  internal_ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sAccept!\n",yyTracePrompt);
@@ -1631,12 +1729,12 @@ static void yy_accept(
   ** parser accepts */
 /*********** Begin %parse_accept code *****************************************/
 /*********** End %parse_accept code *******************************************/
-  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /* The main parser program.
 ** The first argument is a pointer to a structure obtained from
-** "ParseAlloc" which describes the current state of the parser.
+** "internal_ParseAlloc" which describes the current state of the parser.
 ** The second argument is the major token number.  The third is
 ** the minor token.  The fourth optional argument is whatever the
 ** user wants (and specified in the grammar) and is available for
@@ -1653,11 +1751,11 @@ static void yy_accept(
 ** Outputs:
 ** None.
 */
-void Parse(
+void internal_Parse(
   void *yyp,                   /* The parser */
   int yymajor,                 /* The major token code number */
-  ParseTOKENTYPE yyminor       /* The value for the token */
-  ParseARG_PDECL               /* Optional %extra_argument parameter */
+  internal_ParseTOKENTYPE yyminor       /* The value for the token */
+  internal_ParseARG_PDECL               /* Optional %extra_argument parameter */
 ){
   YYMINORTYPE yyminorunion;
   unsigned int yyact;   /* The parser action. */
@@ -1674,7 +1772,7 @@ void Parse(
 #if !defined(YYERRORSYMBOL) && !defined(YYNOERRORRECOVERY)
   yyendofinput = (yymajor==0);
 #endif
-  ParseARG_STORE;
+  internal_ParseARG_STORE;
 
 #ifndef NDEBUG
   if( yyTraceFILE ){

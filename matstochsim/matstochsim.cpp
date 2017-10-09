@@ -3,7 +3,7 @@
 #include <string>
 #include "SimulationWrapper.h"
 #include "MatlabParams.h"
-#include "CmdlParser.h"
+#include "cmdl/parser.h"
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {	
 	MatlabParams params(nlhs, plhs, nrhs, prhs);
@@ -13,12 +13,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	if(command =="new")
 	{
         SimulationWrapper* simulationWrapper = new SimulationWrapper();
-		params.Set(0, convertPtr2Mat<SimulationWrapper>(simulationWrapper));
 		if (params.NumParams() > 1)
 		{
+			auto fileName = params.Get<std::string>(1);
+			std::string logName = fileName + ".log";
 			try
 			{
-				stochsim::CmdlParser::Parse(params.Get<std::string>(1), *simulationWrapper);
+				cmdl::parser cmdlParser(fileName, logName);
+				cmdlParser.parse(*simulationWrapper);
 			}
 			catch (const std::exception& ex)
 			{
@@ -29,6 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				mexErrMsgTxt("Unexpected error occured.");
 			}
 		}
+		params.Set(0, convertPtr2Mat<SimulationWrapper>(simulationWrapper));
         return;
     }
     

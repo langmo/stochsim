@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include "examples.h"
-#include "CmdlParser.h"
+#include "cmdl/parser.h"
 #include "StateLogger.h"
 #include "ProgressLogger.h"
 std::vector<Example> getExamples()
@@ -57,8 +57,8 @@ void runCustomModel(std::string modelPath, std::string folder, double runtime)
 
 	// Display simulation progress in console
 	sim.CreateLogger<stochsim::ProgressLogger>();
-
-	stochsim::CmdlParser::Parse(modelPath, sim);
+	cmdl::parser cmdlParser(modelPath);
+	cmdlParser.parse(sim);
 	for (auto& state : sim.GetStates())
 	{
 		logger->AddState(state);

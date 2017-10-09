@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include <random>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 namespace stochsim
 {
 	/// <summary>

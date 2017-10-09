@@ -5,7 +5,7 @@
 #include <memory>
 #include <functional>
 #include <cassert>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include "CircularBuffer.h"
 namespace stochsim
 {

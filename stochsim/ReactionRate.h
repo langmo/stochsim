@@ -1,10 +1,10 @@
 #pragma once
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include "muParser.h"
 #include <string>
 #include <codecvt>
 #include <memory>
-#include "expression.h"
+#include "expression/expression.h"
 #include <map>
 namespace stochsim
 {

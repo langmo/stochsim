@@ -3,52 +3,68 @@
 %start_symbol model
 %parse_failure {throw std::exception("Syntax error.");}
 %stack_overflow {throw std::exception("Parser stack overflow while parsing cmdl file.");}
-%name Parse
+%name internal_Parse
 %token_type {terminal_symbol*}
 %token_destructor {
 	delete $$;
 	$$ = nullptr;
 }
 %extra_argument {parse_tree* parseTree}
-%include {#include "cmdl_grammar_definitions.h"}
+
+%include {#include "../expression/expression.h"}
+%include {#include "../expression/comparison_expression.h"}
+%include {#include "../expression/conditional_expression.h"}
+%include {#include "../expression/exponentiation_expression.h"}
+%include {#include "../expression/logical_expression.h"}
+%include {#include "../expression/number_expression.h"}
+%include {#include "../expression/product_expression.h"}
+%include {#include "../expression/sum_expression.h"}
+%include {#include "../expression/variable_expression.h"}
+%include {#include "../expression/function_expression.h"}
+
+%include {#include "symbols.h"}
+%include {#include "parse_tree.h"}
+%include {#include "parser.h"}
+
 %include {#include  <assert.h>}
-%include {using namespace stochsim::expression;}
-%include {using namespace stochsim::cmdl;}
+%include {using namespace expression;}
+%include {using namespace cmdl;}
 %include {#undef NDEBUG} // necessary for ParseTrace
 // Convert c-style parsing functions to implementation of clean c++ class handling everything.
 %include {
 	// Forward declaration parser functions.
-	void Parse(
+	void internal_Parse(
 		void *yyp,                   /* The parser */
 		int yymajor,                 /* The major token code number */
 		terminal_symbol* yyminor,       /* The value for the token */
 		parse_tree* parse_tree               /* Optional %extra_argument parameter */
 	);
 
-	void *ParseAlloc(void* (*mallocProc)(size_t));
+	void *internal_ParseAlloc(void* (*mallocProc)(size_t));
 
-	void ParseFree(
+	void internal_ParseFree(
 		void *p,                    /* The parser to be deleted */
 		void(*freeProc)(void*)     /* Function used to reclaim memory */
 	);
-	void ParseTrace(FILE *TraceFILE, char *zTracePrompt);
-	stochsim::cmdl::parser::parser(std::string errorFileName)
+	void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+	void cmdl::parser::initialize_internal()
 	{
-		if (errorFileName.empty())
+		uninitialize_internal();
+		if (logFilePath_.empty())
 		{
-			traceFile_ = nullptr;
+			logFile_ = nullptr;
 		}
 		else
 		{
-			fopen_s(&traceFile_, errorFileName.c_str(), "w");
-			if(traceFile_)
-				ParseTrace(traceFile_, "cmdl_");
+			fopen_s(&logFile_, logFilePath_.c_str(), "w");
+			if(logFile_)
+				internal_ParseTrace(logFile_, "cmdl_");
 			else
-				ParseTrace(0, "cmdl_");
+				internal_ParseTrace(0, "cmdl_");
 		}
 		try
 		{
-			handle_ = ParseAlloc(malloc);
+			handle_ = internal_ParseAlloc(malloc);
 		}
 		catch (...)
 		{
@@ -59,18 +75,19 @@
 			throw std::exception("Could not create cmdl parser.");
 		}
 	}
-	stochsim::cmdl::parser::~parser()
+	void cmdl::parser::uninitialize_internal()
 	{
-		ParseTrace(0, "cmdl_");
-		if(handle_)
-			ParseFree(handle_, free); 
+		if(!handle_)
+			return;
+		internal_ParseTrace(0, "cmdl_");
+		internal_ParseFree(handle_, free); 
 		handle_ = nullptr;
-		if (traceFile_)
-			fclose(traceFile_);
-		traceFile_ = nullptr;
+		if (logFile_)
+			fclose(logFile_);
+		logFile_ = nullptr;
 	}
 
-	void stochsim::cmdl::parser::operator()(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
+	void cmdl::parser::parse_token(int tokenID, cmdl::terminal_symbol* token, cmdl::parse_tree& parseTree)
 	{
 		if (!handle_)
 		{
@@ -78,7 +95,7 @@
 		}
 		try
 		{
-			Parse(handle_, tokenID, token, &parseTree);
+			internal_Parse(handle_, tokenID, token, &parseTree);
 		}
 		catch (const std::exception& ex)
 		{
@@ -171,7 +188,7 @@ expression(e_new) ::= LEFT_ROUND expression(e_old) RIGHT_ROUND. {
 	delete $$;
 	$$ = nullptr;
 }
-expression(e) ::= sum(s). [SEMICOLON] {
+expression(e) ::= sum(s). [PLUS] {
 	e = s;
 }
 sum(s) ::= expression(e1) PLUS expression(e2). {
@@ -200,7 +217,7 @@ sum(s_new) ::= sum(s_old) MINUS expression(e). {
 	delete $$;
 	$$ = nullptr;
 }
-expression(e) ::= product(p). [SEMICOLON] {
+expression(e) ::= product(p). [MULTIPLY] {
 	e = p;
 }
 product(p) ::= expression(e1) MULTIPLY expression(e2). {
@@ -230,7 +247,7 @@ product(p_new) ::= product(p_old) DIVIDE expression(e). {
 	delete $$;
 	$$ = nullptr;
 }
-expression(e) ::= conjunction(c). [SEMICOLON] {
+expression(e) ::= conjunction(c). [AND] {
 	e = c;
 }
 conjunction(c) ::= expression(e1) AND expression(e2). {
@@ -250,7 +267,7 @@ conjunction(c_new) ::= conjunction(c_old) AND expression(e). {
 	delete $$;
 	$$ = nullptr;
 }
-expression(e) ::= disjunction(c). [SEMICOLON] {
+expression(e) ::= disjunction(c). [OR] {
 	e = c;
 }
 disjunction(c) ::= expression(e1) OR expression(e2). {
@@ -266,12 +283,12 @@ disjunction(c_new) ::= disjunction(c_old) OR expression(e). {
 
 // not
 expression(e_new) ::= NOT expression(e_old). {
-	e_new = new not_expression(std::unique_ptr<expression_base>(e_old));
+	e_new = new unary_not_expression(std::unique_ptr<expression_base>(e_old));
 }
 
 // unary minus
 expression(e_new) ::= MINUS expression(e_old). [NOT] {
-	e_new = new minus_expression(std::unique_ptr<expression_base>(e_old));
+	e_new = new unary_minus_expression(std::unique_ptr<expression_base>(e_old));
 }
 
 // Exponentiation
@@ -304,24 +321,24 @@ expression(e_new) ::= expression(e1) LESS_EQUAL expression(e2). {
 assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto I_temp = I;
-	auto e_temp = e;
+	identifier name = *I;
+	delete I;
 	I = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(e);
 	e = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), parseTree->get_expression_value(e_temp));
-	delete e_temp;
-	e_temp = nullptr;
+	parseTree->create_variable(std::move(name), parseTree->get_expression_value(e_temp.get()));
 }
 assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto I_temp = I;
-	auto e_temp = e;
+	identifier name = *I;
+	delete I;
 	I = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(e);
 	e = nullptr;
 
-	parseTree->create_variable(std::unique_ptr<terminal_symbol>(I_temp), std::unique_ptr<expression_base>(e_temp));
+	parseTree->create_variable(std::move(name), std::move(e_temp));
 }
 
 
@@ -329,45 +346,52 @@ assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMIC
 reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA expression(e) SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = reactants;
-	auto products_temp = products;
+	auto reactants_temp = std::unique_ptr<reaction_side>(reactants);
+	auto products_temp = std::unique_ptr<reaction_side>(products);
 	auto e_temp = e;
 	reactants = nullptr;
 	products = nullptr;
 	e = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), parseTree->get_expression_value(e_temp));
+	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), parseTree->get_expression_value(e_temp));
 	delete e_temp;
 	e_temp = nullptr;
 }
 reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = reactants;
-	auto products_temp = products;
+	auto reactants_temp = std::unique_ptr<reaction_side>(reactants);
+	auto products_temp = std::unique_ptr<reaction_side>(products);
 	auto e_temp = e;
 	reactants = nullptr;
 	products = nullptr;
 	e = nullptr;
 
-	parseTree->create_reaction(std::unique_ptr<sum_expression>(reactants_temp), std::unique_ptr<sum_expression>(products_temp), std::unique_ptr<expression_base>(e_temp));
+	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), std::unique_ptr<expression_base>(e_temp));
 }
 
-%type reactionSide {sum_expression*}
+%type reactionSide {reaction_side*}
 %destructor reactionSide { 
 	delete $$;
 	$$ = nullptr;
 }
 reactionSide(rs) ::= . [SEMICOLON] {
-	rs = new sum_expression();
+	rs = new reaction_side();
 }
 reactionSide(rs) ::= reactionComponent(rc). [MULTIPLY]{
-	rs = new sum_expression();
-	rs->push_back(false, std::unique_ptr<product_expression>(rc));
+	auto rc_temp = std::unique_ptr<reaction_component>(rc);
+	rc = nullptr;
+
+	rs = new reaction_side();
+	rs->push_back(std::move(rc_temp));
 }
 reactionSide(rs_new) ::= reactionSide(rs_old) PLUS reactionComponent(rc). [MULTIPLY]{
 	rs_new = rs_old;
-	rs_new->push_back(false, std::unique_ptr<product_expression>(rc));
+	rs_old = nullptr;
+	auto rc_temp = std::unique_ptr<reaction_component>(rc);
+	rc = nullptr;
+
+	rs_new->push_back(std::move(rc_temp));
 }
 
 reactionSide ::= expression(e). [PLUS] {
@@ -383,25 +407,51 @@ reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
-%type reactionComponent {product_expression*}
+%type reactionComponent {reaction_component*}
 %destructor reactionComponent { 
 	delete $$;
 	$$ = nullptr;
 }
 reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
-	rc = new product_expression();
-	rc->push_back(false, std::make_unique<number_expression>(1));
-	rc->push_back(false, std::make_unique<variable_expression>(*I));
+	identifier state = *I;
 	delete I;
 	I = nullptr;
+	rc = nullptr;
+
+	rc = new reaction_component(state, 1, false);
+}
+
+reactionComponent(rc) ::= IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+
+	rc = new reaction_component(state, 1, true);
 }
 
 reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I). [EXP]{
-	rc = new product_expression();
-	rc->push_back(false, std::unique_ptr<expression_base>(e));
-	rc->push_back(false, std::make_unique<variable_expression>(*I));
+	identifier state = *I;
 	delete I;
 	I = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	rc = nullptr;
+
+	auto stochiometry = parseTree->get_expression_value(e_temp.get());
+	rc = new reaction_component(state, stochiometry, false);
+}
+
+reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	rc = nullptr;
+
+	auto stochiometry = parseTree->get_expression_value(e_temp.get());
+	rc = new reaction_component(state, stochiometry, true);
 }
 
 

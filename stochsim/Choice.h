@@ -4,7 +4,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 namespace stochsim
 {
 	/// <summary>

@@ -16,6 +16,18 @@
     <Filter Include="Grammar">
       <UniqueIdentifier>{97e3330b-6c7d-40a7-95b5-49e0b60b42f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\expression">
+      <UniqueIdentifier>{68ef66ea-bab1-426a-916e-828b29d95c43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\cmdl">
+      <UniqueIdentifier>{65b4fcd2-4968-46d7-94f0-0bdd81d87b56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cmdl">
+      <UniqueIdentifier>{f1b41c44-cd1a-4176-bc76-e5697e1c2660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Grammar\cmdl">
+      <UniqueIdentifier>{3160cfeb-e6ad-4065-9973-566ce2827062}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation.h">
@@ -31,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComposedState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stochsim_interfaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="State.h">
@@ -90,17 +99,47 @@
     <ClInclude Include="Choice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cmdl_grammar_definitions.h">
+    <ClInclude Include="expression\comparison_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\conditional_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\exponentiation_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\logical_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\number_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\product_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\sum_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\variable_expression.h">
+      <Filter>Header Files\expression</Filter>
+    </ClInclude>
+    <ClInclude Include="stochsim.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CmdlParser.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="cmdl\parser.h">
+      <Filter>Header Files\cmdl</Filter>
     </ClInclude>
-    <ClInclude Include="expression.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="cmdl\parse_tree.h">
+      <Filter>Header Files\cmdl</Filter>
     </ClInclude>
-    <ClInclude Include="cmdl_grammar.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="cmdl\symbols.h">
+      <Filter>Header Files\cmdl</Filter>
+    </ClInclude>
+    <ClInclude Include="expression\function_expression.h">
+      <Filter>Header Files\expression</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -125,22 +164,16 @@
     <ClCompile Include="muParserTokenReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CmdlParser.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="cmdl\parser.cpp">
+      <Filter>Source Files\cmdl</Filter>
     </ClCompile>
-    <ClCompile Include="cmdl_grammar.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="cmdl\grammar.c">
+      <Filter>Source Files\cmdl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cmdl_grammar.y">
-      <Filter>Grammar</Filter>
-    </None>
-    <None Include="cmdl_grammar.template">
-      <Filter>Grammar</Filter>
-    </None>
-    <None Include="cmdl_grammar.out">
-      <Filter>Grammar</Filter>
+    <None Include="cmdl\grammar.y">
+      <Filter>Grammar\cmdl</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "stochsim_interfaces.h"
+#include "stochsim.h"
 #include <fstream>
 namespace stochsim
 {
