@@ -304,10 +304,18 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 	}
 	for (auto& reaction : parseTree.get_reactions())
 	{
+		bool isDirectDelay = reaction.second->get_specifiers()->has_delay() && !reaction.second->get_specifiers()->has_rate();
 		for (auto& elem : *reaction.second->get_reactants())
 		{
-			// construct state if yet not existent.
-			states[elem.first];
+			// define state if yet not existent, or get it if already existent.
+			auto name = elem.first;
+			state_definition& state = states[name];
+			if (isDirectDelay && !state.require_type(state_definition::type_composed))
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as the species determining the delay of a reaction and in another as a choice, which is invalid.";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			
 		}
 		for (auto& elem : *reaction.second->get_products())
@@ -386,34 +394,95 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 	};
 	for (auto& reactionDefinition : parseTree.get_reactions())
 	{
-		auto rate = reactionDefinition.second->get_rate()->simplify(variableLookup);
-		rate->bind(functionLookup);
-		rate = rate->simplify(variableLookup);
-		std::shared_ptr<stochsim::PropensityReaction> reaction;
-		if (dynamic_cast<expression::number_expression*>(rate.get()))
+		auto rateDef = reactionDefinition.second->get_specifiers()->get_rate(); 
+		auto delayDef = reactionDefinition.second->get_specifiers()->get_delay();
+		if (!rateDef && !delayDef)
 		{
-			auto rateConstant = static_cast<expression::number_expression*>(rate.get())->get_number();
-			reaction = sim.CreateReaction<stochsim::PropensityReaction>(reactionDefinition.first, rateConstant);
+			std::stringstream errorMessage;
+			errorMessage << "Reaction \"" << reactionDefinition.first << "\" has neither a rate nor a delay defined.";
+			throw std::exception(errorMessage.str().c_str());
 		}
-		else
+		else if (rateDef && delayDef)
 		{
-			reaction = sim.CreateReaction<stochsim::PropensityReaction>(reactionDefinition.first, std::move(rate));
+			//TODO: implement
+			std::stringstream errorMessage;
+			errorMessage << "Yet not implemented.";
+			throw std::exception(errorMessage.str().c_str());
 		}
-		for (auto& component : *reactionDefinition.second->get_reactants())
+		else if (rateDef)
 		{
-			if (component.second->is_modifier())
-				reaction->AddModifier(sim.GetState(component.first), component.second->get_stochiometry());
+			auto rate = rateDef->simplify(variableLookup);
+			rate->bind(functionLookup);
+			rate = rate->simplify(variableLookup);
+			std::shared_ptr<stochsim::PropensityReaction> reaction;
+			if (dynamic_cast<expression::number_expression*>(rate.get()))
+			{
+				auto rateConstant = static_cast<expression::number_expression*>(rate.get())->get_number();
+				reaction = sim.CreateReaction<stochsim::PropensityReaction>(reactionDefinition.first, rateConstant);
+			}
 			else
-				reaction->AddReactant(sim.GetState(component.first), component.second->get_stochiometry());
+			{
+				reaction = sim.CreateReaction<stochsim::PropensityReaction>(reactionDefinition.first, std::move(rate));
+			}
+			for (auto& component : *reactionDefinition.second->get_reactants())
+			{
+				if (component.second->is_modifier())
+					reaction->AddModifier(sim.GetState(component.first), component.second->get_stochiometry());
+				else
+					reaction->AddReactant(sim.GetState(component.first), component.second->get_stochiometry());
+			}
+			for (auto& component : *reactionDefinition.second->get_products())
+			{
+				if (component.second->is_modifier())
+					reaction->AddTransformee(sim.GetState(component.first), component.second->get_stochiometry());
+				else
+					reaction->AddProduct(sim.GetState(component.first), component.second->get_stochiometry());
+			}
 		}
-		for (auto& component : *reactionDefinition.second->get_products())
+		else if (delayDef)
 		{
-			if (component.second->is_modifier())
-				reaction->AddTransformee(sim.GetState(component.first), component.second->get_stochiometry());
-			else
-				reaction->AddProduct(sim.GetState(component.first), component.second->get_stochiometry());
+			auto delay = parseTree.get_expression_value(delayDef);
+			auto& reactants = *reactionDefinition.second->get_reactants();
+			if (reactants.size() != 1)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which are required to have exactly one reactant.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			auto& reactant = *reactants.begin()->second;
+			if (reactant.is_modifier())
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.get_state() << " is not marked as a modifier.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			if (reactant.get_stochiometry() != 1)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.get_state() << " has a stochiometry of one.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			auto stateBase = sim.GetState(reactant.get_state());
+			auto state = std::dynamic_pointer_cast<stochsim::ComposedState>(stateBase);
+			if (!state)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.get_state() << " is a composed state. This should be ensured automatically, but something seems to have gone wrong.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			auto reaction = sim.CreateReaction<stochsim::DelayReaction>(reactionDefinition.first, state, delay);
+			for (auto& component : *reactionDefinition.second->get_products())
+			{
+				if (component.second->is_modifier())
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the product " << component.first << " is not marked as a transformee.";
+					throw std::exception(errorMessage.str().c_str());
+				}
+				else
+					reaction->AddProduct(sim.GetState(component.first), component.second->get_stochiometry());
+			}
 		}
-			
 	}
 }
 

@@ -395,7 +395,20 @@ assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMIC
 
 
 // reaction
-reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA expression(e) SEMICOLON. {
+reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
+	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto reactants_temp = std::unique_ptr<reaction_side>(reactants);
+	auto products_temp = std::unique_ptr<reaction_side>(products);
+	auto rss_temp = std::unique_ptr<reaction_specifiers>(rss);
+	rss = nullptr;
+	reactants = nullptr;
+	products = nullptr;
+
+	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
+}
+
+/*reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA expression(e) SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
 	auto reactants_temp = std::unique_ptr<reaction_side>(reactants);
@@ -420,6 +433,60 @@ reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA LEFT_SQU
 	e = nullptr;
 
 	parseTree->create_reaction(std::move(reactants_temp), std::move(products_temp), std::unique_ptr<expression_base>(e_temp));
+}*/
+
+%type reactionSpecifiers {reaction_specifiers*}
+%destructor reactionSpecifiers { 
+	delete $$;
+	$$ = nullptr;
+}
+reactionSpecifiers(rss) ::= reactionSpecifier(rs) . {
+	auto rss_temp = std::make_unique<reaction_specifiers>();
+	auto rs_temp = std::unique_ptr<reaction_specifier>(rs);
+	rs = nullptr;
+	rss = nullptr;
+	rss_temp->push_back(std::move(rs_temp));
+	rss = rss_temp.release();
+}
+reactionSpecifiers(rss_new) ::= reactionSpecifiers(rss_old) COMMA reactionSpecifier(rs) . {
+	auto rss_temp = std::unique_ptr<reaction_specifiers>(rss_old);
+	rss_old = nullptr;
+	rss_new = nullptr;
+	auto rs_temp = std::unique_ptr<reaction_specifier>(rs);
+	rs = nullptr;
+	rss_temp->push_back(std::move(rs_temp));
+	rss_new = rss_temp.release();
+}
+
+%type reactionSpecifier {reaction_specifier*}
+%destructor reactionSpecifier { 
+	delete $$;
+	$$ = nullptr;
+}
+reactionSpecifier(rs) ::= expression(e). {
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	rs = nullptr;
+	auto value = parseTree->get_expression_value(e_temp.get());
+	rs = new reaction_specifier(reaction_specifier::rate_type, std::make_unique<number_expression>(value));
+}
+
+reactionSpecifier(rs) ::= IDENTIFIER(I) COLON expression(e). {
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	rs = nullptr;
+	identifier name = *I;
+	delete I;
+	I = nullptr;
+	auto value = parseTree->get_expression_value(e_temp.get());
+	rs = new reaction_specifier(name, std::make_unique<number_expression>(value));
+}
+
+reactionSpecifier(rs) ::= LEFT_SQUARE expression(e) RIGHT_SQUARE. {
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	rs = nullptr;
+	rs = new reaction_specifier(reaction_specifier::rate_type, std::move(e_temp));
 }
 
 %type reactionSide {reaction_side*}

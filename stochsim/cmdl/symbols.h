@@ -201,15 +201,12 @@ namespace cmdl
 	class reaction_specifier
 	{
 	public:
-		enum type
-		{
-			rate_type,
-			delay_type
-		};
-		reaction_specifier(type type, std::unique_ptr<expression::expression_base> value) : type_(type), value_(std::move(value))
+		static constexpr char rate_type[] = "rate";
+		static constexpr char delay_type[] = "delay";
+		reaction_specifier(expression::identifier type, std::unique_ptr<expression::expression_base> value) : type_(std::move(type)), value_(std::move(value))
 		{
 		}
-		type get_type() const noexcept
+		expression::identifier get_type() const noexcept
 		{
 			return type_;
 		}
@@ -218,12 +215,60 @@ namespace cmdl
 			return value_.get();
 		}
 	private:
-		type type_;
+		expression::identifier type_;
 		std::unique_ptr<expression::expression_base> value_;
 	};
 
-	typedef std::vector<std::unique_ptr<reaction_specifier>> reaction_specifiers;
-
+	class reaction_specifiers
+	{
+	public:
+		reaction_specifiers() :specifiers_(10)
+		{
+		} 
+		void push_back(std::unique_ptr<reaction_specifier> specifier)
+		{
+			auto search = specifiers_.find(specifier->get_type());
+			if (search != specifiers_.end())
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Reaction specifier \""<< search->first <<"\" already defined.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			specifiers_.emplace(specifier->get_type(), std::move(specifier));
+		}
+		bool has_type(expression::identifier type) const noexcept
+		{
+			return specifiers_.find(type) != specifiers_.end();
+		}
+		bool has_rate() const noexcept
+		{
+			return has_type(reaction_specifier::rate_type);
+		}
+		bool has_delay() const noexcept
+		{
+			return has_type(reaction_specifier::delay_type);
+		}
+		const expression::expression_base* get_type(expression::identifier type) const noexcept
+		{
+			auto search = specifiers_.find(type);
+			if (search == specifiers_.end())
+				return nullptr;
+			else
+				return search->second->get_value();
+		}
+		const expression::expression_base* get_rate() const noexcept
+		{
+			return get_type(reaction_specifier::rate_type);
+		}
+		const expression::expression_base* get_delay() const noexcept
+		{
+			return get_type(reaction_specifier::delay_type);
+		}
+	private:
+		std::unordered_map<expression::identifier, std::unique_ptr<reaction_specifier> > specifiers_;
+		
+	};
+	
 	class choice_definition
 	{
 	public:
@@ -277,10 +322,10 @@ namespace cmdl
 	class reaction_definition
 	{
 	public:
-		reaction_definition(std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<expression::expression_base> rate) :
+		reaction_definition(std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<reaction_specifiers> specifiers) :
 			reactants_(std::move(reactants)),
 			products_(std::move(products)),
-			rate_(std::move(rate))
+			specifiers_(std::move(specifiers))
 		{
 			// transformees must be specified as LHS and RHS modifiers. Reduce stochiometry of LHS modifiers according to RHS modifiers stochiometry.
 			for (auto& product : *products_)
@@ -310,14 +355,14 @@ namespace cmdl
 			return products_.get();
 		}
 
-		const expression::expression_base* get_rate() const noexcept
+		const reaction_specifiers* get_specifiers() const noexcept
 		{
-			return rate_.get();
+			return specifiers_.get();
 		}
 	private:
 		std::unique_ptr<reaction_side> reactants_;
 		std::unique_ptr<reaction_side> products_;
-		std::unique_ptr<expression::expression_base> rate_;
+		std::unique_ptr<reaction_specifiers> specifiers_;
 	};
 
 	

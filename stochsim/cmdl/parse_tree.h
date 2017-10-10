@@ -35,25 +35,17 @@ namespace cmdl
 		{
 			variables_[name] = std::make_unique<expression::number_expression>(value);
 		}
-		void create_reaction(std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, expression::number rateConstant)
-		{
-			create_reaction(std::move(reactants), std::move(products), std::make_unique<expression::number_expression>(rateConstant));
-		}
-		void create_reaction(std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<expression::expression_base> rate)
-		{
+		void create_reaction(std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<reaction_specifiers> specifiers)
+		{ 
 			std::stringstream name;
 			name << "reaction_" << (reactions_.size() + 1); 
 			auto nameC = name.str();
 			auto nameI = expression::identifier(nameC.begin(), nameC.end());
-			create_reaction(nameI, std::move(reactants), std::move(products), std::move(rate));
+			create_reaction(nameI, std::move(reactants), std::move(products), std::move(specifiers));
 		}
-		void create_reaction(expression::identifier name, std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, expression::number rateConstant)
+		void create_reaction(expression::identifier name, std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<reaction_specifiers> specifiers)
 		{
-			create_reaction(std::move(name), std::move(reactants), std::move(products), std::make_unique<expression::number_expression>(rateConstant));
-		}
-		void create_reaction(expression::identifier name, std::unique_ptr<reaction_side> reactants, std::unique_ptr<reaction_side> products, std::unique_ptr<expression::expression_base> rate)
-		{
-			reactions_[name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate));
+			reactions_[name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(specifiers));
 		}
 		expression::identifier create_choice(std::unique_ptr<expression::expression_base> condition, std::unique_ptr<reaction_side> componentsIfTrue, std::unique_ptr<reaction_side> componentsIfFalse)
 		{
