@@ -196,6 +196,84 @@ namespace cmdl
 		collection_type components_;
 	};
 
+	typedef std::vector<std::unique_ptr<expression::expression_base>> arguments;
+
+	class reaction_specifier
+	{
+	public:
+		enum type
+		{
+			rate_type,
+			delay_type
+		};
+		reaction_specifier(type type, std::unique_ptr<expression::expression_base> value) : type_(type), value_(std::move(value))
+		{
+		}
+		type get_type() const noexcept
+		{
+			return type_;
+		}
+		const expression::expression_base* get_value() const noexcept
+		{
+			return value_.get();
+		}
+	private:
+		type type_;
+		std::unique_ptr<expression::expression_base> value_;
+	};
+
+	typedef std::vector<std::unique_ptr<reaction_specifier>> reaction_specifiers;
+
+	class choice_definition
+	{
+	public:
+		choice_definition(std::unique_ptr<expression::expression_base> condition, std::unique_ptr<reaction_side> componentsIfTrue, std::unique_ptr<reaction_side> componentsIfFalse) :
+			componentsIfTrue_(std::move(componentsIfTrue)),
+			componentsIfFalse_(std::move(componentsIfFalse)),
+			condition_(std::move(condition))
+		{
+			componentsIfTrue_->remove_zero_components();
+			componentsIfFalse_->remove_zero_components();
+			// don't allow modifiers
+			for (auto& component : *componentsIfTrue_)
+			{
+				if (component.second->is_modifier())
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Modifiers are not allowed for conditional reaction components. State " << component.first << " is defined as a modifier.";
+					throw std::exception(errorMessage.str().c_str());
+				}
+			}
+			for (auto& component : *componentsIfFalse_)
+			{
+				if (component.second->is_modifier())
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Modifiers are not allowed for conditional reaction components. State " << component.first << " is defined as a modifier.";
+					throw std::exception(errorMessage.str().c_str());
+				}
+			}
+		}
+		const reaction_side* get_components_if_true() const noexcept
+		{
+			return componentsIfTrue_.get();
+		}
+
+		const reaction_side* get_components_if_false() const noexcept
+		{
+			return componentsIfFalse_.get();
+		}
+
+		const expression::expression_base* get_condition() const noexcept
+		{
+			return condition_.get();
+		}
+	private:
+		std::unique_ptr<reaction_side> componentsIfTrue_;
+		std::unique_ptr<reaction_side> componentsIfFalse_;
+		std::unique_ptr<expression::expression_base> condition_;
+	};
+
 	class reaction_definition
 	{
 	public:
@@ -233,10 +311,6 @@ namespace cmdl
 		}
 
 		const expression::expression_base* get_rate() const noexcept
-		{
-			return rate_.get();
-		}
-		expression::expression_base* get_rate() noexcept
 		{
 			return rate_.get();
 		}

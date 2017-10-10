@@ -72,16 +72,22 @@ namespace expression
 			{
 			case type_equal:
 				symbol = "==";
+				break;
 			case type_not_equal:
 				symbol = "!=";
+				break;
 			case type_greater:
 				symbol = ">";
+				break;
 			case type_greater_equal:
 				symbol = ">=";
+				break;
 			case type_less:
 				symbol = "<";
+				break;
 			case type_less_equal:
 				symbol = "<=";
+				break;
 			}
 			left_->printCmdl(stream, true);
 

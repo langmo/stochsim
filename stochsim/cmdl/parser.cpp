@@ -6,6 +6,7 @@
 #include "parse_tree.h"
 #include "../ComposedState.h"
 #include "../State.h"
+#include "../Choice.h"
 #include "../PropensityReaction.h"
 #include "../DelayReaction.h"
 #include "../expression/conditional_expression.h"
@@ -13,10 +14,10 @@
 /// <summary>
 /// Class for static helper methods to parse a cmdl file.
 /// </summary>
-class CmdlCodecs
+class codecs
 {
 public:
-	CmdlCodecs() = delete;
+	codecs() = delete;
 	/// <summary>
 	/// Returns c in [0-9]. 
 	/// </summary>
@@ -87,7 +88,7 @@ public:
 	inline static const std::string::value_type* GetDouble(const std::string::value_type* stream, int* tokenID, double* value)
 	{
 		// Test if valid start of double value. Otherwise, return 0 and current position in character stream.
-		if (!IsDigit(*stream))
+		if (!IsDigit(*stream) && *stream != '.')
 		{
 			*value = 0;
 			*tokenID = 0;
@@ -130,6 +131,12 @@ public:
 			return ++stream;
 		case '*':
 			*tokenID = TOKEN_MULTIPLY;
+			return ++stream;
+		case ':':
+			*tokenID = TOKEN_COLON;
+			return ++stream;
+		case '?':
+			*tokenID = TOKEN_QUESTIONMARK;
 			return ++stream;
 		case '=':
 			if (stream[1] == '=')
@@ -249,6 +256,9 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 		state_definition() noexcept: type_(type_simple)
 		{
 		}
+		state_definition(type type) noexcept : type_(type)
+		{
+		}
 		bool require_type(type type) noexcept
 		{
 			if (type_ == type_simple)
@@ -275,76 +285,89 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 	};
 	// get all state names used in reactions.
 	std::unordered_map<expression::identifier, state_definition> states;
-	for (auto& reaction : parseTree)
+	for (auto& choice : parseTree.get_choices())
+	{
+		states.emplace(choice.first, state_definition::type::type_choice);
+	}
+	for (auto& choice : parseTree.get_choices())
+	{
+		for (auto& elem : *choice.second->get_components_if_true())
+		{
+			// define state if yet not existent.
+			states[elem.first];
+		}
+		for (auto& elem : *choice.second->get_components_if_false())
+		{
+			// define state if yet not existent.
+			states[elem.first];
+		}
+	}
+	for (auto& reaction : parseTree.get_reactions())
 	{
 		for (auto& elem : *reaction.second->get_reactants())
 		{
-			// get or construct state.
-			auto name = elem.first;
-			state_definition& state = states[name];
-			if (!state.require_type(state_definition::type_simple))
-			{
-				std::stringstream errorMessage;
-				errorMessage << "Cannot initialize state '" << name << "', because state is used inconsistently in reactions.";
-				throw std::exception(errorMessage.str().c_str());
-			}
+			// construct state if yet not existent.
+			states[elem.first];
+			
 		}
 		for (auto& elem : *reaction.second->get_products())
 		{
-			// get or construct state.
+			// define state if yet not existent, or get it if already existent.
 			auto name = elem.first;
 			state_definition& state = states[name];
-			if (!state.require_type(elem.second->is_modifier() ? state_definition::type_composed : state_definition::type_simple))
+			// if a state on the RHS has the modifier flag, this means it is a transformee. Transformees must be composed states. Switch flag to composed, which only fails if state is already defined as a choice.
+			if (elem.second->is_modifier() && !state.require_type(state_definition::type_composed))
 			{
 				std::stringstream errorMessage;
-				errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as a transformee but defined as a choice, which is invalid.";
+				errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as a transformee and in another as a choice, which is invalid.";
 				throw std::exception(errorMessage.str().c_str());
 			}
-		}
-	}
-	// Check for states which are choices.
-	for (auto& state : states)
-	{
-		auto expression = parseTree.get_variable_expression(state.first);
-		if (dynamic_cast<const expression::conditional_expression*>(expression.get()))
-		{
-			// TODO: Handle conditional.
-			throw std::exception("Not yet implemented.");
 		}
 	}
 
-	// Create states
+	// Create states, but not yet choices
 	for (auto& state : states)
 	{
-		auto expression = parseTree.get_variable_expression(state.first);
 		if (state.second.type_ == state_definition::type_choice)
 		{
-			// TODO: Handle conditional.
-			throw std::exception("Not yet implemented.");
+			continue;
 		}
+		auto expression = parseTree.get_variable_expression(state.first);		
+		auto initialCondition = parseTree.get_expression_value(expression.get());
+		if (initialCondition + 0.5 < 0)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Initial condition for state '" << state.first << "' is negative.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		if (state.second.type_ == state_definition::type_simple)
+			sim.CreateState<stochsim::State>(state.first, static_cast<size_t>(initialCondition + 0.5));
+		else if (state.second.type_ == state_definition::type_composed)
+			sim.CreateState<stochsim::ComposedState>(state.first, static_cast<size_t>(initialCondition + 0.5));
 		else
 		{
-			auto initialCondition = parseTree.get_expression_value(expression.get());
-			if (initialCondition + 0.5 < 0)
-			{
-				std::stringstream errorMessage;
-				errorMessage << "Initial condition for state '" << state.first << "' is negative.";
-				throw std::exception(errorMessage.str().c_str());
-			}
-			if (state.second.type_ == state_definition::type_simple)
-				sim.CreateState<stochsim::State>(state.first, static_cast<size_t>(initialCondition + 0.5));
-			else if (state.second.type_ == state_definition::type_composed)
-				sim.CreateState<stochsim::ComposedState>(state.first, static_cast<size_t>(initialCondition + 0.5));
-			else
-			{
-				std::stringstream errorMessage;
-				errorMessage << "State '" << state.first << "' has unknown type.";
-				throw std::exception(errorMessage.str().c_str());
-			}
+			std::stringstream errorMessage;
+			errorMessage << "State '" << state.first << "' has unknown type.";
+			throw std::exception(errorMessage.str().c_str());
 		}
 	}
+
+	// create choices in order of definition
+	for (auto& choice : parseTree.get_choices())
+	{
+		auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, choice.second->get_condition()->clone());
+		for (auto& elem : *choice.second->get_components_if_true())
+		{
+			choiceState->AddProductIfTrue(sim.GetState(elem.first), elem.second->get_stochiometry());
+		}
+		for (auto& elem : *choice.second->get_components_if_false())
+		{
+			choiceState->AddProductIfFalse(sim.GetState(elem.first), elem.second->get_stochiometry());
+		}
+	}
+
 	// Create reactions
-	auto partialLookup = [&parseTree, &states](const expression::identifier variableName) -> std::unique_ptr<expression::expression_base>
+	auto variableLookup = [&parseTree, &states](const expression::identifier variableName) -> std::unique_ptr<expression::expression_base>
 	{
 		// We want to simplify everything away which is not a state name, and not one of the standard variables.
 		if (states.find(variableName) == states.end())
@@ -353,9 +376,19 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 		errorMessage << "Variable with name \"" << variableName << "\" not defined";
 		throw std::exception(errorMessage.str().c_str());
 	};
-	for (auto& reactionDefinition : parseTree)
+	auto functionLookup = [&parseTree](const expression::identifier name)->std::unique_ptr<expression::function_holder_base>
 	{
-		auto rate = reactionDefinition.second->get_rate()->simplify(partialLookup);
+		if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
+		{
+			return parseTree.get_function_handler(name.substr(0, name.size() - 2));
+		}
+		throw std::exception("Only binding functions, not variables (we are substituting them instead).");
+	};
+	for (auto& reactionDefinition : parseTree.get_reactions())
+	{
+		auto rate = reactionDefinition.second->get_rate()->simplify(variableLookup);
+		rate->bind(functionLookup);
+		rate = rate->simplify(variableLookup);
 		std::shared_ptr<stochsim::PropensityReaction> reaction;
 		if (dynamic_cast<expression::number_expression*>(rate.get()))
 		{
@@ -428,20 +461,20 @@ void cmdl::parser::parse(stochsim::Simulation& sim)
 			{
 				lastCharPtr = currentCharPtr;
 				// Discard spaces/tabs/...
-				if (CmdlCodecs::IsSpace(currentCharPtr[0]))
+				if (codecs::IsSpace(currentCharPtr[0]))
 				{
 					currentCharPtr++;
 					continue;
 				}
 				// Discard rest of the line if comment
-				else if (CmdlCodecs::isLineComment(currentCharPtr[0], currentCharPtr[1]))
+				else if (codecs::isLineComment(currentCharPtr[0], currentCharPtr[1]))
 					break;
 
 				// Initialize all token values and identifiers.
 				tokenID = 0;					
 
 				// check if simple token
-				currentCharPtr = CmdlCodecs::GetSimpleToken(currentCharPtr, &tokenID);
+				currentCharPtr = codecs::GetSimpleToken(currentCharPtr, &tokenID);
 				if (tokenID != 0)
 				{
 					parse_token(tokenID, new cmdl::terminal_symbol(), parseTree);
@@ -450,7 +483,7 @@ void cmdl::parser::parse(stochsim::Simulation& sim)
 
 				// check if identifier
 				stringValue[0] = '\0';
-				currentCharPtr = CmdlCodecs::GetIdentifier(currentCharPtr, &tokenID, stringValue, maxStringValueLength);
+				currentCharPtr = codecs::GetIdentifier(currentCharPtr, &tokenID, stringValue, maxStringValueLength);
 				if (tokenID != 0)
 				{
 					parse_token(tokenID, new cmdl::terminal_symbol(stringValue), parseTree);
@@ -459,7 +492,7 @@ void cmdl::parser::parse(stochsim::Simulation& sim)
 
 				// check if double value
 				doubleValue = 0;
-				currentCharPtr = CmdlCodecs::GetDouble(currentCharPtr, &tokenID, &doubleValue);
+				currentCharPtr = codecs::GetDouble(currentCharPtr, &tokenID, &doubleValue);
 				if (tokenID != 0)
 				{
 					parse_token(tokenID, new cmdl::terminal_symbol(doubleValue), parseTree);

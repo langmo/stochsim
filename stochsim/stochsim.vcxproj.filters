@@ -141,6 +141,9 @@
     <ClInclude Include="expression\function_expression.h">
       <Filter>Header Files\expression</Filter>
     </ClInclude>
+    <ClInclude Include="cmdl\grammar.h">
+      <Filter>Header Files\cmdl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation.cpp">

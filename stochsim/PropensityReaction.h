@@ -37,7 +37,7 @@ namespace stochsim
 		PropensityReaction(std::string name, double rateConstant) noexcept : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}
-		PropensityReaction(std::string name, std::unique_ptr<const expression::expression_base> rateEquation) noexcept : name_(std::move(name)), rateConstant_(0), rateEquation_(std::move(rateEquation))
+		PropensityReaction(std::string name, std::unique_ptr<expression::expression_base> rateEquation) noexcept : name_(std::move(name)), rateConstant_(0), rateEquation_(std::move(rateEquation))
 		{
 		}
 		/// <summary>
@@ -364,7 +364,7 @@ namespace stochsim
 		/// during evaluation. To deactivate the usage of a custom rate equation again, simply define a rate constant for this reaction (i.e. call SetRateConstant(...)).
 		/// </summary>
 		/// <param name="rateEquation">Custom reaction rate equation.</param>
-		void SetRateEquation(std::unique_ptr<const expression::expression_base> rateEquation) noexcept
+		void SetRateEquation(std::unique_ptr<expression::expression_base> rateEquation) noexcept
 		{
 			rateConstant_ = 0;
 			rateEquation_ = std::move(rateEquation);
@@ -373,7 +373,7 @@ namespace stochsim
 		ReactionRate customRate_;
 		double rateConstant_;
 		const std::string name_;
-		std::unique_ptr<const expression::expression_base> rateEquation_;
+		std::unique_ptr<expression::expression_base> rateEquation_;
 		std::vector<ReactionElementWithModifiers> reactants_;
 		std::vector<ReactionElementWithModifiers> products_;
 	};

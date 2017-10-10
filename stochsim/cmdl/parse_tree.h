@@ -1,37 +1,18 @@
 #pragma once
+#include <random>
+#include <unordered_map>
+#include <memory>
+#include <sstream>
+#include "../expression/expression.h"
 namespace cmdl
 {
 	class parse_tree
 	{
 	public:
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>>::value_type value_type;
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>>::size_type size_type;
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>>::iterator iterator;
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>>::const_iterator const_iterator;
-		iterator begin() noexcept
-		{
-			return reactions_.begin();
-		}
-		const_iterator begin() const noexcept
-		{
-			return reactions_.begin();
-		}
-		const_iterator cbegin() const noexcept
-		{
-			return reactions_.cbegin();
-		}
-		iterator end() noexcept
-		{
-			return reactions_.end();
-		}
-		const_iterator end() const noexcept
-		{
-			return reactions_.end();
-		}
-		const_iterator cend() const noexcept
-		{
-			return reactions_.cend();
-		}
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> variable_collection;
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> function_collection;
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>> reaction_collection;
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<choice_definition>> choice_collection;
 	public:
 		parse_tree() : defaultVariables_(create_default_variables()), defaultFunctions_(create_default_functions())
 		{
@@ -74,6 +55,15 @@ namespace cmdl
 		{
 			reactions_[name] = std::make_unique<reaction_definition>(std::move(reactants), std::move(products), std::move(rate));
 		}
+		expression::identifier create_choice(std::unique_ptr<expression::expression_base> condition, std::unique_ptr<reaction_side> componentsIfTrue, std::unique_ptr<reaction_side> componentsIfFalse)
+		{
+			std::stringstream name;
+			name << "choice_" << (choices_.size() + 1);
+			auto nameC = name.str();
+			auto nameI = expression::identifier(nameC.begin(), nameC.end());
+			choices_[nameI] = std::make_unique<choice_definition>(std::move(condition), std::move(componentsIfTrue), std::move(componentsIfFalse));
+			return nameI;
+		}
 
 		/// <summary>
 		/// Finds the variable with the given name and returns its expression.
@@ -97,16 +87,16 @@ namespace cmdl
 			throw std::exception(errorMessage.str().c_str());
 		}
 
-		const expression::function_holder_base* get_function_handler(const expression::identifier& name) const
+		std::unique_ptr<expression::function_holder_base> get_function_handler(const expression::identifier& name) const
 		{
 			auto search = functions_.find(name);
 			if (search != functions_.end())
 			{
-				return search->second.get();
+				return search->second->clone();
 			}
 			auto default_search = defaultFunctions_.find(name);
 			if (default_search != defaultFunctions_.end())
-				return default_search->second.get();
+				return default_search->second->clone();
 
 			std::stringstream errorMessage;
 			errorMessage << "Function with name \"" << name << "\" not defined";
@@ -168,34 +158,126 @@ namespace cmdl
 		static std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> create_default_functions() noexcept
 		{
 			std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> defaultFunctions;
+			
+			defaultFunctions.emplace("min", expression::make_function_holder(
+				(expression::number(*)(expression::number, expression::number))(&fmin), false));
 			defaultFunctions.emplace("max", expression::make_function_holder(
-				static_cast<std::function<expression::number(expression::number, expression::number)>>(
-					[](expression::number n1, const expression::number n2) -> expression::number
+				(expression::number(*)(expression::number, expression::number))(&fmax), false));
+			defaultFunctions.emplace("mod", expression::make_function_holder(
+				(expression::number(*)(expression::number, expression::number))(&fmod), false));
+			
+			defaultFunctions.emplace("sin", expression::make_function_holder(
+				(expression::number (*)(expression::number))(&sin), false));
+			defaultFunctions.emplace("cos", expression::make_function_holder(
+				(expression::number(*)(expression::number))&cos, false));
+			defaultFunctions.emplace("tan", expression::make_function_holder(
+				(expression::number(*)(expression::number))&tan, false));
+
+			defaultFunctions.emplace("asin", expression::make_function_holder(
+				(expression::number(*)(expression::number))(&asin), false));
+			defaultFunctions.emplace("acos", expression::make_function_holder(
+				(expression::number(*)(expression::number))&acos, false));
+			defaultFunctions.emplace("atan", expression::make_function_holder(
+				(expression::number(*)(expression::number))&atan, false));
+
+			defaultFunctions.emplace("sinh", expression::make_function_holder(
+				(expression::number(*)(expression::number))(&sinh), false));
+			defaultFunctions.emplace("cosh", expression::make_function_holder(
+				(expression::number(*)(expression::number))&cosh, false));
+			defaultFunctions.emplace("tanh", expression::make_function_holder(
+				(expression::number(*)(expression::number))&tanh, false));
+
+			defaultFunctions.emplace("asinh", expression::make_function_holder(
+				(expression::number(*)(expression::number))(&asinh), false));
+			defaultFunctions.emplace("acosh", expression::make_function_holder(
+				(expression::number(*)(expression::number))&acosh, false));
+			defaultFunctions.emplace("atanh", expression::make_function_holder(
+				(expression::number(*)(expression::number))&atanh, false));
+
+			defaultFunctions.emplace("abs", expression::make_function_holder(
+				(expression::number(*)(expression::number))&abs, false));
+			
+			defaultFunctions.emplace("ceil", expression::make_function_holder(
+				(expression::number(*)(expression::number))&ceil, false));
+			defaultFunctions.emplace("floor", expression::make_function_holder(
+				(expression::number(*)(expression::number))&floor, false));
+			defaultFunctions.emplace("round", expression::make_function_holder(
+				(expression::number(*)(expression::number))&round, false));
+			
+			defaultFunctions.emplace("erf", expression::make_function_holder(
+				(expression::number(*)(expression::number))&erf, false));
+			defaultFunctions.emplace("exp", expression::make_function_holder(
+				(expression::number(*)(expression::number))&exp, false));
+			defaultFunctions.emplace("exp2", expression::make_function_holder(
+				(expression::number(*)(expression::number))&exp2, false));
+			defaultFunctions.emplace("log", expression::make_function_holder(
+				(expression::number(*)(expression::number))&log, false));
+			defaultFunctions.emplace("log10", expression::make_function_holder(
+				(expression::number(*)(expression::number))&log10, false));
+			defaultFunctions.emplace("log2", expression::make_function_holder(
+				(expression::number(*)(expression::number))&log2, false));
+			
+			defaultFunctions.emplace("pow", expression::make_function_holder(
+				(expression::number(*)(expression::number, expression::number))&pow, false));
+			defaultFunctions.emplace("sqrt", expression::make_function_holder(
+				(expression::number(*)(expression::number))&sqrt, false));
+
+			defaultFunctions.emplace("rand", expression::make_function_holder(
+				static_cast<std::function<expression::number()>>(
+					[]() -> expression::number
 			{
-				return n1 > n2 ? n1 : n2;
+				static std::default_random_engine randomEngine(std::random_device{}());
+				static std::uniform_real<expression::number> randomUniform;
+				return randomUniform(randomEngine);
 			}
-			), false));
+			), true));
 			return std::move(defaultFunctions);
 		}
+		
 	private:
 		/// <summary>
 		/// Returns a binding for all defined variable.
 		/// </summary>
 		/// <returns>Function to lookup variable values.</returns>
-		const expression::binding_lookup get_binding_lookup() const noexcept
+		expression::binding_lookup get_binding_lookup() const noexcept
 		{
 			return [this](const expression::identifier name)->std::unique_ptr<expression::function_holder_base>
 			{
-				std::function<expression::number()> binding = [this, name]()->expression::number {return this->get_variable_value(name); };
-				return expression::make_function_holder(binding, false);
+				if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
+				{
+					return this->get_function_handler(name.substr(0, name.size()-2));
+				}
+				else
+				{
+					auto value = this->get_variable_value(name);
+					std::function<expression::number()> binding = [value]()->expression::number {return value; };
+					return expression::make_function_holder(binding, false);
+				}
 			};
 		}
-
+	public:
+		const variable_collection& get_variables()
+		{
+			return variables_;
+		}
+		const function_collection& get_functions()
+		{
+			return functions_;
+		}
+		const reaction_collection& get_reactions()
+		{
+			return reactions_;
+		}
+		const choice_collection& get_choices()
+		{
+			return choices_;
+		}
 	private:
-		std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> variables_;
-		std::unordered_map<expression::identifier, std::unique_ptr<expression::expression_base>> defaultVariables_;
-		std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> functions_;
-		std::unordered_map<expression::identifier, std::unique_ptr<expression::function_holder_base>> defaultFunctions_;
-		std::unordered_map<expression::identifier, std::unique_ptr<reaction_definition>> reactions_;
+		variable_collection variables_;
+		variable_collection defaultVariables_;
+		function_collection functions_;
+		function_collection defaultFunctions_;
+		reaction_collection reactions_;
+		choice_collection choices_;
 	};
 }

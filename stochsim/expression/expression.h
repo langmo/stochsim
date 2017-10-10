@@ -168,7 +168,11 @@ namespace expression
 		virtual number operator()(const std::vector<number>& arguments) override
 		{
 			if (arguments.size() != sizeof...(Args))
-				throw std::exception("Wrong number of arguments.");
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Wrong number of arguments (expected "<< sizeof...(Args) << ", found " << arguments.size() <<").";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			return call_helper(arguments, typename make_indices<sizeof...(Args)>::type());
 		}
 		virtual size_t num_arguments() const noexcept override

@@ -6,6 +6,8 @@
 #include <locale>
 #include <codecvt>
 #include <iostream>
+#include <vector>
+#include <random>
 #if defined(_WIN32)
 // Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN

@@ -139,6 +139,7 @@
 // A statement is finished with a semicolon only after all rules having a precedence higher than a semicolon are applied. Rules having the precedence of a semicolon are only
 // applied if they have to, which is convenient for conversion rules which should only be applied if nothing else works.
 %right SEMICOLON. 
+%right QUESTIONMARK.
 %left AND.
 %left OR.
 %nonassoc EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL.
@@ -172,6 +173,21 @@ expression(e) ::= IDENTIFIER(I). [SEMICOLON] {
 	delete I;
 	I = nullptr;
 }
+expression(e) ::= IDENTIFIER(I) LEFT_ROUND arguments(as) RIGHT_ROUND . [SEMICOLON] {
+	auto func = new function_expression(*I);
+	delete I;
+	I = nullptr;
+	e = nullptr;
+	for(auto& argument : *as)
+	{
+		func->push_back(std::move(argument));
+	}
+	delete as;
+	as = nullptr;
+	e = func;
+	func = nullptr;
+}
+
 expression(e) ::= VALUE(V). [SEMICOLON]{
 	e = new number_expression(*V);
 	delete V;
@@ -181,6 +197,41 @@ expression(e_new) ::= LEFT_ROUND expression(e_old) RIGHT_ROUND. {
 	e_new = e_old;
 } // forces sums, ..., to be converted to an expression.
 
+%type comparison {conditional_expression*}
+%destructor comparison { 
+	delete $$;
+	$$ = nullptr;
+}
+comparison(e) ::= expression(c) QUESTIONMARK expression(e1) COLON expression(e2). [QUESTIONMARK]{
+	e = new conditional_expression(std::unique_ptr<expression_base>(c), std::unique_ptr<expression_base>(e1), std::unique_ptr<expression_base>(e2));
+	e1 = nullptr;
+	e2 = nullptr;
+	c = nullptr;
+}
+expression(e) ::= comparison(s). [EXP] {
+	e = s;
+}
+
+// Arguments
+%type arguments {arguments*}
+%destructor arguments { 
+	delete $$;
+	$$ = nullptr;
+}
+arguments(as) ::= . [SEMICOLON] {
+	as = new arguments();
+}
+arguments(as) ::= expression(e). [COMMA]{
+	as = new arguments();
+	as->push_back(typename arguments::value_type(e));
+	e = nullptr;
+}
+arguments(as_new) ::= arguments(as_old) COMMA expression(e). [COMMA]{
+	as_new = as_old;
+	as_old = nullptr;
+	as_new->push_back(typename arguments::value_type(e));
+	e = nullptr;
+}
 
 // Sum
 %type sum {sum_expression*}
@@ -329,6 +380,7 @@ assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
 
 	parseTree->create_variable(std::move(name), parseTree->get_expression_value(e_temp.get()));
 }
+
 assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -394,11 +446,16 @@ reactionSide(rs_new) ::= reactionSide(rs_old) PLUS reactionComponent(rc). [MULTI
 	rs_new->push_back(std::move(rc_temp));
 }
 
-reactionSide ::= expression(e). [PLUS] {
-	delete(e);
-	e=nullptr;
+reactionSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
+	delete(e1);
+	e1=nullptr;
+	delete(e2);
+	e2=nullptr;
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
+
+
+
 reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
 	delete(e);
 	e=nullptr;
@@ -454,5 +511,15 @@ reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I) LEFT_SQUARE RIGHT
 	rc = new reaction_component(state, stochiometry, true);
 }
 
+reactionComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionSide(s1) COLON reactionSide(s2) RIGHT_SQUARE . [EXP]{
+	auto e_temp = std::unique_ptr<expression_base>(e);
+	e = nullptr;
+	auto s1_temp = std::unique_ptr<reaction_side>(s1);
+	auto s2_temp = std::unique_ptr<reaction_side>(s2);
+	s1 = nullptr;
+	s2 = nullptr;
+	rc = nullptr;
 
-
+	identifier state = parseTree->create_choice(std::move(e_temp), std::move(s1_temp), std::move(s2_temp));
+	rc = new reaction_component(state, 1, false);
+}

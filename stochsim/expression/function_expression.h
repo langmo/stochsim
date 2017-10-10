@@ -22,10 +22,19 @@ namespace expression
 				{
 					arguments.push_back(elem->eval());
 				}
-				return evalFunction_->operator()(arguments);
+				try
+				{
+					return evalFunction_->operator()(arguments);
+				}
+				catch (const std::exception& e)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Error while evaluating function \"" << name_ << "\": "<<e.what();
+					throw std::exception(errorMessage.str().c_str());
+				}
 			}
 			std::stringstream errorMessage;
-			errorMessage << "Expression contains unbound function with name \"" << name_ << "\".";
+			errorMessage << "Function with name \"" << name_ << "\" is unknown.";
 			throw std::exception(errorMessage.str().c_str());
 		}
 		virtual std::unique_ptr<expression_base> simplify(const variable_lookup& variableLookup) const override
@@ -50,7 +59,7 @@ namespace expression
 				}
 				return std::make_unique<number_expression>(evalFunction_->operator()(arguments));
 			}
-			auto returnVal = std::make_unique<function_expression>(name_, evalFunction_->clone());
+			auto returnVal = std::make_unique<function_expression>(name_, evalFunction_ ? evalFunction_->clone() : nullptr);
 			returnVal->elems_ = std::move(simElems);
 			return std::unique_ptr<expression_base>(returnVal.release());
 		}
@@ -62,11 +71,14 @@ namespace expression
 		{
 			return name_;
 		}
-
+		void push_back(std::unique_ptr<expression_base> expression)
+		{
+			elems_.push_back(std::move(expression));
+		}
 
 		virtual std::unique_ptr<expression_base> clone() const override
 		{
-			auto val = std::make_unique<function_expression>(name_, evalFunction_->clone());
+			auto val = std::make_unique<function_expression>(name_, evalFunction_ ? evalFunction_->clone() : nullptr);
 			for (auto& elem : elems_)
 				val->elems_.emplace_back(elem->clone());
 			return std::move(val);

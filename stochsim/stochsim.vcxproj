@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="Choice.h" />
     <ClInclude Include="CircularBuffer.h" />
+    <ClInclude Include="cmdl\grammar.h" />
     <ClInclude Include="cmdl\parser.h" />
     <ClInclude Include="cmdl\symbols.h" />
     <ClInclude Include="cmdl\parse_tree.h" />

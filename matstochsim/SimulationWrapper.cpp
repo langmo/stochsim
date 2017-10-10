@@ -98,8 +98,9 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 	{
 		std::string name = params.Get<std::string>(0);
 		auto choiceEquation = params.Get<std::string>(1);
-		auto state = CreateState<stochsim::Choice>(name, choiceEquation);
-		params.Set(0, GetStateReference(state));
+		//auto state = CreateState<stochsim::Choice>(name, choiceEquation);
+		//params.Set(0, GetStateReference(state));
+		//TODO: make work again
 	}
 	else if (methodName == "CreateComposedState")
 	{
@@ -706,12 +707,13 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 	else if (methodName == "SetChoiceEquation")
 	{
 		auto choiceEquation = params.Get<std::string>(0);
-		choice->SetChoiceEquation(choiceEquation);
+		//choice->SetChoiceEquation(choiceEquation);
+		//TODO: MAKE work again
 	}
 	else if (methodName == "GetChoiceEquation")
 	{
 		auto choiceEquation = choice->GetChoiceEquation();
-		params.Set(0, choiceEquation);
+		params.Set(0, choiceEquation->toCmdl());
 	}
 	else
 	{

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "stochsim.h"
+#include "expression\expression.h"
 namespace stochsim
 {
 	/// <summary>
@@ -38,7 +39,7 @@ namespace stochsim
 			}
 		};
 
-		typedef std::unordered_map<std::string, std::unique_ptr<mu::value_type>> VariablesMap;
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::number>> VariablesMap;
 	public:
 		/// <summary>
 		/// Constructor.
@@ -48,7 +49,7 @@ namespace stochsim
 		/// <param name="choiceEquation">The boolean equation for this choice. To evaluate this equation we use muparser. Please see the documentation of muparser for the syntax of the expression. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
-		Choice(std::string name, std::string choiceEquation) : name_(std::move(name)), choiceEquation_(choiceEquation), variables_(100)
+		Choice(std::string name, std::unique_ptr<expression::expression_base> choiceEquation) : name_(std::move(name)), choiceEquation_(std::move(choiceEquation)), variables_(10)
 		{
 		}
 		/// <summary>
@@ -65,36 +66,39 @@ namespace stochsim
 		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			// Set parser variables
+			bool rebind = false;
 			for (auto& variable : variables)
 			{
-				auto& valuePtr = variables_[variable.first];
+				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
 				if (!valuePtr)
 				{
-					valuePtr = std::make_unique<mu::value_type>(static_cast<mu::value_type>(variable.second));
+					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
+					rebind = true;
 				}
 				else
 				{
-					*valuePtr = static_cast<mu::value_type>(variable.second);
+					*valuePtr = static_cast<expression::number>(variable.second);
 				}
 			}
-			accessSimInfo(&simInfo);
+			if (rebind)
+				rebind_variables(simInfo, false);
 			for (size_t i = 0; i < num; i++)
 			{
 				// Find out which choice was made by evaluating the formula with the current variable values.
-				double choice;
+				expression::number choice;
 				try
 				{
-					choice = static_cast<double>(parser_.Eval());
+					choice = choiceEquation_->eval();
 				}
-				catch (mu::Parser::exception_type &e)
+				catch (const std::exception& e)
 				{
-					std::string message = transformString<mu::string_type, std::string>(e.GetMsg());
-
 					std::stringstream errorMessage;
-					errorMessage << "Could not evaluate expression \"" << choiceEquation_ << "\" for choice "<<name_<<": " << message;
+					errorMessage << "Could not evaluate expression \"";
+					choiceEquation_->printCmdl(errorMessage, false);
+					errorMessage << "\" for choice " << name_ << ": " << e.what();
 					throw std::exception(errorMessage.str().c_str());
 				}
-				// Depnding of the choice, either increase one or the other sets of products.
+				// Depending of the choice, either increase one or the other sets of products.
 				if (choice != 0)
 				{
 					for (const auto& product : productsIfTrue_)
@@ -122,28 +126,17 @@ namespace stochsim
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			variables_.clear();
-			parser_.ClearVar();
-			mu::string_type choiceEquationMu = transformString<std::string, mu::string_type>(choiceEquation_);
-			try
-			{
-				accessSimInfo(&simInfo);
-				parser_.DefineFun(transformString<std::string, mu::string_type>("rand"), Rand, false);
-				parser_.SetVarFactory(CreateVariable, &variables_);
-				parser_.SetExpr(choiceEquationMu);
-			}
-			catch (mu::Parser::exception_type &e)
-			{
-				std::string message = transformString<mu::string_type, std::string>(e.GetMsg());
-				std::stringstream errorMessage;
-				errorMessage << "Could not parse expression \""<< choiceEquation_ << "\" for choice " << name_ << ": " << message;
-				throw std::exception(errorMessage.str().c_str());
-			}
+			boundChoiceEquation_ = choiceEquation_->simplify();
+			rebind_variables(simInfo, true);
+
+			
+			
 	
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			variables_.clear();
-			parser_.ClearVar();
+			boundChoiceEquation_ = nullptr;
 		}
 		virtual std::string GetName() const override
 		{
@@ -218,90 +211,82 @@ namespace stochsim
 		/// Returns the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
 		/// <returns>Choice equation. For the syntax, see the documentation of muparser.</returns>
-		std::string GetChoiceEquation() const
+		const expression::expression_base* GetChoiceEquation() const
 		{
-			return choiceEquation_;
+			return choiceEquation_.get();
 		}
 		/// <summary>
 		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
 		/// <param name="choiceEquation">Choice equation. For the syntax, see the documentation of muparser.</param>
-		void SetChoiceEquation(std::string choiceEquation)
+		void SetChoiceEquation(std::unique_ptr<expression::expression_base> choiceEquation)
 		{
 			choiceEquation_ = std::move(choiceEquation);
 		}
 
 	private:
-		/// <summary>
-		/// Callback function for the muparser, which is called when during parsing (not evaluating) an equation a variable name is discovered which is not yet declared. The task of this function is then to
-		/// return a pointer to a double value representing the value of the variable. This pointer is then used later when evaluating the equation to determine the (current) value of the variable.
-		/// Here, we simply save all found variables in an unordered map, with the parameter values initially initialized to zero. Before evaluation of the equation, we then set all variables in the map which
-		/// we know of to their respective values. This implies that variables which appear in the formula but of which we have no clue that they exist (respectively, for which we don't have a current value)
-		/// have a value of zero.
-		/// </summary>
-		/// <param name="a_szName">Name of the variable found by the muparser.</param>
-		/// <param name="pUserData">User provided data. In our case, this is a pointer to an unordered map of name-value pairs (a pointer to a VariablesMap).</param>
-		/// <returns>Pointer to a double holding the current value to the variable, which is initially zero.</returns>
-		static mu::value_type* CreateVariable(const mu::char_type *a_szName, void *pUserData)
+		void rebind_variables(ISimInfo& simInfo, bool all)
 		{
-			// We know that the user data is a pointer to VariablesMap, since we provide this in the call to SetVarFactory of the parser when we pass a reference to this function. 
-			VariablesMap* map = static_cast<VariablesMap*>(pUserData);
-			std::string varName = transformString<mu::string_type, std::string>(a_szName);
-			// Initialize variable to zero.
-			(*map)[varName] = std::make_unique<mu::value_type>(0);
-			return ((*map)[varName]).get();
-		}
-
-		template<typename A, typename B> static B transformString(const A& orgString)
-		{
-			B returnVal;
-			std::transform(orgString.begin(), orgString.end(), std::back_inserter(returnVal), [](A::value_type value) {return static_cast<B::value_type>(value); });
-			return std::move(returnVal);
-		}
-		/// <summary>
-		/// Implementation of a uniform random function used in muparser evaluations.
-		/// Since this function is only called when muparser evaluates the expression, and since this only happens inside Add, and
-		/// since then simInfoPtr_ is set, this always returnes a valid random number in the current implementation.
-		/// We nevertheless check if simInfoPtr_ is a valid pointer to prevent errors occuring during refactoring.
-		/// </summary>
-		/// <returns>Uniformly distributed random number between zero and one.</returns>
-		static mu::value_type Rand()
-		{ 
-			auto simInfoPtr = accessSimInfo();
-			if (simInfoPtr)
-				return static_cast<mu::value_type>(simInfoPtr->Rand());
-			else
-				throw mu::Parser::exception_type(transformString<std::string, mu::string_type>("accessSimInfo() points to null during calculation of a random number."));
-		}
-
-		/// <summary>
-		/// Helper class to access simInfo in muparser functions. These functions have to be static, so we have to somewhere store simInfo. We do this by a static local variable in this static function.
-		/// This circumvents the C++ restriction that static member functions must not be initialized in the header, thus avoinding to define a source file only for this one static variable...
-		/// This is definitely ugly, but shouldn't be a problem when not used in a multithreaded environment. In a multithreaded environment, it might happen that the wrong simInfo is used to calculate
-		/// a random variable. This might cause problems when the random number generator is seeded with a given value instead of a random one. Seeding the random number generator with a given value is,
-		/// however, mainly useful for debugging. Thus, the cases when this induces an unexpected behavior (non-reproducibility of a realization even though seeding the random number generator with the same value)
-		/// should be rather view.
-		/// TODO: Check for a better multi-threaded solution...
-		/// </summary>
-		/// <param name="newVal">New value of simInfo.</param>
-		/// <param name="set">Determines if the value of simInfo is set.</param>
-		/// <returns>The current value of simInfo.</returns>
-		static ISimInfo* accessSimInfo(ISimInfo* newVal = nullptr)
-		{
-			static ISimInfo* simInfo = nullptr;
-			if (newVal)
+			expression::binding_lookup bindings = [&simInfo, this, all](const expression::identifier name) -> std::unique_ptr<expression::function_holder_base>
 			{
-				simInfo = newVal;
-			}
-			return simInfo;
+				if (all)
+				{
+					for (auto& component : productsIfTrue_)
+					{
+						auto& state = component.state_;
+						if (state->GetName() == name)
+						{
+							std::function<expression::number()> holder = [state]() -> expression::number
+							{
+								return static_cast<expression::number>(state->Num());
+							};
+							return expression::make_function_holder(holder, true);
+						}
+					}
+					for (auto& component : productsIfFalse_)
+					{
+						auto& state = component.state_;
+						if (state->GetName() == name)
+						{
+							std::function<expression::number()> holder = [state]() -> expression::number
+							{
+								return static_cast<expression::number>(state->Num());
+							};
+							return expression::make_function_holder(holder, true);
+						}
+					}
+					if (name == "rand()")
+					{
+						std::function<expression::number()> holder = [&simInfo]() -> expression::number
+						{
+							return static_cast<expression::number>(simInfo.Rand());
+						};
+					}
+				}
+				auto search = variables_.find(name);
+				if (search != variables_.end())
+				{
+					auto valuePointer = search->second.get();
+					std::function<expression::number()> holder = [valuePointer]() -> expression::number
+					{
+						return *valuePointer;
+					};
+					return expression::make_function_holder(holder, true);
+				}
+
+				std::stringstream errorMessage;
+				errorMessage << "State or function with name \"" << name << "\" is not defined.";
+				throw std::exception(errorMessage.str().c_str());
+			};
+			boundChoiceEquation_->bind(bindings);
 		}
 
 	private:
 		const std::string name_;
-		std::string choiceEquation_;
-		mu::Parser parser_;
-		VariablesMap variables_;
+		std::unique_ptr<expression::expression_base> choiceEquation_;
+		std::unique_ptr<expression::expression_base> boundChoiceEquation_;
 		std::vector<ReactionElementWithModifiers> productsIfTrue_;
 		std::vector<ReactionElementWithModifiers> productsIfFalse_;
+		VariablesMap variables_;
 	};
 }
