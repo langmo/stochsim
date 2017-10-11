@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "ReactionRate.h"
 #include "expression_common.h"
+#include "ExpressionParser.h"
 namespace stochsim
 {
 	/// <summary>
@@ -37,8 +38,13 @@ namespace stochsim
 		PropensityReaction(std::string name, double rateConstant) noexcept : name_(std::move(name)), rateConstant_(rateConstant)
 		{
 		}
-		PropensityReaction(std::string name, std::unique_ptr<expression::IExpression> rateEquation) noexcept : name_(std::move(name)), rateConstant_(0), rateEquation_(std::move(rateEquation))
+		PropensityReaction(std::string name, std::unique_ptr<expression::IExpression> rateEquation) : name_(std::move(name)), rateConstant_(0)
 		{
+			SetRateEquation(std::move(rateEquation));
+		}
+		PropensityReaction(std::string name, std::string rateEquation) : name_(std::move(name)), rateConstant_(0)
+		{
+			SetRateEquation(std::move(rateEquation));
 		}
 		/// <summary>
 		/// Returns all reactants of the reaction. Modifiers and Transformees are not considered to be reactants.
@@ -313,20 +319,18 @@ namespace stochsim
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			if (rateEquation_)
+			if (customRate_)
 			{
 				std::vector<std::shared_ptr<IState>> reactantsPtrs;
 				std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantsPtrs),
 					[](const ReactionElementWithModifiers& reactant) -> std::shared_ptr<IState> {return reactant.state_; });
 
-				customRate_ = ReactionRate(rateEquation_.get(), reactantsPtrs);
+				customRate_.Initialize(simInfo, reactantsPtrs);
 			}
-			else
-				customRate_ = ReactionRate();
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
-			customRate_ = ReactionRate();
+			customRate_.Uninitialize(simInfo);
 		}
 		/// <summary>
 		/// Returns the rate constant of this reaction. If this reaction depends on a custom rate equation instead of a rate constant, returns -1.
@@ -334,7 +338,7 @@ namespace stochsim
 		/// <returns>Rate constant of reaction. Unit of rate constant is assumed to fit number of reactants.</returns>
 		double GetRateConstant() const noexcept
 		{
-			if (!rateEquation_)
+			if (!customRate_)
 				return rateConstant_;
 			else
 				return -1;
@@ -346,7 +350,7 @@ namespace stochsim
 		void SetRateConstant(double rateConstant) noexcept
 		{
 			rateConstant_ = rateConstant;
-			rateEquation_ = nullptr;
+			customRate_.SetRateExpression(nullptr);
 		}
 
 		/// <summary>
@@ -355,7 +359,7 @@ namespace stochsim
 		/// <returns>Custom rate equation of reaction.</returns>
 		const expression::IExpression* GetRateEquation() const noexcept
 		{
-			return rateEquation_.get();
+			return customRate_.GetRateExpression();
 		}
 		/// <summary>
 		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
@@ -367,13 +371,24 @@ namespace stochsim
 		void SetRateEquation(std::unique_ptr<expression::IExpression> rateEquation) noexcept
 		{
 			rateConstant_ = 0;
-			rateEquation_ = std::move(rateEquation);
+			customRate_.SetRateExpression(std::move(rateEquation));
+		}
+		/// <summary>
+		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
+		/// Instead, the rate is dynamically calculated by solving the mathematical formula provided as an argument. This formula can contain standard math functions like
+		/// min, sin and similar, as well as variables having the name of the reactants of this reaction, which are dynamically replaced by the molcular numbers of these reactants
+		/// during evaluation. To deactivate the usage of a custom rate equation again, simply define a rate constant for this reaction (i.e. call SetRateConstant(...)).
+		/// </summary>
+		/// <param name="rateEquation">Custom reaction rate equation.</param>
+		void SetRateEquation(std::string rateEquation)
+		{
+			expression::ExpressionParser parser;
+			SetRateEquation(parser.Parse(rateEquation, true, false));
 		}
 	private:
 		ReactionRate customRate_;
 		double rateConstant_;
 		const std::string name_;
-		std::unique_ptr<expression::IExpression> rateEquation_;
 		std::vector<ReactionElementWithModifiers> reactants_;
 		std::vector<ReactionElementWithModifiers> products_;
 	};

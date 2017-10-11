@@ -1,15 +1,15 @@
 // Configuration of output
 %token_prefix TOKEN_
-%start_symbol model
-%parse_failure {throw std::exception("Syntax error.");}
-%stack_overflow {throw std::exception("Parser stack overflow while parsing cmdl file.");}
-%name internal_Parse
+%start_symbol result
+%parse_failure {throw std::exception("Syntax error while parsing expression.");}
+%stack_overflow {throw std::exception("Parser stack overflow while parsing expression.");}
+%name expression_Parse
 %token_type {TerminalSymbol*}
 %token_destructor {
 	delete $$;
 	$$ = nullptr;
 }
-%extra_argument {CmdlParseTree* parseTree}
+%extra_argument {ExpressionParseTree* parseTree}
 
 %include {#include "expression_common.h"}
 %include {#include "ComparisonExpression.h"}
@@ -25,34 +25,33 @@
 %include {#include "VariableExpression.h"}
 %include {#include "FunctionExpression.h"}
 
-%include {#include "cmdl_symbols.h"}
-%include {#include "CmdlParseTree.h"}
-%include {#include "CmdlParser.h"}
+%include {#include "expression_symbols.h"}
+%include {#include "ExpressionParseTree.h"}
+%include {#include "ExpressionParser.h"}
 
 %include {#include  <assert.h>}
 %include {using namespace expression;}
-%include {using namespace cmdlparser;}
 
 // Convert c-style parsing functions to implementation of clean c++ class handling everything.
 %include {
 	// Forward declaration parser functions.
-	void internal_Parse(
+	void expression_Parse(
 		void *yyp,                   /* The parser */
 		int yymajor,                 /* The major token code number */
 		TerminalSymbol* yyminor,       /* The value for the token */
-		CmdlParseTree* parse_tree               /* Optional %extra_argument parameter */
+		ExpressionParseTree* parse_tree               /* Optional %extra_argument parameter */
 	);
 
-	void *internal_ParseAlloc(void* (*mallocProc)(size_t));
+	void *expression_ParseAlloc(void* (*mallocProc)(size_t));
 
-	void internal_ParseFree(
+	void expression_ParseFree(
 		void *p,                    /* The parser to be deleted */
 		void(*freeProc)(void*)     /* Function used to reclaim memory */
 	);
 	#ifndef NDEBUG
-		void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+		void expression_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
 	#endif
-	void cmdlparser::CmdlParser::InitializeInternal()
+	void expression::ExpressionParser::InitializeInternal()
 	{
 		UninitializeInternal();
 	#ifndef NDEBUG
@@ -64,39 +63,39 @@
 		{
 			fopen_s(&logFile_, logFilePath_.c_str(), "w");
 			if(logFile_)
-				internal_ParseTrace(logFile_, "cmdl_");
+				expression_ParseTrace(logFile_, "cmdl_");
 			else
-				internal_ParseTrace(0, "cmdl_");
+				expression_ParseTrace(0, "cmdl_");
 		}
 	#endif
 		try
 		{
-			handle_ = internal_ParseAlloc(malloc);
+			handle_ = expression_ParseAlloc(malloc);
 		}
 		catch (...)
 		{
-			throw std::exception("Could not allocate space for cmdl parser.");
+			throw std::exception("Could not allocate space for expression parser.");
 		}
 		if (!handle_)
 		{
-			throw std::exception("Could not create cmdl parser.");
+			throw std::exception("Could not create expression parser.");
 		}
 	}
-	void cmdlparser::CmdlParser::UninitializeInternal()
+	void expression::ExpressionParser::UninitializeInternal()
 	{
 		if(!handle_)
 			return;
-		internal_ParseFree(handle_, free); 
+		expression_ParseFree(handle_, free); 
 		handle_ = nullptr;
 	#ifndef NDEBUG
-		internal_ParseTrace(0, "cmdl_");
+		expression_ParseTrace(0, "cmdl_");
 		if (logFile_)
 			fclose(logFile_);
 		logFile_ = nullptr;
 	#endif
 	}
 
-	void cmdlparser::CmdlParser::ParseToken(int tokenID, TerminalSymbol* token, CmdlParseTree& parseTree)
+	void expression::ExpressionParser::ParseToken(int tokenID, TerminalSymbol* token, ExpressionParseTree& parseTree)
 	{
 		if (!handle_)
 		{
@@ -104,7 +103,7 @@
 		}
 		try
 		{
-			internal_Parse(handle_, tokenID, token, &parseTree);
+			expression_Parse(handle_, tokenID, token, &parseTree);
 		}
 		catch (const std::exception& ex)
 		{
@@ -373,208 +372,10 @@ expression(e_new) ::= expression(e1) LESS_EQUAL expression(e2). {
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Rules specific for CMDL files
+// Rules specific for Expressions
 /////////////////////////////////////////////////////////////////////////////
-// assignments
-assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
-	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
-	// they point to null to avoid double deletion.
-	identifier name = *I;
-	delete I;
-	I = nullptr;
-	auto e_temp = std::unique_ptr<IExpression>(e);
+result ::= expression(e). {
+	parseTree->SetResult(std::unique_ptr<IExpression>(e));
 	e = nullptr;
-
-	parseTree->CreateVariable(std::move(name), parseTree->GetExpressionValue(e_temp.get()));
 }
-
-assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
-	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
-	// they point to null to avoid double deletion.
-	identifier name = *I;
-	delete I;
-	I = nullptr;
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-
-	parseTree->CreateVariable(std::move(name), std::move(e_temp));
-}
-
-
-// reaction
-reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
-	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
-	// they point to null to avoid double deletion.
-	auto reactants_temp = std::unique_ptr<ReactionSide>(reactants);
-	auto products_temp = std::unique_ptr<ReactionSide>(products);
-	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(rss);
-	rss = nullptr;
-	reactants = nullptr;
-	products = nullptr;
-
-	parseTree->CreateReaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
-}
-
-%type reactionSpecifiers {ReactionSpecifiers*}
-%destructor reactionSpecifiers { 
-	delete $$;
-	$$ = nullptr;
-}
-reactionSpecifiers(rss) ::= reactionSpecifier(rs) . {
-	auto rss_temp = std::make_unique<ReactionSpecifiers>();
-	auto rs_temp = std::unique_ptr<ReactionSpecifier>(rs);
-	rs = nullptr;
-	rss = nullptr;
-	rss_temp->PushBack(std::move(rs_temp));
-	rss = rss_temp.release();
-}
-reactionSpecifiers(rss_new) ::= reactionSpecifiers(rss_old) COMMA reactionSpecifier(rs) . {
-	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(rss_old);
-	rss_old = nullptr;
-	rss_new = nullptr;
-	auto rs_temp = std::unique_ptr<ReactionSpecifier>(rs);
-	rs = nullptr;
-	rss_temp->PushBack(std::move(rs_temp));
-	rss_new = rss_temp.release();
-}
-
-%type reactionSpecifier {ReactionSpecifier*}
-%destructor reactionSpecifier { 
-	delete $$;
-	$$ = nullptr;
-}
-reactionSpecifier(rs) ::= expression(e). {
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	rs = nullptr;
-	auto value = parseTree->GetExpressionValue(e_temp.get());
-	rs = new ReactionSpecifier(ReactionSpecifier::rate_type, std::make_unique<NumberExpression>(value));
-}
-
-reactionSpecifier(rs) ::= IDENTIFIER(I) COLON expression(e). {
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	rs = nullptr;
-	identifier name = *I;
-	delete I;
-	I = nullptr;
-	auto value = parseTree->GetExpressionValue(e_temp.get());
-	rs = new ReactionSpecifier(name, std::make_unique<NumberExpression>(value));
-}
-
-reactionSpecifier(rs) ::= LEFT_SQUARE expression(e) RIGHT_SQUARE. {
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	rs = nullptr;
-	rs = new ReactionSpecifier(ReactionSpecifier::rate_type, std::move(e_temp));
-}
-
-%type reactionSide {ReactionSide*}
-%destructor reactionSide { 
-	delete $$;
-	$$ = nullptr;
-}
-reactionSide(rs) ::= . [SEMICOLON] {
-	rs = new ReactionSide();
-}
-reactionSide(rs) ::= reactionComponent(rc). [MULTIPLY]{
-	auto rc_temp = std::unique_ptr<ReactionComponent>(rc);
-	rc = nullptr;
-
-	rs = new ReactionSide();
-	rs->PushBack(std::move(rc_temp));
-}
-reactionSide(rs_new) ::= reactionSide(rs_old) PLUS reactionComponent(rc). [MULTIPLY]{
-	rs_new = rs_old;
-	rs_old = nullptr;
-	auto rc_temp = std::unique_ptr<ReactionComponent>(rc);
-	rc = nullptr;
-
-	rs_new->PushBack(std::move(rc_temp));
-}
-
-reactionSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
-	delete(e1);
-	e1=nullptr;
-	delete(e2);
-	e2=nullptr;
-	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
-}
-
-reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
-	delete(e);
-	e=nullptr;
-	delete(rs_old);
-	rs_old=nullptr;
-	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
-}
-
-%type reactionComponent {ReactionComponent*}
-%destructor reactionComponent { 
-	delete $$;
-	$$ = nullptr;
-}
-reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
-	identifier state = *I;
-	delete I;
-	I = nullptr;
-	rc = nullptr;
-
-	rc = new ReactionComponent(state, 1, false);
-}
-
-reactionComponent(rc) ::= IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
-	identifier state = *I;
-	delete I;
-	I = nullptr;
-	rc = nullptr;
-
-	rc = new ReactionComponent(state, 1, true);
-}
-
-reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I). [EXP]{
-	identifier state = *I;
-	delete I;
-	I = nullptr;
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	rc = nullptr;
-
-	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
-	rc = new ReactionComponent(state, stochiometry, false);
-}
-
-reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
-	identifier state = *I;
-	delete I;
-	I = nullptr;
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	rc = nullptr;
-
-	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
-	rc = new ReactionComponent(state, stochiometry, true);
-}
-
-reactionComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionSide(s1) COLON reactionSide(s2) RIGHT_SQUARE . [EXP]{
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
-	auto s1_temp = std::unique_ptr<ReactionSide>(s1);
-	auto s2_temp = std::unique_ptr<ReactionSide>(s2);
-	s1 = nullptr;
-	s2 = nullptr;
-	rc = nullptr;
-
-	identifier state = parseTree->CreateChoice(std::move(e_temp), std::move(s1_temp), std::move(s2_temp));
-	rc = new ReactionComponent(state, 1, false);
-}
-
-// A model consists of a set of statements.
-model ::= statements.
-statements ::= statements statement.
-statements ::= .
-
-// A statement can either be a variable assignment or a reaction
-statement ::= assignment.
-statement ::= reaction.
-statement ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines
+result ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines

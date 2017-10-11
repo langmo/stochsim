@@ -4,17 +4,15 @@
 #include <sstream>
 #include "expression_common.h"
 #include "NumberExpression.h"
-namespace cmdlparser
+namespace expression
 {
-	class CmdlParseTree
+	class ExpressionParseTree
 	{
 	public:
 		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::IExpression>> variable_collection;
 		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::IFunctionHolder>> function_collection;
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<ReactionDefinition>> reaction_collection;
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<ChoiceDefinition>> choice_collection;
 	public:
-		CmdlParseTree() : defaultFunctions_(expression::makeDefaultFunctions())
+		ExpressionParseTree() : defaultFunctions_(expression::makeDefaultFunctions())
 		{
 			auto defaultVarValues = expression::makeDefaultVariables();
 			for (auto& var : defaultVarValues)
@@ -40,28 +38,7 @@ namespace cmdlparser
 		{
 			variables_[name] = std::make_unique<expression::NumberExpression>(value);
 		}
-		void CreateReaction(std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
-		{ 
-			std::stringstream name;
-			name << "reaction_" << (reactions_.size() + 1); 
-			auto nameC = name.str();
-			auto nameI = expression::identifier(nameC.begin(), nameC.end());
-			CreateReaction(nameI, std::move(reactants), std::move(products), std::move(specifiers));
-		}
-		void CreateReaction(expression::identifier name, std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
-		{
-			reactions_[name] = std::make_unique<ReactionDefinition>(std::move(reactants), std::move(products), std::move(specifiers));
-		}
-		expression::identifier CreateChoice(std::unique_ptr<expression::IExpression> condition, std::unique_ptr<ReactionSide> componentsIfTrue, std::unique_ptr<ReactionSide> componentsIfFalse)
-		{
-			std::stringstream name;
-			name << "choice_" << (choices_.size() + 1);
-			auto nameC = name.str();
-			auto nameI = expression::identifier(nameC.begin(), nameC.end());
-			choices_[nameI] = std::make_unique<ChoiceDefinition>(std::move(condition), std::move(componentsIfTrue), std::move(componentsIfFalse));
-			return nameI;
-		}
-
+		
 		/// <summary>
 		/// Finds the variable with the given name and returns its expression.
 		/// If no variable with the given name exists, throws a std::exception.
@@ -143,7 +120,7 @@ namespace cmdlparser
 			throw std::exception(errorMessage.str().c_str());
 		}
 		
-	private:
+	public:
 		/// <summary>
 		/// Returns a binding for all defined variable.
 		/// </summary>
@@ -173,20 +150,20 @@ namespace cmdlparser
 		{
 			return functions_;
 		}
-		const reaction_collection& GetReactions()
+		void SetResult(std::unique_ptr<IExpression> result) noexcept
 		{
-			return reactions_;
+			result_ = std::move(result);
 		}
-		const choice_collection& GetChoices()
+		const IExpression* GetResult() const noexcept
 		{
-			return choices_;
+			return result_.get();
 		}
 	private:
 		variable_collection variables_;
 		variable_collection defaultVariables_;
 		function_collection functions_;
 		function_collection defaultFunctions_;
-		reaction_collection reactions_;
-		choice_collection choices_;
+
+		std::unique_ptr<IExpression> result_;
 	};
 }

@@ -125,12 +125,9 @@ namespace stochsim
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			variables_.clear();
-			boundChoiceEquation_ = choiceEquation_->Simplify();
+			boundChoiceEquation_ = choiceEquation_->Clone();
 			rebind_variables(simInfo, true);
-
-			
-			
-	
+			boundChoiceEquation_ = boundChoiceEquation_->Simplify();
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
@@ -226,58 +223,100 @@ namespace stochsim
 	private:
 		void rebind_variables(ISimInfo& simInfo, bool all)
 		{
-			expression::BindingLookup bindings = [&simInfo, this, all](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
+			if (all)
 			{
-				if (all)
+				auto defaultFunctions = expression::makeDefaultFunctions();
+				auto defaultVariables = expression::makeDefaultVariables();
+				expression::BindingLookup bindings = [this, &defaultFunctions, &defaultVariables, &simInfo](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
 				{
-					for (auto& component : productsIfTrue_)
+					if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
 					{
-						auto& state = component.state_;
-						if (state->GetName() == name)
+						if (name == "rand()")
 						{
-							std::function<expression::number()> holder = [state]() -> expression::number
+							std::function<expression::number()> holder = [&simInfo]() -> expression::number
 							{
-								return static_cast<expression::number>(state->Num());
+								return static_cast<expression::number>(simInfo.Rand());
 							};
 							return expression::makeFunctionHolder(holder, true);
 						}
-					}
-					for (auto& component : productsIfFalse_)
-					{
-						auto& state = component.state_;
-						if (state->GetName() == name)
-						{
-							std::function<expression::number()> holder = [state]() -> expression::number
-							{
-								return static_cast<expression::number>(state->Num());
-							};
-							return expression::makeFunctionHolder(holder, true);
-						}
-					}
-					if (name == "rand()")
-					{
-						std::function<expression::number()> holder = [&simInfo]() -> expression::number
-						{
-							return static_cast<expression::number>(simInfo.Rand());
-						};
-					}
-				}
-				auto search = variables_.find(name);
-				if (search != variables_.end())
-				{
-					auto valuePointer = search->second.get();
-					std::function<expression::number()> holder = [valuePointer]() -> expression::number
-					{
-						return *valuePointer;
-					};
-					return expression::makeFunctionHolder(holder, true);
-				}
+						auto default_search = defaultFunctions.find(name);
+						if (default_search != defaultFunctions.end())
+							return default_search->second->Clone();
 
-				std::stringstream errorMessage;
-				errorMessage << "State or function with name \"" << name << "\" is not defined.";
-				throw std::exception(errorMessage.str().c_str());
-			};
-			boundChoiceEquation_->Bind(bindings);
+					}
+					else
+					{
+						auto search = variables_.find(name);
+						if (search != variables_.end())
+						{
+							auto valuePointer = search->second.get();
+							std::function<expression::number()> holder = [valuePointer]() -> expression::number
+							{
+								return *valuePointer;
+							};
+							return expression::makeFunctionHolder(holder, true);
+						}
+
+						for (auto& component : productsIfTrue_)
+						{
+							auto& state = component.state_;
+							if (state->GetName() == name)
+							{
+								std::function<expression::number()> holder = [state]() -> expression::number
+								{
+									return static_cast<expression::number>(state->Num());
+								};
+								return expression::makeFunctionHolder(holder, true);
+							}
+						}
+						for (auto& component : productsIfFalse_)
+						{
+							auto& state = component.state_;
+							if (state->GetName() == name)
+							{
+								std::function<expression::number()> holder = [state]() -> expression::number
+								{
+									return static_cast<expression::number>(state->Num());
+								};
+								return expression::makeFunctionHolder(holder, true);
+							}
+						}
+
+						auto default_search = defaultVariables.find(name);
+						if (default_search != defaultVariables.end())
+						{
+							auto value = default_search->second;
+							std::function<expression::number()> binding = [value]()->expression::number {return value; };
+							return expression::makeFunctionHolder(binding, false);
+						}
+					}
+					std::stringstream errorMessage;
+					errorMessage << "State or function with name \"" << name << "\" is not defined.";
+					throw std::exception(errorMessage.str().c_str());
+				};
+				boundChoiceEquation_->Bind(bindings);
+			}
+			else
+			{
+				expression::BindingLookup bindings = [this](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
+				{
+					auto search = variables_.find(name);
+					if (search != variables_.end())
+					{
+						auto valuePointer = search->second.get();
+						std::function<expression::number()> holder = [valuePointer]() -> expression::number
+						{
+							return *valuePointer;
+						};
+						return expression::makeFunctionHolder(holder, true);
+					}
+
+					std::stringstream errorMessage;
+					errorMessage << "State or function with name \"" << name << "\" is not defined.";
+					throw std::exception(errorMessage.str().c_str());
+				};
+				boundChoiceEquation_->Bind(bindings);
+			}
 		}
 
 	private:

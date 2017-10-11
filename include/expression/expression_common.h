@@ -4,7 +4,7 @@
 #include <sstream>
 #include <functional>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <cmath>
 
 namespace expression
@@ -527,4 +527,8 @@ namespace expression
 		std::vector<Element> elems_;
 		number baseValue_;
 	};
+
+	std::unordered_map<identifier, number> makeDefaultVariables() noexcept;
+
+	std::unordered_map<identifier, std::unique_ptr<IFunctionHolder>> makeDefaultFunctions() noexcept;
 }

@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\include\expression\ComparisonExpression.h" />
     <ClInclude Include="..\..\include\expression\ConditionalExpression.h" />
     <ClInclude Include="..\..\include\expression\ExponentiationExpression.h" />
+    <ClInclude Include="..\..\include\expression\ExpressionParser.h" />
     <ClInclude Include="..\..\include\expression\expression_common.h" />
     <ClInclude Include="..\..\include\expression\FunctionExpression.h" />
     <ClInclude Include="..\..\include\expression\UnaryMinusExpression.h" />
@@ -33,9 +34,19 @@
     <ClInclude Include="..\..\include\expression\ProductExpression.h" />
     <ClInclude Include="..\..\include\expression\SumExpression.h" />
     <ClInclude Include="..\..\include\expression\VariableExpression.h" />
+    <ClInclude Include="ExpressionCodecs.h" />
+    <ClInclude Include="ExpressionParseTree.h" />
+    <ClInclude Include="expression_grammar.h" />
+    <ClInclude Include="expression_symbols.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="temp.cpp" />
+    <ClCompile Include="ExpressionParser.cpp" />
+    <ClCompile Include="expression_common.cpp" />
+    <ClCompile Include="expression_grammar.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="expression_grammar.template" />
+    <None Include="expression_grammar.y" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -114,12 +125,17 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\expression</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)\bin\lemon\$(Platform)\$(Configuration)\lemon.exe -T$(SolutionDir)lib\$(ProjectName)\expression_grammar.template $(SolutionDir)lib\$(ProjectName)\expression_grammar.y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -128,10 +144,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\expression</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)\bin\lemon\$(Platform)\$(Configuration)\lemon.exe -T$(SolutionDir)lib\$(ProjectName)\expression_grammar.template $(SolutionDir)lib\$(ProjectName)\expression_grammar.y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -140,10 +161,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\expression</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)\bin\lemon\$(Platform)\$(Configuration)\lemon.exe -T$(SolutionDir)lib\$(ProjectName)\expression_grammar.template $(SolutionDir)lib\$(ProjectName)\expression_grammar.y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -154,12 +180,17 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\expression</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)\bin\lemon\$(Platform)\$(Configuration)\lemon.exe -T$(SolutionDir)lib\$(ProjectName)\expression_grammar.template $(SolutionDir)lib\$(ProjectName)\expression_grammar.y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

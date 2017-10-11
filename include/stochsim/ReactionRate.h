@@ -15,85 +15,31 @@ namespace stochsim
 	{
 	public:
 		/// <summary>
-		/// Default constructor.
-		/// Sets the reaction rate to zero.
+		/// Constructor.
 		/// </summary>
 		ReactionRate() noexcept
 		{
 		}
-		/// <summary>
-		/// Constructor.
-		/// Sets the reaction rate expression and all reactants of the reaction. The expression may contain variables with the names of the reactants of the reaction.
-		/// </summary>
-		/// <param name="rateExpression">Custom reaction rate expression.</param>
-		/// <param name="reactants">Reactants of the reaction.</param>
-		ReactionRate(const expression::IExpression* rateExpression, const std::vector<std::shared_ptr<IState>>& reactants)
+		
+		void SetRateExpression(std::unique_ptr<expression::IExpression> rateExpression) noexcept
 		{
-			expression::BindingLookup bindings = [&reactants](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
-			{
-				for (auto reactant : reactants)
-				{
-					if (reactant->GetName() == name)
-					{
-						std::function<expression::number()> holder = [reactant]() -> expression::number
-						{
-							return static_cast<expression::number>(reactant->Num());
-						};
-						return expression::makeFunctionHolder(holder, true);
-					}
-				}
-				std::stringstream errorMessage;
-				errorMessage << "State or function with name \"" << name << "\" is not defined.";
-				throw std::exception(errorMessage.str().c_str());
-			};
-			boundRateExpession_ = rateExpression->Clone();
-			boundRateExpession_->Bind(bindings);
-			boundRateExpession_ = boundRateExpession_->Simplify();
+			rateExpression_ = std::move(rateExpression);
+		}
+		const expression::IExpression* GetRateExpression() const noexcept
+		{
+			if (rateExpression_)
+				return rateExpression_.get();
+			else
+				return nullptr;
+		}
 
-		}
-		/// <summary>
-		/// Copy constructor.
-		/// </summary>
-		/// <param name="other">Reation rate to copy.</param>
-		ReactionRate(const ReactionRate& other)
-		{
-			boundRateExpession_ = other.boundRateExpession_->Clone();
-		}
-		/// <summary>
-		/// Move constructor.
-		/// </summary>
-		/// <param name="other">Reaction rate to swap contents with.</param>
-		ReactionRate(ReactionRate&& other) noexcept
-		{
-			boundRateExpession_.swap(other.boundRateExpession_);
-		}
-		/// <summary>
-		/// Copy assignment operator.
-		/// </summary>
-		/// <param name="other">Reation rate to copy.</param>
-		/// <returns>Reference to this object.</returns>
-		ReactionRate& operator=(const ReactionRate& other)
-		{
-			boundRateExpession_ = other.boundRateExpession_->Clone();
-			return *this;
-		}
-		/// <summary>
-		/// Move assignement operator.
-		/// </summary>
-		/// <param name="other">Reaction rate to swap contents with.</param>
-		/// <returns>Reference to this object.</returns>
-		ReactionRate& operator=(ReactionRate&& other) noexcept
-		{
-			boundRateExpession_.swap(other.boundRateExpession_);
-			return *this;
-		}
 		/// <summary>
 		/// Returns true if a custom reaction rate expression was set via an appropriate constructor, false otherwise.
 		/// </summary>
 		/// <returns>True if custom reaction rate.</returns>
 		operator bool() const noexcept
 		{
-			return boundRateExpession_.operator bool();
+			return rateExpression_.operator bool();
 		}
 
 		/// <summary>
@@ -108,8 +54,71 @@ namespace stochsim
 				throw std::exception("Custom reaction rate not set.");
 			return boundRateExpession_->Eval();
 		}
+
+		void Initialize(ISimInfo& simInfo, std::vector<std::shared_ptr<IState>>& reactants)
+		{
+			boundRateExpession_ = rateExpression_->Clone();
+			bindVariables(simInfo, reactants);
+			boundRateExpession_ = boundRateExpession_->Simplify();
+		}
+		void Uninitialize(ISimInfo& simInfo)
+		{
+			boundRateExpession_ = nullptr;
+		}
 	private:
 		std::unique_ptr<expression::IExpression> boundRateExpession_;
+		std::unique_ptr<expression::IExpression> rateExpression_;
+
+		void bindVariables(ISimInfo& simInfo, std::vector<std::shared_ptr<IState>>& reactants)
+		{
+			
+			auto defaultFunctions = expression::makeDefaultFunctions();
+			auto defaultVariables = expression::makeDefaultVariables();
+			expression::BindingLookup bindings = [this, &reactants, &defaultFunctions, &defaultVariables, &simInfo](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
+			{
+				if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
+				{
+					if (name == "rand()")
+					{
+						std::function<expression::number()> holder = [&simInfo]() -> expression::number
+						{
+							return static_cast<expression::number>(simInfo.Rand());
+						};
+						return expression::makeFunctionHolder(holder, true);
+					}
+					auto default_search = defaultFunctions.find(name);
+					if (default_search != defaultFunctions.end())
+						return default_search->second->Clone();
+
+				}
+				else
+				{
+					for (auto reactant : reactants)
+					{
+						if (reactant->GetName() == name)
+						{
+							std::function<expression::number()> holder = [reactant]() -> expression::number
+							{
+								return static_cast<expression::number>(reactant->Num());
+							};
+							return expression::makeFunctionHolder(holder, true);
+						}
+					}
+
+					auto default_search = defaultVariables.find(name);
+					if (default_search != defaultVariables.end())
+					{
+						auto value = default_search->second;
+						std::function<expression::number()> binding = [value]()->expression::number {return value; };
+						return expression::makeFunctionHolder(binding, false);
+					}
+				}
+				std::stringstream errorMessage;
+				errorMessage << "State or function with name \"" << name << "\" is not defined.";
+				throw std::exception(errorMessage.str().c_str());
+			};
+			boundRateExpession_->Bind(bindings);
+		}
 	};
 }
 

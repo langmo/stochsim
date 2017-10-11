@@ -1,14 +1,15 @@
 #include <string>
-#include "cmdl_grammar.h"
-namespace cmdlparser
+#include "expression_grammar.h"
+
+namespace expression
 {
 	/// <summary>
-	/// Class for static helper methods to parse a cmdl file.
+	/// Class for static helper methods to parse an expression.
 	/// </summary>
-	class CMDLCodecs
+	class ExpressionCodecs
 	{
 	public:
-		CMDLCodecs() = delete;
+		ExpressionCodecs() = delete;
 		/// <summary>
 		/// Returns c in [0-9]. 
 		/// </summary>
@@ -138,8 +139,8 @@ namespace cmdlparser
 				}
 				else
 				{
-					*tokenID = TOKEN_ASSIGN;
-					return ++stream;
+					*tokenID = 0;
+					return stream;
 				}
 			case '&':
 				if (stream[1] == '&')
@@ -166,17 +167,8 @@ namespace cmdlparser
 					return stream;
 				}
 			case '-':
-				if (stream[1] == '>')
-				{
-					*tokenID = TOKEN_ARROW;
-					stream += 2;
-					return stream;
-				}
-				else
-				{
-					*tokenID = TOKEN_MINUS;
-					return ++stream;
-				}
+				*tokenID = TOKEN_MINUS;
+				return ++stream;
 			case '/':
 				*tokenID = TOKEN_DIVIDE;
 				return ++stream;
@@ -185,12 +177,6 @@ namespace cmdlparser
 				return ++stream;
 			case ')':
 				*tokenID = TOKEN_RIGHT_ROUND;
-				return ++stream;
-			case '[':
-				*tokenID = TOKEN_LEFT_SQUARE;
-				return ++stream;
-			case ']':
-				*tokenID = TOKEN_RIGHT_SQUARE;
 				return ++stream;
 			case '!':
 				if (stream[1] == '=')
