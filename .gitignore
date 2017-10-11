@@ -10,6 +10,9 @@ bld/
 [Ll]og/
 [Bb]in/
 
+# Visual C++ project user files
+*.vcxproj.user
+
 # Visual Studio cache/options directory
 .vs/
 
