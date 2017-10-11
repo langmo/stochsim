@@ -360,21 +360,6 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 		}
 	}
 
-	// create choices in order of definition
-	for (auto& choice : parseTree.get_choices())
-	{
-		auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, choice.second->get_condition()->clone());
-		for (auto& elem : *choice.second->get_components_if_true())
-		{
-			choiceState->AddProductIfTrue(sim.GetState(elem.first), elem.second->get_stochiometry());
-		}
-		for (auto& elem : *choice.second->get_components_if_false())
-		{
-			choiceState->AddProductIfFalse(sim.GetState(elem.first), elem.second->get_stochiometry());
-		}
-	}
-
-	// Create reactions
 	auto variableLookup = [&parseTree, &states](const expression::identifier variableName) -> std::unique_ptr<expression::expression_base>
 	{
 		// We want to simplify everything away which is not a state name, and not one of the standard variables.
@@ -392,6 +377,26 @@ void Interpret(cmdl::parse_tree& parseTree, stochsim::Simulation& sim)
 		}
 		throw std::exception("Only binding functions, not variables (we are substituting them instead).");
 	};
+
+	// create choices in order of definition
+	for (auto& choice : parseTree.get_choices())
+	{
+		auto condition = choice.second->get_condition()->simplify(variableLookup);
+		condition->bind(functionLookup);
+		condition = condition->simplify(variableLookup);
+
+		auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
+		for (auto& elem : *choice.second->get_components_if_true())
+		{
+			choiceState->AddProductIfTrue(sim.GetState(elem.first), elem.second->get_stochiometry());
+		}
+		for (auto& elem : *choice.second->get_components_if_false())
+		{
+			choiceState->AddProductIfFalse(sim.GetState(elem.first), elem.second->get_stochiometry());
+		}
+	}
+
+	// Create reactions
 	for (auto& reactionDefinition : parseTree.get_reactions())
 	{
 		auto rateDef = reactionDefinition.second->get_specifiers()->get_rate(); 

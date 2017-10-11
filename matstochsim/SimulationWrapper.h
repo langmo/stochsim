@@ -47,6 +47,7 @@ public:
 
 	void ParseCommand(const std::string& command, MatlabParams& params);
 
+	virtual void AddState(std::shared_ptr<stochsim::IState> state) override;
 private:
 	std::shared_ptr<stochsim::StateLogger> stateLogger_;
 	std::shared_ptr<MatlabProgressLogger> progressLogger_;

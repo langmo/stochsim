@@ -1,5 +1,4 @@
 #pragma once
-#include "muParser.h"
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -88,7 +87,7 @@ namespace stochsim
 				expression::number choice;
 				try
 				{
-					choice = choiceEquation_->eval();
+					choice = boundChoiceEquation_->eval();
 				}
 				catch (const std::exception& e)
 				{

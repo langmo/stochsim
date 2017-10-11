@@ -90,8 +90,6 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		std::string name = params.Get<std::string>(0);
 		unsigned long initialCondition = params.Get<unsigned long>(1);
 		auto state = CreateState<stochsim::State>(name, initialCondition);
-		stateLogger_->AddState(state);
-		resultLogger_->AddState(state);
 		params.Set(0, GetStateReference(state));
 	}
 	else if (methodName == "CreateChoice")
@@ -114,8 +112,6 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		}
 		else
 			state = CreateState<stochsim::ComposedState>(name, initialCondition);
-		stateLogger_->AddState(state);
-		resultLogger_->AddState(state);
 		params.Set(0, GetStateReference(state));
 	}
 	else if (methodName == "CreatePropensityReaction")
@@ -881,4 +877,11 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		errorMessage << "Class " << className << " not known. Supported class names are " << simulationPrefix_ << ".";
 		throw std::exception(errorMessage.str().c_str());
 	}
+}
+
+void SimulationWrapper::AddState(std::shared_ptr<stochsim::IState> state)
+{
+	Simulation::AddState(state);
+	stateLogger_->AddState(state);
+	resultLogger_->AddState(state);
 }

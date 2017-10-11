@@ -1,6 +1,5 @@
 #pragma once
 #include "stochsim.h"
-#include "muParser.h"
 #include <string>
 #include <codecvt>
 #include <memory>

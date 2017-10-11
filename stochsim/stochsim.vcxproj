@@ -190,16 +190,6 @@
     <ClInclude Include="expression\product_expression.h" />
     <ClInclude Include="expression\sum_expression.h" />
     <ClInclude Include="expression\variable_expression.h" />
-    <ClInclude Include="muParser.h" />
-    <ClInclude Include="muParserBase.h" />
-    <ClInclude Include="muParserBytecode.h" />
-    <ClInclude Include="muParserCallback.h" />
-    <ClInclude Include="muParserDef.h" />
-    <ClInclude Include="muParserError.h" />
-    <ClInclude Include="muParserFixes.h" />
-    <ClInclude Include="muParserStack.h" />
-    <ClInclude Include="muParserTemplateMagic.h" />
-    <ClInclude Include="muParserToken.h" />
     <ClInclude Include="ProgressLogger.h" />
     <ClInclude Include="PropensityReaction.h" />
     <ClInclude Include="ReactionRate.h" />
@@ -212,12 +202,6 @@
   <ItemGroup>
     <ClCompile Include="cmdl\grammar.c" />
     <ClCompile Include="cmdl\parser.cpp" />
-    <ClCompile Include="muParser.cpp" />
-    <ClCompile Include="muParserBase.cpp" />
-    <ClCompile Include="muParserBytecode.cpp" />
-    <ClCompile Include="muParserCallback.cpp" />
-    <ClCompile Include="muParserError.cpp" />
-    <ClCompile Include="muParserTokenReader.cpp" />
     <ClCompile Include="Simulation.cpp" />
   </ItemGroup>
   <ItemGroup>
