@@ -3,16 +3,33 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stochsim", "stochsim\stochsim.vcxproj", "{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stochsim", "lib\stochsim\stochsim.vcxproj", "{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{F6E10C70-3A62-4008-A2E2-B4A07548136B} = {F6E10C70-3A62-4008-A2E2-B4A07548136B}
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC} = {548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "examples\examples.vcxproj", "{69D962A1-C380-4D53-A3BB-6F71CE2327CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lemon", "lib\lemon\lemon.vcxproj", "{F6E10C70-3A62-4008-A2E2-B4A07548136B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matstochsim", "matstochsim\matstochsim.vcxproj", "{EFC90022-F660-4705-BA2B-52FB902AC20E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmdstochsim", "lib\cmdstochsim\cmdstochsim.vcxproj", "{69D962A1-C380-4D53-A3BB-6F71CE2327CC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E} = {DD3F410F-FA47-4B25-9ED5-E81BAB60159E}
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486} = {D3DB7324-4C80-4BAA-B243-9D4E49017486}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lemon", "lemon\lemon.vcxproj", "{F6E10C70-3A62-4008-A2E2-B4A07548136B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matstochsim", "lib\matstochsim\matstochsim.vcxproj", "{EFC90022-F660-4705-BA2B-52FB902AC20E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E} = {DD3F410F-FA47-4B25-9ED5-E81BAB60159E}
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486} = {D3DB7324-4C80-4BAA-B243-9D4E49017486}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "expression", "lib\expression\expression.vcxproj", "{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmdlparser", "lib\cmdlparser\cmdlparser.vcxproj", "{D3DB7324-4C80-4BAA-B243-9D4E49017486}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E} = {DD3F410F-FA47-4B25-9ED5-E81BAB60159E}
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC} = {548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +47,14 @@ Global
 		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}.Release|x64.Build.0 = Release|x64
 		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}.Release|x86.ActiveCfg = Release|Win32
 		{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}.Release|x86.Build.0 = Release|Win32
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x64.ActiveCfg = Debug|x64
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x64.Build.0 = Debug|x64
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x86.ActiveCfg = Debug|Win32
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x86.Build.0 = Debug|Win32
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x64.ActiveCfg = Release|x64
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x64.Build.0 = Release|x64
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x86.ActiveCfg = Release|Win32
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x86.Build.0 = Release|Win32
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Debug|x64.ActiveCfg = Debug|x64
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Debug|x64.Build.0 = Debug|x64
 		{69D962A1-C380-4D53-A3BB-6F71CE2327CC}.Debug|x86.ActiveCfg = Debug|Win32
@@ -46,14 +71,22 @@ Global
 		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x64.Build.0 = Release|x64
 		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x86.ActiveCfg = Release|Win32
 		{EFC90022-F660-4705-BA2B-52FB902AC20E}.Release|x86.Build.0 = Release|Win32
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x64.ActiveCfg = Debug|x64
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x64.Build.0 = Debug|x64
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x86.ActiveCfg = Debug|Win32
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Debug|x86.Build.0 = Debug|Win32
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x64.ActiveCfg = Release|x64
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x64.Build.0 = Release|x64
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x86.ActiveCfg = Release|Win32
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B}.Release|x86.Build.0 = Release|Win32
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Debug|x64.ActiveCfg = Debug|x64
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Debug|x64.Build.0 = Debug|x64
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Debug|x86.ActiveCfg = Debug|Win32
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Debug|x86.Build.0 = Debug|Win32
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Release|x64.ActiveCfg = Release|x64
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Release|x64.Build.0 = Release|x64
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Release|x86.ActiveCfg = Release|Win32
+		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}.Release|x86.Build.0 = Release|Win32
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Debug|x64.ActiveCfg = Debug|x64
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Debug|x64.Build.0 = Debug|x64
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Debug|x86.ActiveCfg = Debug|Win32
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Debug|x86.Build.0 = Debug|Win32
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Release|x64.ActiveCfg = Release|x64
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Release|x64.Build.0 = Release|x64
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Release|x86.ActiveCfg = Release|Win32
+		{D3DB7324-4C80-4BAA-B243-9D4E49017486}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
