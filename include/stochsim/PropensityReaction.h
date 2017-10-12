@@ -383,7 +383,7 @@ namespace stochsim
 		void SetRateEquation(std::string rateEquation)
 		{
 			expression::ExpressionParser parser;
-			SetRateEquation(parser.Parse(rateEquation, true, false));
+			SetRateEquation(parser.Parse(rateEquation, false, false));
 		}
 	private:
 		ReactionRate customRate_;

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "stochsim_common.h"
 #include "expression_common.h"
+#include "ExpressionParser.h"
 namespace stochsim
 {
 	/// <summary>
@@ -45,11 +46,23 @@ namespace stochsim
 		/// </summary>
 		/// <param name="name">Name of this choice. Since a choice is conveniently treated as a normal state to be able to make a choice whenever being able to make no choice (i.e. just increase the
 		/// concentration of a given product), a choice also has to have a name which is not clashing with other state names.</param>
-		/// <param name="choiceEquation">The boolean equation for this choice. To evaluate this equation we use muparser. Please see the documentation of muparser for the syntax of the expression. The expression
+		/// <param name="choiceEquation">The boolean equation for this choice. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
 		Choice(std::string name, std::unique_ptr<expression::IExpression> choiceEquation) : name_(std::move(name)), choiceEquation_(std::move(choiceEquation)), variables_(10)
 		{
+		}
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="name">Name of this choice. Since a choice is conveniently treated as a normal state to be able to make a choice whenever being able to make no choice (i.e. just increase the
+		/// concentration of a given product), a choice also has to have a name which is not clashing with other state names.</param>
+		/// <param name="choiceEquation">The boolean equation for this choice as a string. The string is parsed immediately. If parsing fails e.g. due to a syntax error, an std::exception is thrown. The expression
+		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
+		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
+		Choice(std::string name, std::string choiceEquation) : name_(std::move(name)), variables_(10)
+		{
+			SetChoiceEquation(choiceEquation);
 		}
 		/// <summary>
 		/// A choice is not really a state, but only implements the state interface such that it can be added as a product of any reaction which allows to add an arbitrary state as a product.
@@ -134,7 +147,7 @@ namespace stochsim
 			variables_.clear();
 			boundChoiceEquation_ = nullptr;
 		}
-		virtual std::string GetName() const override
+		virtual std::string GetName() const noexcept override
 		{
 			return name_;
 		}
@@ -144,7 +157,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to true.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to true.</param>
-		void AddProductIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddProductIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
 		{
 			for (auto& product : productsIfTrue_)
 			{
@@ -162,7 +175,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to false.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to false.</param>
-		void AddProductIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddProductIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
 		{
 			for (auto& product : productsIfFalse_)
 			{
@@ -179,7 +192,7 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to true.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to true.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfTrue() const
+		stochsim::Collection<stochsim::ReactionElement> GetProductsIfTrue() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : productsIfTrue_)
@@ -193,7 +206,7 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to false.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to false.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfFalse() const
+		stochsim::Collection<stochsim::ReactionElement> GetProductsIfFalse() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : productsIfFalse_)
@@ -206,18 +219,29 @@ namespace stochsim
 		/// <summary>
 		/// Returns the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
-		/// <returns>Choice equation. For the syntax, see the documentation of muparser.</returns>
-		const expression::IExpression* GetChoiceEquation() const
+		/// <returns>Choice equation.</returns>
+		const expression::IExpression* GetChoiceEquation() const noexcept
 		{
 			return choiceEquation_.get();
 		}
 		/// <summary>
 		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
-		/// <param name="choiceEquation">Choice equation. For the syntax, see the documentation of muparser.</param>
-		void SetChoiceEquation(std::unique_ptr<expression::IExpression> choiceEquation)
+		/// <param name="choiceEquation">Choice equation.</param>
+		void SetChoiceEquation(std::unique_ptr<expression::IExpression> choiceEquation) noexcept
 		{
 			choiceEquation_ = std::move(choiceEquation);
+		}
+		/// <summary>
+		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
+		/// The provided string is parsed to an IExpression, i.e. an internal representation of the formula. If this parsing fails, e.g. due to
+		/// a syntax error in the equation, an std::exception is thrown.
+		/// </summary>
+		/// <param name="choiceEquation">Choice equation as a string.</param>
+		void SetChoiceEquation(std::string choiceEquation) noexcept
+		{
+			expression::ExpressionParser parser;
+			SetChoiceEquation(parser.Parse(choiceEquation, false, false));
 		}
 
 	private:
