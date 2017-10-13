@@ -8,28 +8,28 @@
 #include "stochsim_common.h"
 #include "CircularBuffer.h"
 namespace stochsim
-{	
+{
 	/// <summary>
 	/// A state representing the concentration of a species, where, however, each molecule has its own identiy/properties. That is, the molecules can be distinguished, which means that this
 	/// class represents something like a meta-state.
 	/// </summary>
-	class ComposedState:
+	template<class T> class CustomState :
 		public IState
 	{
 	public:
 		/// <summary>
-		/// A molecule is one element of a ComposedState, having a creation time and a number stating how often it was modified.
-		/// </summary>
-		struct Molecule
-		{
-			unsigned int numModified;
-			double creationTime;
-		};
-	public:
-		/// <summary>
 		/// Typedef for listener which gets called when a molecule is removed from this state.
 		/// </summary>
-		typedef std::function<void(Molecule& molecule, double time)> RemoveListener;
+		typedef std::function<void(T& molecule, double time)> RemoveListener;
+		/// <summary>
+		/// Type of the function which has to be supplied to a complex state to initilize the properties of a molecule whenever a new molecule of the species represented by this state is produced.
+		/// </summary>
+		typedef std::function<void(T&, double)> Initializer;
+		/// <summary>
+		/// Type of the function which has to be supplied to a complex state to modify the properties of a molecule whenever a molecule of the species represented by this state is modified, i.e.
+		/// when State::Modify is called on this state and a given molecule represented by this state was chosen to be modified.
+		/// </summary>
+		typedef std::function<void(T&, double)> Modifier;
 
 		/// <summary>
 		/// Constructor.
@@ -40,7 +40,7 @@ namespace stochsim
 		/// <param name="initializer">Function which initilize the properties of a molecule whenever a new molecule of the species represented by this state is produced.</param>
 		/// <param name="modifier">Function which modifies the properties of a molecule whenever a molecule of the species represented by this state is modified, i.e.
 		/// when State::Modify is called on this state and a given molecule represented by this state was chosen to be modified.</param>
-		ComposedState(std::string name, size_t initialCondition, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
+		CustomState(std::string name, size_t initialCondition, Initializer initializer, Modifier modifier, size_t initialCapacity = 1000) : name_(name), initialCondition_(initialCondition), initializer_(initializer), modifier_(modifier), buffer_(initialCapacity>initialCondition ? initialCapacity : initialCondition)
 		{
 		}
 
@@ -49,9 +49,7 @@ namespace stochsim
 			buffer_.Clear();
 			for (size_t i = 0; i < GetInitialCondition(); i++)
 			{
-				Molecule& molecule = buffer_.PushTail();
-				molecule.numModified = 0;
-				molecule.creationTime = simInfo.SimTime();
+				initializer_(buffer_.PushTail(), simInfo.SimTime());
 			}
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
@@ -62,27 +60,21 @@ namespace stochsim
 		{
 			return buffer_.Size();
 		}
-		inline void AddRemoveListener(RemoveListener fireListener)
-		{
-			removeListeners_.push_back(std::move(fireListener));
-		}
 		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				Molecule& molecule = buffer_.PushTail();
-				molecule.numModified = 0;
-				molecule.creationTime = simInfo.SimTime();
+				initializer_(buffer_.PushTail(), simInfo.SimTime());
 			}
 		}
-
+		
 		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
 				if (!removeListeners_.empty())
 				{
-					Molecule& molecule = buffer_[0];
+					T& molecule = buffer_[0];
 					double time = simInfo.SimTime();
 					for (auto& removeListener : removeListeners_)
 					{
@@ -96,7 +88,7 @@ namespace stochsim
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				buffer_[simInfo.Rand(0, buffer_.Size() - 1)].numModified++;
+				modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.SimTime());
 			}
 		}
 		/// <summary>
@@ -104,7 +96,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="pos">Index greater equal to zero and smaller than Num().</param>
 		/// <returns>Properties of the molecule.</returns>
-		inline Molecule& operator[](size_t pos)
+		inline T& operator[](size_t pos)
 		{
 			return buffer_[pos];
 		}
@@ -129,8 +121,15 @@ namespace stochsim
 		{
 			initialCondition_ = initialCondition;
 		}
+		inline void AddRemoveListener(RemoveListener fireListener)
+		{
+			removeListeners_.push_back(std::move(fireListener));
+		}
 	private:
-		CircularBuffer<Molecule> buffer_;
+		Initializer initializer_;
+		Modifier modifier_;
+
+		CircularBuffer<T> buffer_;
 		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
 		size_t initialCondition_;

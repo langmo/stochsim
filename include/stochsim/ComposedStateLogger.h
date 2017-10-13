@@ -27,7 +27,7 @@ namespace stochsim
 		{
 			return true;
 		}
-		void RemoveListener(Molecule& molecule, double time)
+		void RemoveListener(ComposedState::Molecule& molecule, double time)
 		{
 			while (molecule.numModified > modificationCounter_.size())
 			{

@@ -4,11 +4,11 @@
 #include "Parameters.h"
 
 #include "State.h"
-#include "ComposedState.h"
+#include "CustomState.h"
 #include "PropensityReaction.h"
 #include "Simulation.h"
 #include "StateLogger.h"
-#include "DelayReaction.h"
+#include "CustomDelayReaction.h"
 #include "ProgressLogger.h"
 #include "CustomLogger.h"
 #include <iostream>
@@ -90,7 +90,7 @@ namespace
 		auto B0i_modifier = [](InfectedBacterium& bacterium, double time) {
 			bacterium.numInfections++;;
 		};
-		auto B0i = sim.CreateState<BasicComposedState<InfectedBacterium>>("B0i", static_cast<unsigned long>(std::round(ic::B0i*V)), B0i_initializer, B0i_modifier, initialCapcity);
+		auto B0i = sim.CreateState<CustomState<InfectedBacterium>>("B0i", static_cast<unsigned long>(std::round(ic::B0i*V)), B0i_initializer, B0i_modifier, initialCapcity);
 		// RM-, non-lysogenic, infected, fate decided to lyse
 		auto B0l_initializer = [](LysingBacterium& bacterium, double time)
 		{
@@ -99,7 +99,7 @@ namespace
 		auto B0l_modifier = [](LysingBacterium& bacterium, double time) {
 			// do nothing
 		};
-		auto B0l = sim.CreateState<BasicComposedState<LysingBacterium>>("B0l", static_cast<unsigned long>(std::round(ic::B0l*V)), B0l_initializer, B0l_modifier, initialCapcity);
+		auto B0l = sim.CreateState<CustomState<LysingBacterium>>("B0l", static_cast<unsigned long>(std::round(ic::B0l*V)), B0l_initializer, B0l_modifier, initialCapcity);
 
 		// RM-, lysogenic
 		auto B0p = sim.CreateState<State>("B0p", static_cast<unsigned long>(std::round(ic::B0p*V)));
@@ -162,7 +162,7 @@ namespace
 			else
 				B0l->Add(simInfo);
 		};
-		auto B0i_fate = sim.CreateReaction<BasicDelayReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
+		auto B0i_fate = sim.CreateReaction<CustomDelayReaction<InfectedBacterium>>("B0i -(t_moi)-> B0p||B0l", B0i, B0i_fate_fireTime, B0i_fate_fireAction);
 
 		// B0l -(t_lag-t_moi)-> beta*Pm
 		auto B0l_lysis_fireTime = [](LysingBacterium& bacterium)-> double
@@ -174,7 +174,7 @@ namespace
 			B0l->Remove(simInfo);
 			Pm->Add(simInfo, Parameters::beta);
 		};
-		auto B0l_lysis = sim.CreateReaction<BasicDelayReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
+		auto B0l_lysis = sim.CreateReaction<CustomDelayReaction<LysingBacterium>>("B0l -(t_lag-t_moi)-> beta*Pm", B0l, B0l_lysis_fireTime, B0l_lysis_fireAction);
 
 		// B0p -> B0l
 		auto B0p_fate = sim.CreateReaction<PropensityReaction>("B0p -> B0l", p::xi);

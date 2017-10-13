@@ -5,7 +5,6 @@ VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stochsim", "lib\stochsim\stochsim.vcxproj", "{DD3F410F-FA47-4B25-9ED5-E81BAB60159E}"
 	ProjectSection(ProjectDependencies) = postProject
-		{F6E10C70-3A62-4008-A2E2-B4A07548136B} = {F6E10C70-3A62-4008-A2E2-B4A07548136B}
 		{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC} = {548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}
 	EndProjectSection
 EndProject
@@ -24,6 +23,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matstochsim", "lib\matstoch
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "expression", "lib\expression\expression.vcxproj", "{548FFCEC-87BA-40E5-A1DA-F4A1ADF875DC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F6E10C70-3A62-4008-A2E2-B4A07548136B} = {F6E10C70-3A62-4008-A2E2-B4A07548136B}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmdlparser", "lib\cmdlparser\cmdlparser.vcxproj", "{D3DB7324-4C80-4BAA-B243-9D4E49017486}"
 	ProjectSection(ProjectDependencies) = postProject
