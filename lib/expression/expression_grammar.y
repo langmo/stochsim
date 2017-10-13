@@ -378,4 +378,7 @@ result ::= expression(e). {
 	parseTree->SetResult(std::unique_ptr<IExpression>(e));
 	e = nullptr;
 }
-result ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines
+// we have to define a symbol of type error somewhere to trigger the error handling routines
+expression ::= error. {
+	throw std::exception("Syntax error.");
+}

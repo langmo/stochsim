@@ -4,7 +4,7 @@
 namespace expression
 {
 	/// <summary>
-	/// Class for static helper methods to parse an expression.
+	/// Class for static helper methods to parse an expression. 
 	/// </summary>
 	class ExpressionCodecs
 	{
@@ -26,9 +26,9 @@ namespace expression
 		/// <returns>c in [a-zA-Z_]</returns>
 		inline static bool IsAlpha(std::string::value_type c) noexcept
 		{
-			return (c >= 'a' && c <= 'z')		// lower case character
+			return (c >= 'a' && c <= 'z')	// lower case character
 				|| (c >= 'A' && c <= 'Z')	// upper case character
-				|| c == '_';					// underscore
+				|| c == '_';				// underscore
 		}
 		/// <summary>
 		/// Returns c in [0-9a-zA-Z_].

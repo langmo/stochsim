@@ -226,9 +226,9 @@ typedef union {
 #define expression_ParseARG_STORE yypParser->parseTree = parseTree
 #define YYERRORSYMBOL 23
 #define YYERRSYMDT yy65
-#define YYNSTATE             57
+#define YYNSTATE             56
 #define YYNRULE              36
-#define YY_MAX_SHIFT         56
+#define YY_MAX_SHIFT         55
 #define YY_MIN_SHIFTREDUCE   65
 #define YY_MAX_SHIFTREDUCE   100
 #define YY_MIN_REDUCE        101
@@ -307,45 +307,48 @@ typedef union {
 **  yy_default[]       Default action for each state.
 **
 *********** Begin parsing tables **********************************************/
-#define YY_ACTTAB_COUNT (307)
+#define YY_ACTTAB_COUNT (332)
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */   135,  136,   24,   18,   17,   15,   14,   13,   12,   11,
+ /*     0 */   135,   16,   24,   18,   17,   15,   14,   13,   12,   11,
  /*    10 */    10,   22,   21,   20,   19,   16,   24,   18,   17,   15,
  /*    20 */    14,   13,   12,   11,   10,   22,   21,   20,   19,   16,
- /*    30 */    20,   19,   16,   16,    1,   23,  103,  103,   24,   18,
+ /*    30 */    20,   19,   16,  103,    1,   23,  103,  103,   24,   18,
  /*    40 */    17,   15,   14,   13,   12,   11,   10,   22,   21,   20,
  /*    50 */    19,   16,   66,  103,   26,  103,   68,  103,  103,   24,
  /*    60 */    18,   17,   15,   14,   13,   12,   11,   10,   22,   21,
  /*    70 */    20,   19,   16,   17,   15,   14,   13,   12,   11,   10,
  /*    80 */    22,   21,   20,   19,   16,   15,   14,   13,   12,   11,
  /*    90 */    10,   22,   21,   20,   19,   16,  137,  137,  137,  137,
- /*   100 */   137,  137,   22,   21,   20,   19,   16,   48,   27,  103,
- /*   110 */   106,  110,  115,  120,  123,  138,   30,   47,  106,  110,
- /*   120 */   115,  120,  123,   43,  103,  106,  110,  115,  120,  123,
- /*   130 */    49,  103,  106,  110,  115,  120,  123,   50,  103,  106,
- /*   140 */   110,  115,  120,  123,   51,  103,  106,  110,  115,  120,
- /*   150 */   123,   35,  103,  106,  110,  115,  120,  123,   33,  103,
- /*   160 */   106,  110,  115,  120,  123,   52,  103,  106,  110,  115,
- /*   170 */   120,  123,   44,  103,  106,  110,  115,  120,  123,   36,
- /*   180 */   103,  106,  110,  115,  120,  123,   37,  103,  106,  110,
- /*   190 */   115,  120,  123,   38,  103,  106,  110,  115,  120,  123,
- /*   200 */    39,  103,  106,  110,  115,  120,  123,   40,  103,  106,
- /*   210 */   110,  115,  120,  123,   41,  103,  106,  110,  115,  120,
- /*   220 */   123,   53,  103,  106,  110,  115,  120,  123,   42,  103,
- /*   230 */   106,  110,  115,  120,  123,   34,  103,  106,  110,  115,
- /*   240 */   120,  123,   54,  103,  106,  110,  115,  120,  123,   55,
- /*   250 */   103,  106,  110,  115,  120,  123,   45,  103,  106,  110,
- /*   260 */   115,  120,  123,   46,  103,  106,  110,  115,  120,  123,
- /*   270 */    32,  103,  106,  110,  115,  120,  123,   28,  103,  106,
- /*   280 */   110,  115,  120,  123,   29,  103,  106,  110,  115,  120,
- /*   290 */   123,   31,  103,  106,  110,  115,  120,  123,  103,    4,
- /*   300 */   103,  103,  103,    5,   56,   67,   25,
+ /*   100 */   137,  137,   22,   21,   20,   19,   16,  136,   27,  103,
+ /*   110 */   106,  110,  115,  120,  123,  138,  136,   30,   47,  106,
+ /*   120 */   110,  115,  120,  123,  136,   43,  103,  106,  110,  115,
+ /*   130 */   120,  123,  136,   48,  103,  106,  110,  115,  120,  123,
+ /*   140 */   136,   49,  103,  106,  110,  115,  120,  123,  136,   50,
+ /*   150 */   103,  106,  110,  115,  120,  123,  136,   35,  103,  106,
+ /*   160 */   110,  115,  120,  123,  136,   33,  103,  106,  110,  115,
+ /*   170 */   120,  123,  136,   51,  103,  106,  110,  115,  120,  123,
+ /*   180 */   136,   44,  103,  106,  110,  115,  120,  123,  136,   36,
+ /*   190 */   103,  106,  110,  115,  120,  123,  136,   37,  103,  106,
+ /*   200 */   110,  115,  120,  123,  136,   38,  103,  106,  110,  115,
+ /*   210 */   120,  123,  136,   39,  103,  106,  110,  115,  120,  123,
+ /*   220 */   136,   40,  103,  106,  110,  115,  120,  123,  136,   41,
+ /*   230 */   103,  106,  110,  115,  120,  123,  136,   52,  103,  106,
+ /*   240 */   110,  115,  120,  123,  136,   42,  103,  106,  110,  115,
+ /*   250 */   120,  123,  136,   34,  103,  106,  110,  115,  120,  123,
+ /*   260 */   136,   53,  103,  106,  110,  115,  120,  123,  136,   54,
+ /*   270 */   103,  106,  110,  115,  120,  123,  136,   45,  103,  106,
+ /*   280 */   110,  115,  120,  123,  136,   46,  103,  106,  110,  115,
+ /*   290 */   120,  123,  136,   32,  103,  106,  110,  115,  120,  123,
+ /*   300 */   136,   28,  103,  106,  110,  115,  120,  123,  136,   29,
+ /*   310 */   103,  106,  110,  115,  120,  123,  136,   31,  103,  106,
+ /*   320 */   110,  115,  120,  123,    4,  103,  103,  103,    5,   55,
+ /*   330 */    67,   25,
 };
 static const YYCODETYPE yy_lookahead[] = {
- /*     0 */     0,    0,    2,    3,    4,    5,    6,    7,    8,    9,
+ /*     0 */     0,   15,    2,    3,    4,    5,    6,    7,    8,    9,
  /*    10 */    10,   11,   12,   13,   14,   15,    2,    3,    4,    5,
  /*    20 */     6,    7,    8,    9,   10,   11,   12,   13,   14,   15,
- /*    30 */    13,   14,   15,   15,   19,   21,   32,   32,    2,    3,
+ /*    30 */    13,   14,   15,   32,   19,   21,   32,   32,    2,    3,
  /*    40 */     4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
  /*    50 */    14,   15,   20,   32,   22,   32,   20,   32,   32,    2,
  /*    60 */     3,    4,    5,    6,    7,    8,    9,   10,   11,   12,
@@ -353,55 +356,58 @@ static const YYCODETYPE yy_lookahead[] = {
  /*    80 */    11,   12,   13,   14,   15,    5,    6,    7,    8,    9,
  /*    90 */    10,   11,   12,   13,   14,   15,    5,    6,    7,    8,
  /*   100 */     9,   10,   11,   12,   13,   14,   15,   23,   24,   32,
- /*   110 */    26,   27,   28,   29,   30,   31,   24,   25,   26,   27,
- /*   120 */    28,   29,   30,   24,   32,   26,   27,   28,   29,   30,
- /*   130 */    24,   32,   26,   27,   28,   29,   30,   24,   32,   26,
- /*   140 */    27,   28,   29,   30,   24,   32,   26,   27,   28,   29,
- /*   150 */    30,   24,   32,   26,   27,   28,   29,   30,   24,   32,
- /*   160 */    26,   27,   28,   29,   30,   24,   32,   26,   27,   28,
- /*   170 */    29,   30,   24,   32,   26,   27,   28,   29,   30,   24,
- /*   180 */    32,   26,   27,   28,   29,   30,   24,   32,   26,   27,
- /*   190 */    28,   29,   30,   24,   32,   26,   27,   28,   29,   30,
- /*   200 */    24,   32,   26,   27,   28,   29,   30,   24,   32,   26,
- /*   210 */    27,   28,   29,   30,   24,   32,   26,   27,   28,   29,
- /*   220 */    30,   24,   32,   26,   27,   28,   29,   30,   24,   32,
- /*   230 */    26,   27,   28,   29,   30,   24,   32,   26,   27,   28,
- /*   240 */    29,   30,   24,   32,   26,   27,   28,   29,   30,   24,
- /*   250 */    32,   26,   27,   28,   29,   30,   24,   32,   26,   27,
- /*   260 */    28,   29,   30,   24,   32,   26,   27,   28,   29,   30,
- /*   270 */    24,   32,   26,   27,   28,   29,   30,   24,   32,   26,
- /*   280 */    27,   28,   29,   30,   24,   32,   26,   27,   28,   29,
- /*   290 */    30,   24,   32,   26,   27,   28,   29,   30,   32,   12,
- /*   300 */    32,   32,   32,   16,   17,   18,   19,
+ /*   110 */    26,   27,   28,   29,   30,   31,   23,   24,   25,   26,
+ /*   120 */    27,   28,   29,   30,   23,   24,   32,   26,   27,   28,
+ /*   130 */    29,   30,   23,   24,   32,   26,   27,   28,   29,   30,
+ /*   140 */    23,   24,   32,   26,   27,   28,   29,   30,   23,   24,
+ /*   150 */    32,   26,   27,   28,   29,   30,   23,   24,   32,   26,
+ /*   160 */    27,   28,   29,   30,   23,   24,   32,   26,   27,   28,
+ /*   170 */    29,   30,   23,   24,   32,   26,   27,   28,   29,   30,
+ /*   180 */    23,   24,   32,   26,   27,   28,   29,   30,   23,   24,
+ /*   190 */    32,   26,   27,   28,   29,   30,   23,   24,   32,   26,
+ /*   200 */    27,   28,   29,   30,   23,   24,   32,   26,   27,   28,
+ /*   210 */    29,   30,   23,   24,   32,   26,   27,   28,   29,   30,
+ /*   220 */    23,   24,   32,   26,   27,   28,   29,   30,   23,   24,
+ /*   230 */    32,   26,   27,   28,   29,   30,   23,   24,   32,   26,
+ /*   240 */    27,   28,   29,   30,   23,   24,   32,   26,   27,   28,
+ /*   250 */    29,   30,   23,   24,   32,   26,   27,   28,   29,   30,
+ /*   260 */    23,   24,   32,   26,   27,   28,   29,   30,   23,   24,
+ /*   270 */    32,   26,   27,   28,   29,   30,   23,   24,   32,   26,
+ /*   280 */    27,   28,   29,   30,   23,   24,   32,   26,   27,   28,
+ /*   290 */    29,   30,   23,   24,   32,   26,   27,   28,   29,   30,
+ /*   300 */    23,   24,   32,   26,   27,   28,   29,   30,   23,   24,
+ /*   310 */    32,   26,   27,   28,   29,   30,   23,   24,   32,   26,
+ /*   320 */    27,   28,   29,   30,   12,   32,   32,   32,   16,   17,
+ /*   330 */    18,   19,
 };
-#define YY_SHIFT_USE_DFLT (307)
-#define YY_SHIFT_COUNT    (56)
-#define YY_SHIFT_MIN      (0)
-#define YY_SHIFT_MAX      (287)
-static const unsigned short int yy_shift_ofst[] = {
- /*     0 */   287,  287,  287,  287,  287,  287,  287,  287,  287,  287,
- /*    10 */   287,  287,  287,  287,  287,  287,  287,  287,  287,  287,
- /*    20 */   287,  287,  287,  287,  287,  287,  287,    0,   14,   36,
+#define YY_SHIFT_USE_DFLT (332)
+#define YY_SHIFT_COUNT    (55)
+#define YY_SHIFT_MIN      (-14)
+#define YY_SHIFT_MAX      (312)
+static const short yy_shift_ofst[] = {
+ /*     0 */   312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+ /*    10 */   312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+ /*    20 */   312,  312,  312,  312,  312,  312,  312,    0,   14,   36,
  /*    30 */    57,   57,   57,   69,   69,   80,   91,   91,   91,   91,
- /*    40 */    91,   91,   80,   17,   17,   17,   17,   32,    1,   18,
- /*    50 */    18,   18,   18,   18,   18,   18,   15,
+ /*    40 */    91,   91,   80,   17,   17,   17,   17,   32,  -14,  -14,
+ /*    50 */   -14,  -14,  -14,  -14,  -14,   15,
 };
 #define YY_REDUCE_USE_DFLT (-1)
 #define YY_REDUCE_COUNT (26)
 #define YY_REDUCE_MIN   (0)
-#define YY_REDUCE_MAX   (267)
+#define YY_REDUCE_MAX   (293)
 static const short yy_reduce_ofst[] = {
- /*     0 */    84,   92,   99,  106,  113,  120,  127,  134,  141,  148,
- /*    10 */   155,  162,  169,  176,  183,  190,  197,  204,  211,  218,
- /*    20 */   225,  232,  239,  246,  253,  260,  267,
+ /*     0 */    84,   93,  101,  109,  117,  125,  133,  141,  149,  157,
+ /*    10 */   165,  173,  181,  189,  197,  205,  213,  221,  229,  237,
+ /*    20 */   245,  253,  261,  269,  277,  285,  293,
 };
 static const YYACTIONTYPE yy_default[] = {
  /*     0 */   137,  107,  137,  137,  137,  137,  137,  137,  137,  137,
  /*    10 */   137,  137,  137,  137,  137,  137,  137,  137,  137,  137,
  /*    20 */   137,  137,  137,  137,  137,  137,  137,  137,  137,  137,
  /*    30 */   108,  109,  105,  122,  121,  125,  134,  133,  132,  131,
- /*    40 */   130,  129,  124,  114,  113,  112,  111,  137,  137,  119,
- /*    50 */   127,  126,  118,  128,  117,  116,  101,
+ /*    40 */   130,  129,  124,  114,  113,  112,  111,  137,  119,  127,
+ /*    50 */   126,  118,  128,  117,  116,  101,
 };
 /********** End of lemon-generated parsing tables *****************************/
 
@@ -557,7 +563,7 @@ static const char *const yyRuleName[] = {
  /*  32 */ "expression ::= expression LESS expression",
  /*  33 */ "expression ::= expression LESS_EQUAL expression",
  /*  34 */ "result ::= expression",
- /*  35 */ "result ::= error",
+ /*  35 */ "expression ::= error",
 };
 #endif /* NDEBUG */
 
@@ -707,7 +713,7 @@ static void yy_destructor(
 	delete (yypminor->yy0);
 	(yypminor->yy0) = nullptr;
 
-#line 711 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 717 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 24: /* expression */
@@ -717,7 +723,7 @@ static void yy_destructor(
 	delete (yypminor->yy16);
 	(yypminor->yy16) = nullptr;
 
-#line 721 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 727 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 25: /* arguments */
@@ -727,7 +733,7 @@ static void yy_destructor(
 	delete (yypminor->yy43);
 	(yypminor->yy43) = nullptr;
 
-#line 731 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 737 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 26: /* comparison */
@@ -737,7 +743,7 @@ static void yy_destructor(
 	delete (yypminor->yy19);
 	(yypminor->yy19) = nullptr;
 
-#line 741 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 747 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 27: /* sum */
@@ -747,7 +753,7 @@ static void yy_destructor(
 	delete (yypminor->yy8);
 	(yypminor->yy8) = nullptr;
 
-#line 751 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 757 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 28: /* product */
@@ -757,7 +763,7 @@ static void yy_destructor(
 	delete (yypminor->yy20);
 	(yypminor->yy20) = nullptr;
 
-#line 761 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 767 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 29: /* conjunction */
@@ -767,7 +773,7 @@ static void yy_destructor(
 	delete (yypminor->yy13);
 	(yypminor->yy13) = nullptr;
 
-#line 771 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 777 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 30: /* disjunction */
@@ -777,7 +783,7 @@ static void yy_destructor(
 	delete (yypminor->yy14);
 	(yypminor->yy14) = nullptr;
 
-#line 781 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 787 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -958,7 +964,7 @@ static void yyStackOverflow(yyParser *yypParser){
 /******** Begin %stack_overflow code ******************************************/
 #line 5 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 throw std::exception("Parser stack overflow while parsing expression.");
-#line 962 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 968 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 /******** End %stack_overflow code ********************************************/
    expression_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
@@ -1067,7 +1073,7 @@ static const struct {
   { 24, -3 },
   { 24, -3 },
   { 31, -1 },
-  { 31, -1 },
+  { 24, -1 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -1138,7 +1144,7 @@ static void yy_reduce(
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1142 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1148 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 1: /* expression ::= IDENTIFIER LEFT_ROUND arguments RIGHT_ROUND */
@@ -1157,7 +1163,7 @@ static void yy_reduce(
 	yylhsminor.yy16 = func;
 	func = nullptr;
 }
-#line 1161 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1167 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,19,&yymsp[-2].minor);
   yy_destructor(yypParser,20,&yymsp[0].minor);
   yymsp[-3].minor.yy16 = yylhsminor.yy16;
@@ -1169,7 +1175,7 @@ static void yy_reduce(
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1173 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1179 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 3: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
@@ -1178,7 +1184,7 @@ static void yy_reduce(
 {
 	yymsp[-2].minor.yy16 = yymsp[-1].minor.yy16;
 }
-#line 1182 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1188 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,20,&yymsp[0].minor);
 }
         break;
@@ -1190,7 +1196,7 @@ static void yy_reduce(
 	yymsp[0].minor.yy16 = nullptr;
 	yymsp[-4].minor.yy16 = nullptr;
 }
-#line 1194 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1200 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-3].minor);
   yy_destructor(yypParser,21,&yymsp[-1].minor);
   yymsp[-4].minor.yy19 = yylhsminor.yy19;
@@ -1200,7 +1206,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy19;
 }
-#line 1204 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1210 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 6: /* arguments ::= */
@@ -1208,7 +1214,7 @@ static void yy_reduce(
 {
 	yymsp[1].minor.yy43 = new FunctionArguments();
 }
-#line 1212 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1218 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
         break;
       case 7: /* arguments ::= expression */
 #line 223 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
@@ -1217,7 +1223,7 @@ static void yy_reduce(
 	yylhsminor.yy43->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1221 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1227 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy43 = yylhsminor.yy43;
         break;
       case 8: /* arguments ::= arguments COMMA expression */
@@ -1228,7 +1234,7 @@ static void yy_reduce(
 	yylhsminor.yy43->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1232 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1238 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
@@ -1237,7 +1243,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy8;
 }
-#line 1241 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1247 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 10: /* sum ::= expression PLUS expression */
@@ -1247,7 +1253,7 @@ static void yy_reduce(
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1251 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1257 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
@@ -1258,7 +1264,7 @@ static void yy_reduce(
 	yylhsminor.yy8->PushBack(false,  std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy8->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1262 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1268 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
@@ -1268,7 +1274,7 @@ static void yy_reduce(
 	yylhsminor.yy8 = yymsp[-2].minor.yy8;
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1272 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1278 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
@@ -1278,7 +1284,7 @@ static void yy_reduce(
 	yylhsminor.yy8 = yymsp[-2].minor.yy8;
 	yylhsminor.yy8->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1282 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1288 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
@@ -1287,7 +1293,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy20;
 }
-#line 1291 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1297 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 15: /* product ::= expression MULTIPLY expression */
@@ -1298,7 +1304,7 @@ static void yy_reduce(
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1302 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1308 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
@@ -1310,7 +1316,7 @@ static void yy_reduce(
 	yylhsminor.yy20->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1314 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1320 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
@@ -1320,7 +1326,7 @@ static void yy_reduce(
 	yylhsminor.yy20 = yymsp[-2].minor.yy20;
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1324 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1330 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
@@ -1330,7 +1336,7 @@ static void yy_reduce(
 	yylhsminor.yy20 = yymsp[-2].minor.yy20;
 	yylhsminor.yy20->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1334 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1340 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
@@ -1339,7 +1345,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy13;
 }
-#line 1343 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1349 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 20: /* conjunction ::= expression AND expression */
@@ -1350,7 +1356,7 @@ static void yy_reduce(
 	yylhsminor.yy13->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1354 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1360 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy13 = yylhsminor.yy13;
         break;
@@ -1360,7 +1366,7 @@ static void yy_reduce(
 	yylhsminor.yy13 = yymsp[-2].minor.yy13;
 	yylhsminor.yy13->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1364 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1370 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy13 = yylhsminor.yy13;
         break;
@@ -1369,7 +1375,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy14;
 }
-#line 1373 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1379 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 23: /* disjunction ::= expression OR expression */
@@ -1380,7 +1386,7 @@ static void yy_reduce(
 	yylhsminor.yy14->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1384 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1390 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy14 = yylhsminor.yy14;
         break;
@@ -1390,7 +1396,7 @@ static void yy_reduce(
 	yylhsminor.yy14 = yymsp[-2].minor.yy14;
 	yylhsminor.yy14->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1394 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1400 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy14 = yylhsminor.yy14;
         break;
@@ -1400,7 +1406,7 @@ static void yy_reduce(
 {
 	yymsp[-1].minor.yy16 = new UnaryNotExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1404 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1410 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
         break;
       case 26: /* expression ::= MINUS expression */
@@ -1409,7 +1415,7 @@ static void yy_reduce(
 {
 	yymsp[-1].minor.yy16 = new UnaryMinusExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1413 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1419 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
         break;
       case 27: /* expression ::= expression EXP expression */
@@ -1417,7 +1423,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ExponentiationExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1421 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1427 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,15,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1426,7 +1432,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_equal);
 }
-#line 1430 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1436 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1435,7 +1441,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_not_equal);
 }
-#line 1439 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1445 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1444,7 +1450,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_greater);
 }
-#line 1448 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1454 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1453,7 +1459,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_greater_equal);
 }
-#line 1457 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1463 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1462,7 +1468,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_less);
 }
-#line 1466 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1472 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1471,7 +1477,7 @@ static void yy_reduce(
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_less_equal);
 }
-#line 1475 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1481 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
@@ -1481,10 +1487,16 @@ static void yy_reduce(
 	parseTree->SetResult(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1485 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1491 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+        break;
+      case 35: /* expression ::= error */
+#line 382 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+{
+	throw std::exception("Syntax error.");
+}
+#line 1498 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
         break;
       default:
-      /* (35) result ::= error */ yytestcase(yyruleno==35);
         break;
 /********** End reduce actions ************************************************/
   };
@@ -1531,7 +1543,7 @@ static void yy_parse_failed(
 /************ Begin %parse_failure code ***************************************/
 #line 4 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 throw std::exception("Syntax error while parsing expression.");
-#line 1535 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1547 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 /************ End %parse_failure code *****************************************/
   expression_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }

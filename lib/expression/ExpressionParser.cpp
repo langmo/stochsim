@@ -135,7 +135,10 @@ namespace expression
 		
 		
 		// Prepare result
-		auto result = parseTree.GetResult()->Clone();
+		auto orgResult = parseTree.GetResult();
+		if (!orgResult)
+			throw std::exception("Parse error while finishing parsing: No expression obtained.");
+		auto result = orgResult->Clone();
 		if (bind)
 		{
 			result->Bind(parseTree.GetBindingLookup());
