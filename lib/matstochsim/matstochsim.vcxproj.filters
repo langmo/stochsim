@@ -46,9 +46,6 @@
     <None Include="stochDelayReaction.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochParseModel.m">
-      <Filter>Matlab Files</Filter>
-    </None>
     <None Include="stochPropensityReaction.m">
       <Filter>Matlab Files</Filter>
     </None>

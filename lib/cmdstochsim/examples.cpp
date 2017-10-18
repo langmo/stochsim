@@ -57,8 +57,8 @@ void runCustomModel(std::string modelPath, std::string folder, double runtime)
 
 	// Display simulation progress in console
 	sim.CreateLogger<stochsim::ProgressLogger>();
-	cmdlparser::CmdlParser cmdlParser(modelPath);
-	cmdlParser.Parse(sim);
+	cmdlparser::CmdlParser cmdlParser;
+	cmdlParser.Parse(modelPath, sim);
 	for (auto& state : sim.GetStates())
 	{
 		logger->AddState(state);

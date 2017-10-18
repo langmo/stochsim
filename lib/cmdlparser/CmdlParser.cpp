@@ -262,23 +262,38 @@ namespace cmdlparser
 		}
 	}
 
-	cmdlparser::CmdlParser::CmdlParser(std::string cmdlFilePath, std::string logFilePath) : cmdlFilePath_(std::move(cmdlFilePath)), logFilePath_(std::move(logFilePath)), handle_(nullptr), logFile_(nullptr)
+	cmdlparser::CmdlParser::CmdlParser(std::string logFilePath) noexcept: logFilePath_(std::move(logFilePath)), handle_(nullptr), logFile_(nullptr)
 	{
 	}
 	cmdlparser::CmdlParser::~CmdlParser()
 	{
 		UninitializeInternal();
 	}
-	void cmdlparser::CmdlParser::Parse(stochsim::Simulation& sim)
+	void cmdlparser::CmdlParser::AddVariable(expression::identifier name, expression::number value, bool overwritable) noexcept
+	{
+		variables_.emplace(std::move(name), Variable({ value, overwritable }));
+	}
+	void cmdlparser::CmdlParser::Parse(std::string cmdlFilePath, stochsim::Simulation& sim)
 	{
 		cmdlparser::CmdlParseTree parseTree;
+		for (auto& variable : variables_)
+		{
+			if (variable.second.overwritable_)
+			{
+				parseTree.CreateVariable(variable.first, variable.second.value_);
+			}
+			else
+			{
+				parseTree.CreateFinalVariable(variable.first, variable.second.value_);
+			}
+		}
 
 		// Open file
-		std::ifstream infile(cmdlFilePath_);
+		std::ifstream infile(cmdlFilePath);
 		if (infile.fail())
 		{
 			std::stringstream errorMessage;
-			errorMessage << "File \"" << cmdlFilePath_ << "\" does not exist or could not be opened.";
+			errorMessage << "File \"" << cmdlFilePath << "\" does not exist or could not be opened.";
 			throw std::exception(errorMessage.str().c_str());
 		}
 
@@ -355,7 +370,7 @@ namespace cmdlparser
 				UninitializeInternal();
 
 				std::stringstream errorMessage;
-				errorMessage << "Parse error in file " << cmdlFilePath_ << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
+				errorMessage << "Parse error in file " << cmdlFilePath << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
 				errorMessage << '\n' << line << '\n';
 				for (int i = 0; i < lastCharPtr - startCharPtr; i++)
 					errorMessage << ' ';
@@ -368,7 +383,7 @@ namespace cmdlparser
 				UninitializeInternal();
 
 				std::stringstream errorMessage;
-				errorMessage << "Parse error in file " << cmdlFilePath_ << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": Unknown error.";
+				errorMessage << "Parse error in file " << cmdlFilePath << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": Unknown error.";
 				errorMessage << '\n' << line << '\n';
 				for (int i = 0; i < lastCharPtr - startCharPtr; i++)
 					errorMessage << ' ';
@@ -388,7 +403,7 @@ namespace cmdlparser
 			UninitializeInternal();
 
 			std::stringstream errorMessage;
-			errorMessage << "Parse error in file " << cmdlFilePath_ << " while finishing parsing: " << ex.what();
+			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: " << ex.what();
 			throw std::exception(errorMessage.str().c_str());
 		}
 		catch (...)
@@ -396,7 +411,7 @@ namespace cmdlparser
 			UninitializeInternal();
 
 			std::stringstream errorMessage;
-			errorMessage << "Parse error in file " << cmdlFilePath_ << " while finishing parsing: Unknown error.";
+			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: Unknown error.";
 			throw std::exception(errorMessage.str().c_str());
 		}
 

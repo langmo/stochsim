@@ -263,7 +263,6 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
     <None Include="matstochsim.def" />
     <None Include="stochComposedState.m" />
     <None Include="stochDelayReaction.m" />
-    <None Include="stochParseModel.m" />
     <None Include="stochPropensityReaction.m" />
     <None Include="stochSimulation.m" />
     <None Include="stochState.m" />

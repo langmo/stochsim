@@ -7,7 +7,23 @@
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {	
 	MatlabParams params(nlhs, plhs, nrhs, prhs);
-	auto command = params.Get<std::string>(0);
+	std::string command;
+	try
+	{
+		command = params.Get<std::string>(0);
+	}
+	catch (const std::exception& ex)
+	{
+		std::stringstream errorMessage;
+		errorMessage << "First parameter must be the name of the class which should be called, or 'new': " << ex.what();
+		mexErrMsgTxt(errorMessage.str().c_str());
+	}
+	catch (...)
+	{
+		std::stringstream errorMessage;
+		errorMessage << "First parameter must be the name of the class which should be called, or 'new': Unexpected error.";
+		mexErrMsgTxt(errorMessage.str().c_str());
+	}
 
     // Create new simulation
 	if(command =="new")
@@ -15,12 +31,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         SimulationWrapper* simulationWrapper = new SimulationWrapper();
 		if (params.NumParams() > 1)
 		{
-			auto fileName = params.Get<std::string>(1);
-			std::string logName = fileName + ".log";
 			try
 			{
-				cmdlparser::CmdlParser cmdlParser(fileName, logName);
-				cmdlParser.Parse(*simulationWrapper);
+				auto fileName = params.Get<std::string>(1);
+				std::string logName = fileName + ".log";
+
+				MatlabParams::MatlabStruct variables;
+				if (params.NumParams() > 2)
+				{
+					variables = params.Get<MatlabParams::MatlabStruct>(2);
+				}
+			
+				cmdlparser::CmdlParser cmdlParser(logName);
+				for (auto variable : variables)
+				{
+					cmdlParser.AddVariable(expression::identifier(variable.first), static_cast<expression::number>(variable.second), false); 
+				}
+				cmdlParser.Parse(fileName, *simulationWrapper);
 			}
 			catch (const std::exception& ex)
 			{
@@ -28,14 +55,29 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 			catch (...)
 			{
-				mexErrMsgTxt("Unexpected error occured.");
+				mexErrMsgTxt("Unexpected error while trying to parse CMDL file.");
 			}
 		}
 		params.Set(0, convertPtr2Mat<SimulationWrapper>(simulationWrapper));
         return;
     }
-    
-	auto simulationRaw = params.Get<const mxArray*>(1);
+	const mxArray* simulationRaw;
+    try
+	{
+		simulationRaw = params.Get<const mxArray*>(1);
+	}
+	catch (const std::exception& ex)
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Second parameter must be a handle to a simulation object, except when first parameter is 'new': " << ex.what();
+		mexErrMsgTxt(errorMessage.str().c_str());
+	}
+	catch (...)
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Second parameter must be a handle to a simulation object, except when first parameter is 'new': Unexpected error.";
+		mexErrMsgTxt(errorMessage.str().c_str());
+	}
 
     // Delete
     if (command == "delete") 

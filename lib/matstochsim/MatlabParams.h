@@ -4,12 +4,13 @@
 #include <sstream>
 #include <type_traits>
 #include <functional>
+#include <unordered_map>
 class MatlabParams
 {
 public:
 
 	typedef std::unique_ptr<mxArray, std::function<void(mxArray*)>> MatlabVariable;
-
+	typedef std::unordered_map<std::string, double> MatlabStruct;
 	MatlabParams(size_t nlhs, mxArray* plhs[], size_t nrhs, const mxArray *prhs[], size_t shift=0) : shift_(shift), nlhs_(nlhs), plhs_(plhs), nrhs_(nrhs), prhs_(prhs)
 	{
 	}
@@ -103,15 +104,41 @@ public:
 		index += shift_;
 		AssertParamIndex(index);
 		const mxArray* elem = prhs_[index];
-		size_t mrows = mxGetM(elem);
-		size_t ncols = mxGetN(elem);
 		if (mxGetM(elem) != 1 || mxGetN(elem) != 1 || !(mxIsNumeric(elem) || mxIsLogical(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
 		{
 			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number.";
-			throw std::exception(errorMessage.str().c_str());
+			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
+			throw std::exception(errorMessage.str().c_str()); 
 		}
 		return mxGetScalar(elem);
+	}
+	template<> MatlabStruct Get<MatlabStruct>(size_t index)
+	{
+		index += shift_;
+		AssertParamIndex(index);
+		MatlabStruct result;
+		const mxArray* elem = prhs_[index];
+		if (!mxIsStruct(elem) || mxGetM(elem) != 1 || mxGetN(elem) != 1)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Parameter " << (index + 1) << " must be a struct.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		int numFields = ::mxGetNumberOfFields(elem);
+		for (int i = 0; i < numFields; i++)
+		{
+			auto name = mxGetFieldNameByNumber(elem, i);
+			mxArray* field = mxGetField(elem, 0, name);
+			if (mxGetM(field) != 1 || mxGetN(field) != 1 || !(mxIsNumeric(field) || mxIsLogical(field)) || mxIsEmpty(field) || mxIsComplex(field))
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Field " << name << " of parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			auto value= mxGetScalar(field);
+			result.emplace(name, value);
+		}
+		return std::move(result);
 	}
 	template<> const mxArray* Get<const mxArray*>(size_t index)
 	{

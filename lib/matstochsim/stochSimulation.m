@@ -182,10 +182,11 @@ classdef stochSimulation < handle & matlab.mixin.CustomDisplay
             % constructed.
             this.objectHandle = [];
             if nargin >= 1 && ~isempty(fileName)
-                if nargin < 2
-                    externalParameters = [];
-                end
-				this.objectHandle = matstochsim('new', fileName);
+                if nargin >= 2
+					this.objectHandle = matstochsim('new', fileName, externalParameters);
+                else
+					this.objectHandle = matstochsim('new', fileName);
+				end
 			else
 				this.objectHandle = matstochsim('new');
             end

@@ -40,6 +40,17 @@ namespace cmdlparser
 		{
 			variables_[name] = std::make_unique<expression::NumberExpression>(value);
 		}
+
+		/// <summary>
+		/// Creates a variable with the given name and value. Variables defined via this methods have precedence over variables defined via CreateVariable(...).
+		/// Useful to dynamically overwrite variable definitions in the CMDL file.
+		/// </summary>
+		/// <param name="name">Name of variable</param>
+		/// <param name="value">Value of variable</param>
+		void CreateFinalVariable(expression::identifier name, expression::number value)
+		{
+			finalVariables_[name] = std::make_unique<expression::NumberExpression>(value);
+		}
 		void CreateReaction(std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
 		{ 
 			std::stringstream name;
@@ -70,6 +81,11 @@ namespace cmdlparser
 		/// <returns>Expression of the variable.</returns>
 		std::unique_ptr<expression::IExpression> GetVariableExpression(const expression::identifier name) const
 		{
+			auto final_search = finalVariables_.find(name);
+			if (final_search != finalVariables_.end())
+			{
+				return final_search->second->Clone();
+			}
 			auto search = variables_.find(name);
 			if (search != variables_.end())
 			{
@@ -121,6 +137,14 @@ namespace cmdlparser
 		/// <returns>Value of the variable.</returns>
 		expression::number GetVariableValue(const expression::identifier& name) const
 		{
+			auto final_search = finalVariables_.find(name);
+			if (final_search != finalVariables_.end())
+			{
+				auto clone = final_search->second->Clone();
+				auto bindings = GetBindingLookup();
+				clone->Bind(bindings);
+				return clone->Eval();
+			}
 			auto search = variables_.find(name);
 			if (search != variables_.end())
 			{
@@ -165,14 +189,6 @@ namespace cmdlparser
 			};
 		}
 	public:
-		const variable_collection& GetVariables()
-		{
-			return variables_;
-		}
-		const function_collection& GetFunctions()
-		{
-			return functions_;
-		}
 		const reaction_collection& GetReactions()
 		{
 			return reactions_;
@@ -182,6 +198,7 @@ namespace cmdlparser
 			return choices_;
 		}
 	private:
+		variable_collection finalVariables_;
 		variable_collection variables_;
 		variable_collection defaultVariables_;
 		function_collection functions_;
