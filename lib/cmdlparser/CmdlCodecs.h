@@ -51,7 +51,14 @@ namespace cmdlparser
 		{
 			return first == '/' && next == '/'; // C++ style line comments ("//").
 		}
-
+		inline static bool isBlockCommentStart(std::string::value_type first, std::string::value_type next)  noexcept
+		{
+			return first == '/' && next == '*'; // C++ style line comments ("/*").
+		}
+		inline static bool isBlockCommentEnd(std::string::value_type first, std::string::value_type next)  noexcept
+		{
+			return first == '*' && next == '/'; // C++ style line comments ("/*").
+		}
 
 		inline static const std::string::value_type* GetIdentifier(const std::string::value_type* stream, int* tokenID, std::string::value_type* buffer, unsigned int bufferLength)
 		{

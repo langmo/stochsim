@@ -3,7 +3,7 @@
 %start_symbol model
 %parse_failure {throw std::exception("Syntax error.");}
 %stack_overflow {throw std::exception("Parser stack overflow while parsing cmdl file.");}
-%name internal_Parse
+%name cmdl_internal_Parse
 %token_type {TerminalSymbol*}
 %token_destructor {
 	delete $$;
@@ -32,90 +32,6 @@
 %include {#include  <assert.h>}
 %include {using namespace expression;}
 %include {using namespace cmdlparser;}
-
-// Convert c-style parsing functions to implementation of clean c++ class handling everything.
-%include {
-	// Forward declaration parser functions.
-	void internal_Parse(
-		void *yyp,                   /* The parser */
-		int yymajor,                 /* The major token code number */
-		TerminalSymbol* yyminor,       /* The value for the token */
-		CmdlParseTree* parse_tree               /* Optional %extra_argument parameter */
-	);
-
-	void *internal_ParseAlloc(void* (*mallocProc)(size_t));
-
-	void internal_ParseFree(
-		void *p,                    /* The parser to be deleted */
-		void(*freeProc)(void*)     /* Function used to reclaim memory */
-	);
-	#ifndef NDEBUG
-		void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
-	#endif
-	void cmdlparser::CmdlParser::InitializeInternal()
-	{
-		UninitializeInternal();
-	#ifndef NDEBUG
-		if (logFilePath_.empty())
-		{
-			logFile_ = nullptr;
-		}
-		else
-		{
-			fopen_s(&logFile_, logFilePath_.c_str(), "w");
-			if(logFile_)
-				internal_ParseTrace(logFile_, "cmdl_");
-			else
-				internal_ParseTrace(0, "cmdl_");
-		}
-	#endif
-		try
-		{
-			handle_ = internal_ParseAlloc(malloc);
-		}
-		catch (...)
-		{
-			throw std::exception("Could not allocate space for cmdl parser.");
-		}
-		if (!handle_)
-		{
-			throw std::exception("Could not create cmdl parser.");
-		}
-	}
-	void cmdlparser::CmdlParser::UninitializeInternal()
-	{
-		if(!handle_)
-			return;
-		internal_ParseFree(handle_, free); 
-		handle_ = nullptr;
-	#ifndef NDEBUG
-		internal_ParseTrace(0, "cmdl_");
-		if (logFile_)
-			fclose(logFile_);
-		logFile_ = nullptr;
-	#endif
-	}
-
-	void cmdlparser::CmdlParser::ParseToken(int tokenID, TerminalSymbol* token, CmdlParseTree& parseTree)
-	{
-		if (!handle_)
-		{
-			throw std::exception("Parser handle invalid.");
-		}
-		try
-		{
-			internal_Parse(handle_, tokenID, token, &parseTree);
-		}
-		catch (const std::exception& ex)
-		{
-			throw ex;
-		}
-		catch (...)
-		{
-			throw std::exception("Unknown error");
-		}
-	}
-}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -413,6 +329,22 @@ reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA reaction
 	products = nullptr;
 
 	parseTree->CreateReaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
+}
+
+reaction ::= IDENTIFIER(I) COMMA reactionSide(reactants) ARROW reactionSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
+	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto reactants_temp = std::unique_ptr<ReactionSide>(reactants);
+	auto products_temp = std::unique_ptr<ReactionSide>(products);
+	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(rss);
+	identifier name = *I; 
+	rss = nullptr;
+	reactants = nullptr;
+	products = nullptr;
+	delete I;
+	I = nullptr;
+
+	parseTree->CreateReaction(std::move(name), std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
 }
 
 %type reactionSpecifiers {ReactionSpecifiers*}

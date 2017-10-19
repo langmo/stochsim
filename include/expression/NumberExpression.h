@@ -20,7 +20,7 @@ namespace expression
 		{
 			return std::make_unique<NumberExpression>(number_);
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
 			// we are already the most simple possible expression...
 			return Clone();
@@ -37,7 +37,7 @@ namespace expression
 		{
 			stream << number_;
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
 			// do nothing
 		}

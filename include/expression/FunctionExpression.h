@@ -37,13 +37,13 @@ namespace expression
 			errorMessage << "Function with name \"" << name_ << "\" is unknown.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
 			std::vector<std::unique_ptr<IExpression>> simElems;
 			bool allNumbers = true;
 			for (auto& elem : elems_)
 			{
-				auto simElem = elem->Simplify(variableLookup);
+				auto simElem = elem->Simplify(variableRegister);
 				if (!dynamic_cast<NumberExpression*>(simElem.get()))
 				{
 					allNumbers = false;
@@ -98,15 +98,16 @@ namespace expression
 			}
 			stream << ")";
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			try
+			auto newBinding = bindingRegister(name_ + "()");
+			if (newBinding)
 			{
-				evalFunction_ = bindingLookup(name_+"()");
+				evalFunction_ = std::move(newBinding);
 			}
-			catch (...)
+			for (auto& elem : elems_)
 			{
-				// do nothing. There is simply no binding for this variable...
+				elem->Bind(bindingRegister);
 			}
 		}
 	private:

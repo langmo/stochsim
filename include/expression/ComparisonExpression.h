@@ -52,10 +52,10 @@ namespace expression
 		{
 			return std::make_unique<ComparisonExpression>(left_->Clone(), right_->Clone(), type_);
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
-			auto simpLeft = left_->Simplify(variableLookup);
-			auto simpRight = right_->Simplify(variableLookup);
+			auto simpLeft = left_->Simplify(variableRegister);
+			auto simpRight = right_->Simplify(variableRegister);
 			auto numLeft = dynamic_cast<NumberExpression*>(simpLeft.get());
 			auto numRight = dynamic_cast<NumberExpression*>(simpRight.get());
 			if (numLeft && numRight)
@@ -98,10 +98,10 @@ namespace expression
 			if (subExpression)
 				stream << ")";
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			left_->Bind(bindingLookup);
-			right_->Bind(bindingLookup);
+			left_->Bind(bindingRegister);
+			right_->Bind(bindingRegister);
 		}
 	private:
 		std::unique_ptr<IExpression> left_;

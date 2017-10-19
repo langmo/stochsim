@@ -250,32 +250,28 @@ namespace expression
 
 	/// <summary>
 	/// Takes the name of a variable and returns its expression, for example a number wrapped in a number_expression. 
-	/// Throws a std::exception if a variable with the given name does not
-	/// exist. If variables are directly saved by value, a corresponding number_expression is returned.
+	/// Returns nullptr if variable with given name is not known/not in the register.
 	/// </summary>
-	typedef std::function<std::unique_ptr<IExpression> (const identifier variableName)> VariableLookup;
+	typedef std::function<std::unique_ptr<IExpression> (const identifier variableName)> VariableRegister;
 	/// <summary>
-	/// Returns a default variable lookup which always throws an error for every querry.
+	/// Returns a default variable register which always returns a nullptr for every querry.
 	/// </summary>
-	/// <returns>Empty variable lookup</returns>
-	inline const VariableLookup makeEmptyVariableLookup()
+	/// <returns>Empty variable register</returns>
+	inline const VariableRegister makeEmptyVariableRegister()
 	{
 		return [](const identifier variableName) ->std::unique_ptr<IExpression>
 		{
-			std::stringstream errorMessage;
-			errorMessage << "Variable with name \"" << variableName << "\" is not defined.";
-			throw std::exception(errorMessage.str().c_str());
+			return nullptr;
 		};
 	}
 	/// <summary>
 	/// Takes the name of a variable or function and returns its binding, a function handler which can be evaluated to return the value of the variable or function.
 	/// For variables, the name has to correspond to the name of the variable, whereas for functions, the name has to be suceeded by a an opening and closing round bracket, without spaces
 	/// (independently of the number of arguments of the function). 
-	/// Throws a std::exception if a variable with the given name does not
-	/// exist. 
+	/// Returns nullptr if variable or function with given name is not known/not in the register. 
 	/// To store the handler, call clone() on the returned pointer.
 	/// </summary>
-	typedef std::function<std::unique_ptr<IFunctionHolder> (const identifier name)> BindingLookup;
+	typedef std::function<std::unique_ptr<IFunctionHolder> (const identifier name)> BindingRegister;
 		
 	/// <summary>
 	/// Abstract base class of all expressions.
@@ -302,15 +298,14 @@ namespace expression
 		/// <returns>Copy of this expression</returns>
 		virtual std::unique_ptr<IExpression> Clone() const = 0;
 		/// <summary>
-		/// Creates a new expression which is a simplified version of the current expression. For this, all variables defined in the lookup
+		/// Creates a new expression which is a simplified version of the current expression. For this, all variables defined in the register
 		/// are replaced by their corresponding expressions. It is guaranteed that the new expression, and all of its subexpressions, do not contain
-		/// variables defined in the partial lookup. Variables not defined as a partial lookup are kept as name references. For this function, the simplest
-		/// possible return value is considered to be a number_expression.
+		/// variables defined in the register. Variables not defined in the register are kept as name references.
 		/// This function may throw a std::exception if the simplification is mathematically incorrect, e.g. for division by zero errors and similar.
 		/// </summary>
-		/// <param name="variableLookup">A (partial) lookup for the variables which should be replaced by their corresponding expressions.</param>
+		/// <param name="variableRegister">A register for the variables which should be replaced by their corresponding expressions.</param>
 		/// <returns>A simplified version of this expression. If simplification is not possible, returns a clone/copy of this expression.</returns>
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const = 0;
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const = 0;
 		/// <summary>
 		/// Creates a new expression which is a simplified version of the current expression.
 		/// This function may throw a std::exception if the simplification is mathematically incorrect, e.g. for division by zero errors and similar.
@@ -318,14 +313,14 @@ namespace expression
 		/// <returns>A simplified version of this expression. If simplification is not possible, returns a clone/copy of this expression.</returns>
 		virtual std::unique_ptr<IExpression> Simplify() const
 		{
-			return Simplify(makeEmptyVariableLookup());
+			return Simplify(makeEmptyVariableRegister());
 		}
 		/// <summary>
 		/// Binds all variables or functions to their corresponding function bindings which are used to evaluate their expression when evaluated. Variables or functions not 
-		/// defined in the binding lookup are not bound.
+		/// defined in the register are not bound.
 		/// </summary>
-		/// <param name="bindingLookup">Lookup to determine binding function given a function or variable name.</param>
-		virtual void Bind(const BindingLookup& bindingLookup) = 0;
+		/// <param name="bindingRegister">Register to determine binding function given a function or variable name.</param>
+		virtual void Bind(const BindingRegister& bindingRegister) = 0;
 
 		/// <summary>
 		/// Prints a string representation in CMDL of this expression to the stream.
@@ -503,11 +498,11 @@ namespace expression
 		{
 			return elems_.cend();
 		}
-		virtual void Bind(const BindingLookup& bindingLookup)
+		virtual void Bind(const BindingRegister& bindingRegister)
 		{
 			for (auto& elem : elems_)
 			{
-				elem.GetExpression()->Bind(bindingLookup);
+				elem.GetExpression()->Bind(bindingRegister);
 			}
 		}
 	public:

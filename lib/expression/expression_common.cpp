@@ -10,6 +10,7 @@ namespace expression
 		defaultVariables.emplace(identifier("false"), number_false);
 		defaultVariables.emplace(identifier("pi"), number(3.141592653589793));
 		defaultVariables.emplace(identifier("e"), number(2.718281828459046));
+		defaultVariables.emplace(identifier("Navo"), number(6.02214085774e23));
 		return std::move(defaultVariables);
 	}
 

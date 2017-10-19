@@ -26,10 +26,10 @@ namespace expression
 		{
 			return std::make_unique<ExponentiationExpression>(base_->Clone(), exponent_->Clone());
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
-			auto simpBase = base_->Simplify(variableLookup);
-			auto simpExponent = exponent_->Simplify(variableLookup);
+			auto simpBase = base_->Simplify(variableRegister);
+			auto simpExponent = exponent_->Simplify(variableRegister);
 			auto numBase = dynamic_cast<NumberExpression*>(simpBase.get());
 			auto numExponent = dynamic_cast<NumberExpression*>(simpExponent.get());
 			if (numBase && numExponent)
@@ -69,10 +69,10 @@ namespace expression
 			if (subExpression)
 				stream << ")";
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			base_->Bind(bindingLookup);
-			exponent_->Bind(bindingLookup);
+			base_->Bind(bindingRegister);
+			exponent_->Bind(bindingRegister);
 		}
 	private:
 		std::unique_ptr<IExpression> base_;

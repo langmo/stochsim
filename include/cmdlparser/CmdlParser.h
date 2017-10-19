@@ -22,8 +22,7 @@ namespace cmdlparser
 		/// <summary>
 		/// Constructor.
 		/// </summary>
-		/// <param name="logFilePath">Full path of a log file which is created while parsing. Set to an empty string to not print logs. Only has an effect if NDEBUG is not set.</param>
-		CmdlParser(std::string logFilePath = "") noexcept;
+		CmdlParser() noexcept;
 		~CmdlParser();
 		/// <summary>
 		/// Parses the CMDL file passed to the constructor, and initializes the provided simulation with the reactions and states defined in the CMDL file.
@@ -31,7 +30,8 @@ namespace cmdlparser
 		/// </summary>
 		/// <param name="cmdlFilePath">Full path to the CMDL file which should be parsed.</param>
 		/// <param name="sim">Simulation to initialize with the reactions and states defined in the CMDL file.</param>
-		void Parse(std::string cmdlFilePath, stochsim::Simulation& sim);
+		/// <param name="logFilePath">Full path of a log file which is created while parsing. Set to an empty string to not print logs. Only has an effect if NDEBUG is not set.</param>
+		void Parse(std::string cmdlFilePath, stochsim::Simulation& sim, std::string logFilePath = "");
 		/// <summary>
 		/// Pre-defines a variable with the given name and value, which is treated as if it was defined at the top of the CMDL file. If overwritable is false, subsequent
 		/// redefinitions of the variable inside the CMDL file are ignored (but not subsequent redefinitions using this function), simplifying e.g. parameter optimization and similar.
@@ -42,13 +42,6 @@ namespace cmdlparser
 		/// <returns></returns>
 		void AddVariable(expression::identifier name, expression::number value, bool overwritable = true) noexcept;
 	private:
-		std::string logFilePath_;
-		void* handle_;
-		FILE* logFile_;
 		std::unordered_map<expression::identifier, Variable> variables_;
-
-		void ParseToken(int tokenID, TerminalSymbol* token, CmdlParseTree& parseTree);
-		void InitializeInternal();
-		void UninitializeInternal();
 	};
 }

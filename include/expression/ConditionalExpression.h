@@ -29,23 +29,23 @@ namespace expression
 		{
 			return std::make_unique<ConditionalExpression>(condition_->Clone(), expressionIfTrue_->Clone(), expressionIfFalse_->Clone());
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
-			auto simpCondition = condition_->Simplify(variableLookup);
+			auto simpCondition = condition_->Simplify(variableRegister);
 			if (dynamic_cast<NumberExpression*>(simpCondition.get()))
 			{
 				if (dynamic_cast<NumberExpression*>(simpCondition.get())->GetValue() != 0)
 				{
-					return expressionIfTrue_->Simplify(variableLookup);
+					return expressionIfTrue_->Simplify(variableRegister);
 				}
 				else
 				{
-					return expressionIfFalse_->Simplify(variableLookup);
+					return expressionIfFalse_->Simplify(variableRegister);
 				}
 			}
 			else
 			{
-				return std::make_unique<ConditionalExpression>(std::move(simpCondition), expressionIfTrue_->Simplify(variableLookup), expressionIfFalse_->Simplify(variableLookup));
+				return std::make_unique<ConditionalExpression>(std::move(simpCondition), expressionIfTrue_->Simplify(variableRegister), expressionIfFalse_->Simplify(variableRegister));
 			}
 		}
 		virtual void PrintCmdl(std::ostream& stream, bool subExpression) const noexcept override
@@ -60,11 +60,11 @@ namespace expression
 			if (subExpression)
 				stream << ")";
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			condition_->Bind(bindingLookup);
-			expressionIfTrue_->Bind(bindingLookup);
-			expressionIfFalse_->Bind(bindingLookup);
+			condition_->Bind(bindingRegister);
+			expressionIfTrue_->Bind(bindingRegister);
+			expressionIfFalse_->Bind(bindingRegister);
 		}
 	private:
 		std::unique_ptr<IExpression> condition_;

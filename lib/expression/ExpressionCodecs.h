@@ -93,7 +93,7 @@ namespace expression
 			if (errno != 0)
 			{
 				errno = 0;
-				throw std::exception("Number too large.");
+				throw std::exception("Number too large or number format invalid.");
 			}
 			// check if after the double value there is a valid character.
 			if (IsAlphaNum(*stream))

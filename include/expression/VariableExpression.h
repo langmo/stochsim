@@ -24,16 +24,14 @@ namespace expression
 			errorMessage << "Expression contains unbound variable with name \"" << name_ << "\".";
 			throw std::exception(errorMessage.str().c_str());
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
-			try
+			auto newVal = variableRegister(name_);
+			if (newVal)
 			{
-				return variableLookup(name_)->Simplify(variableLookup);
+				return newVal->Simplify(variableRegister);
 			}
-			catch (...)
-			{
-				// do nothing, means variable is not defined in lookup.
-			}
+			
 			if (evalFunction_ && !evalFunction_->IsMutable())
 			{
 				std::vector<number> empty;
@@ -57,15 +55,12 @@ namespace expression
 		{
 			stream << name_;
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			try
+			auto newFunction = bindingRegister(name_);
+			if (newFunction)
 			{
-				evalFunction_ = bindingLookup(name_);
-			}
-			catch (...)
-			{
-				// do nothing. There is simply no binding for this variable...
+				evalFunction_ = std::move(newFunction);
 			}
 		}
 	private:

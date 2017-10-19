@@ -37,13 +37,13 @@ namespace expression
 			}
 			return sum;
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
 			auto value = baseValue_;
 			std::vector<Element> simElems;
 			for (auto& elem : elems_)
 			{
-				auto simElem = elem.GetExpression()->Simplify(variableLookup);
+				auto simElem = elem.GetExpression()->Simplify(variableRegister);
 				if (dynamic_cast<NumberExpression*>(simElem.get()))
 				{
 					if (elem.IsNotInverse())

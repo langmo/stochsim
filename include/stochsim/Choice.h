@@ -251,11 +251,12 @@ namespace stochsim
 			{
 				auto defaultFunctions = expression::makeDefaultFunctions();
 				auto defaultVariables = expression::makeDefaultVariables();
-				expression::BindingLookup bindings = [this, &defaultFunctions, &defaultVariables, &simInfo](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
+				expression::BindingRegister bindings = [this, &defaultFunctions, &defaultVariables, &simInfo](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
 				{
+					std::string stdName(name);
 					if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
 					{
-						if (name == "rand()")
+						if (stdName == "rand()")
 						{
 							std::function<expression::number()> holder = [&simInfo]() -> expression::number
 							{
@@ -305,7 +306,14 @@ namespace stochsim
 								return expression::makeFunctionHolder(holder, true);
 							}
 						}
-
+						if (stdName == "time")
+						{
+							std::function<expression::number()> holder = [&simInfo]() -> expression::number
+							{
+								return static_cast<expression::number>(simInfo.SimTime());
+							};
+							return expression::makeFunctionHolder(holder, true);
+						}
 						auto default_search = defaultVariables.find(name);
 						if (default_search != defaultVariables.end())
 						{
@@ -314,15 +322,13 @@ namespace stochsim
 							return expression::makeFunctionHolder(binding, false);
 						}
 					}
-					std::stringstream errorMessage;
-					errorMessage << "State or function with name \"" << name << "\" is not defined.";
-					throw std::exception(errorMessage.str().c_str());
+					return nullptr;
 				};
 				boundChoiceEquation_->Bind(bindings);
 			}
 			else
 			{
-				expression::BindingLookup bindings = [this](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
+				expression::BindingRegister bindings = [this](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
 				{
 					auto search = variables_.find(name);
 					if (search != variables_.end())
@@ -334,10 +340,7 @@ namespace stochsim
 						};
 						return expression::makeFunctionHolder(holder, true);
 					}
-
-					std::stringstream errorMessage;
-					errorMessage << "State or function with name \"" << name << "\" is not defined.";
-					throw std::exception(errorMessage.str().c_str());
+					return nullptr;
 				};
 				boundChoiceEquation_->Bind(bindings);
 			}

@@ -75,11 +75,11 @@ namespace cmdlparser
 
 		/// <summary>
 		/// Finds the variable with the given name and returns its expression.
-		/// If no variable with the given name exists, throws a std::exception.
+		/// If no variable with the given name exists, a nullptr is returned.
 		/// </summary>
 		/// <param name="name">Name of the variable to evaluate.</param>
 		/// <returns>Expression of the variable.</returns>
-		std::unique_ptr<expression::IExpression> GetVariableExpression(const expression::identifier name) const
+		std::unique_ptr<expression::IExpression> FindVariableExpression(const expression::identifier name) const
 		{
 			auto final_search = finalVariables_.find(name);
 			if (final_search != finalVariables_.end())
@@ -95,12 +95,10 @@ namespace cmdlparser
 			if (default_search != defaultVariables_.end())
 				return default_search->second->Clone();
 
-			std::stringstream errorMessage;
-			errorMessage << "Variable with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			return nullptr;
 		}
 
-		std::unique_ptr<expression::IFunctionHolder> GetFunctionHandler(const expression::identifier& name) const
+		std::unique_ptr<expression::IFunctionHolder> FindFunctionHandler(const expression::identifier& name) const
 		{
 			auto search = functions_.find(name);
 			if (search != functions_.end())
@@ -111,9 +109,7 @@ namespace cmdlparser
 			if (default_search != defaultFunctions_.end())
 				return default_search->second->Clone();
 
-			std::stringstream errorMessage;
-			errorMessage << "Function with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			return nullptr;
 		}
 
 		/// <summary>
@@ -124,7 +120,7 @@ namespace cmdlparser
 		expression::number GetExpressionValue(const expression::IExpression* expression) const
 		{
 			auto clone = expression->Clone();
-			auto bindings = GetBindingLookup();
+			auto bindings = GetBindingRegister();
 			clone->Bind(bindings);
 			return clone->Eval();
 		}
@@ -135,13 +131,13 @@ namespace cmdlparser
 		/// </summary>
 		/// <param name="name">Name of the variable to evaluate.</param>
 		/// <returns>Value of the variable.</returns>
-		expression::number GetVariableValue(const expression::identifier& name) const
+		expression::number FindVariableValue(const expression::identifier& name) const
 		{
 			auto final_search = finalVariables_.find(name);
 			if (final_search != finalVariables_.end())
 			{
 				auto clone = final_search->second->Clone();
-				auto bindings = GetBindingLookup();
+				auto bindings = GetBindingRegister();
 				clone->Bind(bindings);
 				return clone->Eval();
 			}
@@ -149,7 +145,7 @@ namespace cmdlparser
 			if (search != variables_.end())
 			{
 				auto clone = search->second->Clone();
-				auto bindings = GetBindingLookup();
+				auto bindings = GetBindingRegister();
 				clone->Bind(bindings);
 				return clone->Eval();
 			}
@@ -157,7 +153,7 @@ namespace cmdlparser
 			if (default_search != defaultVariables_.end())
 			{
 				auto clone = default_search->second->Clone();
-				auto bindings = GetBindingLookup();
+				auto bindings = GetBindingRegister();
 				clone->Bind(bindings);
 				return clone->Eval();
 			}
@@ -172,17 +168,25 @@ namespace cmdlparser
 		/// Returns a binding for all defined variable.
 		/// </summary>
 		/// <returns>Function to lookup variable values.</returns>
-		expression::BindingLookup GetBindingLookup() const noexcept
+		expression::BindingRegister GetBindingRegister() const noexcept
 		{
 			return [this](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
 			{
 				if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
 				{
-					return this->GetFunctionHandler(name.substr(0, name.size()-2));
+					return this->FindFunctionHandler(name.substr(0, name.size()-2));
 				}
 				else
 				{
-					auto value = this->GetVariableValue(name);
+					expression::number value;
+					try
+					{
+						value = this->FindVariableValue(name);
+					}
+					catch (...)
+					{
+						return nullptr;
+					}
 					std::function<expression::number()> binding = [value]()->expression::number {return value; };
 					return expression::makeFunctionHolder(binding, false);
 				}

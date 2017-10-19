@@ -141,7 +141,7 @@ namespace expression
 		auto result = orgResult->Clone();
 		if (bind)
 		{
-			result->Bind(parseTree.GetBindingLookup());
+			result->Bind(parseTree.GetBindingRegister());
 		}
 		if (simplify)
 		{

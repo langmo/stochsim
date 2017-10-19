@@ -85,7 +85,7 @@ namespace expression
 		expression::number GetExpressionValue(const expression::IExpression* expression) const
 		{
 			auto clone = expression->Clone();
-			auto bindings = GetBindingLookup();
+			auto bindings = GetBindingRegister();
 			clone->Bind(bindings);
 			return clone->Eval();
 		}
@@ -102,7 +102,7 @@ namespace expression
 			if (search != variables_.end())
 			{
 				auto clone = search->second->Clone();
-				auto bindings = GetBindingLookup();
+				auto bindings = GetBindingRegister();
 				clone->Bind(bindings);
 				return clone->Eval();
 			}
@@ -110,7 +110,7 @@ namespace expression
 			if (default_search != defaultVariables_.end())
 			{
 				auto clone = default_search->second->Clone();
-				auto bindings = GetBindingLookup();
+				auto bindings = GetBindingRegister();
 				clone->Bind(bindings);
 				return clone->Eval();
 			}
@@ -125,7 +125,7 @@ namespace expression
 		/// Returns a binding for all defined variable.
 		/// </summary>
 		/// <returns>Function to lookup variable values.</returns>
-		expression::BindingLookup GetBindingLookup() const noexcept
+		expression::BindingRegister GetBindingRegister() const noexcept
 		{
 			return [this](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
 			{

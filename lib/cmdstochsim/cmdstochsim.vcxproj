@@ -103,6 +103,13 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)examples
+copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Examples</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -116,6 +123,13 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)examples
+copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Examples</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -133,6 +147,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)examples
+copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Examples</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -150,6 +171,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)examples
+copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Examples</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="example1.h" />
@@ -158,7 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="example1.cpp" />
-    <ClCompile Include="examples.cpp" />
+    <ClCompile Include="cmdstochsim.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cmdlparser\cmdlparser.vcxproj">

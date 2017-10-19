@@ -23,9 +23,9 @@ namespace expression
 		{
 			return std::make_unique<UnaryDivideExpression>(expression_->Clone());
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
-			auto simpExpression = expression_->Simplify(variableLookup);
+			auto simpExpression = expression_->Simplify(variableRegister);
 			auto numExpression = dynamic_cast<NumberExpression*>(simpExpression.get());
 			if (numExpression)
 			{
@@ -56,9 +56,9 @@ namespace expression
 		{
 			return expression_.get();
 		}
-		virtual void Bind(const BindingLookup& bindingLookup) override
+		virtual void Bind(const BindingRegister& bindingRegister) override
 		{
-			expression_->Bind(bindingLookup);
+			expression_->Bind(bindingRegister);
 		}
 	private:
 		std::unique_ptr<IExpression> expression_;

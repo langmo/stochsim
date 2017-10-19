@@ -21,7 +21,6 @@ namespace expression
 		/// Parses the mathematical expression passed to the constructor, and returns a class representation of the expression which can be executed to evaluate the expression.
 		/// If the expression can not be parsed, a std::exception is thrown.
 		/// </summary>
-		/// <summary>
 		/// <param name="expression">Mathematical expression which should be parsed.</param>
 		/// <param name="bind">Set to true if all common variables (like "pi", "e", "true", "false", ...) and all common functions (like "max", "min", "exp", "rand", ..) should be
 		/// bound to their respective values. This implies that these function and variable names are substituted by their respective conventional definitions when evaluating the expression.

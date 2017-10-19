@@ -62,89 +62,7 @@
 using namespace expression;
 #line 34 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 using namespace cmdlparser;
-#line 37 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
-
-	// Forward declaration parser functions.
-	void internal_Parse(
-		void *yyp,                   /* The parser */
-		int yymajor,                 /* The major token code number */
-		TerminalSymbol* yyminor,       /* The value for the token */
-		CmdlParseTree* parse_tree               /* Optional %extra_argument parameter */
-	);
-
-	void *internal_ParseAlloc(void* (*mallocProc)(size_t));
-
-	void internal_ParseFree(
-		void *p,                    /* The parser to be deleted */
-		void(*freeProc)(void*)     /* Function used to reclaim memory */
-	);
-	#ifndef NDEBUG
-		void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
-	#endif
-	void cmdlparser::CmdlParser::InitializeInternal()
-	{
-		UninitializeInternal();
-	#ifndef NDEBUG
-		if (logFilePath_.empty())
-		{
-			logFile_ = nullptr;
-		}
-		else
-		{
-			fopen_s(&logFile_, logFilePath_.c_str(), "w");
-			if(logFile_)
-				internal_ParseTrace(logFile_, "cmdl_");
-			else
-				internal_ParseTrace(0, "cmdl_");
-		}
-	#endif
-		try
-		{
-			handle_ = internal_ParseAlloc(malloc);
-		}
-		catch (...)
-		{
-			throw std::exception("Could not allocate space for cmdl parser.");
-		}
-		if (!handle_)
-		{
-			throw std::exception("Could not create cmdl parser.");
-		}
-	}
-	void cmdlparser::CmdlParser::UninitializeInternal()
-	{
-		if(!handle_)
-			return;
-		internal_ParseFree(handle_, free); 
-		handle_ = nullptr;
-	#ifndef NDEBUG
-		internal_ParseTrace(0, "cmdl_");
-		if (logFile_)
-			fclose(logFile_);
-		logFile_ = nullptr;
-	#endif
-	}
-
-	void cmdlparser::CmdlParser::ParseToken(int tokenID, TerminalSymbol* token, CmdlParseTree& parseTree)
-	{
-		if (!handle_)
-		{
-			throw std::exception("Parser handle invalid.");
-		}
-		try
-		{
-			internal_Parse(handle_, tokenID, token, &parseTree);
-		}
-		catch (const std::exception& ex)
-		{
-			throw ex;
-		}
-		catch (...)
-		{
-			throw std::exception("Unknown error");
-		}
-	}
-#line 148 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 66 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -168,7 +86,7 @@ using namespace cmdlparser;
 **    YYACTIONTYPE       is the data type used for "action codes" - numbers
 **                       that indicate what to do in response to the next
 **                       token.
-**    internal_ParseTOKENTYPE     is the data type used for minor type for terminal
+**    cmdl_internal_ParseTOKENTYPE     is the data type used for minor type for terminal
 **                       symbols.  Background: A "minor type" is a semantic
 **                       value associated with a terminal or non-terminal
 **                       symbols.  For example, for an "ID" terminal symbol,
@@ -179,14 +97,14 @@ using namespace cmdlparser;
 **                       symbols.
 **    YYMINORTYPE        is the data type used for all minor types.
 **                       This is typically a union of many types, one of
-**                       which is internal_ParseTOKENTYPE.  The entry in the union
+**                       which is cmdl_internal_ParseTOKENTYPE.  The entry in the union
 **                       for terminal symbols is called "yy0".
 **    YYSTACKDEPTH       is the maximum depth of the parser's stack.  If
 **                       zero the stack is dynamically sized using realloc()
-**    internal_ParseARG_SDECL     A static variable declaration for the %extra_argument
-**    internal_ParseARG_PDECL     A parameter declaration for the %extra_argument
-**    internal_ParseARG_STORE     Code to store %extra_argument into yypParser
-**    internal_ParseARG_FETCH     Code to extract %extra_argument from yypParser
+**    cmdl_internal_ParseARG_SDECL     A static variable declaration for the %extra_argument
+**    cmdl_internal_ParseARG_PDECL     A parameter declaration for the %extra_argument
+**    cmdl_internal_ParseARG_STORE     Code to store %extra_argument into yypParser
+**    cmdl_internal_ParseARG_FETCH     Code to extract %extra_argument from yypParser
 **    YYERRORSYMBOL      is the code number of the error symbol.  If not
 **                       defined, then do no error processing.
 **    YYNSTATE           the combined number of states.
@@ -206,10 +124,10 @@ using namespace cmdlparser;
 #define YYCODETYPE unsigned char
 #define YYNOCODE 45
 #define YYACTIONTYPE unsigned char
-#define internal_ParseTOKENTYPE TerminalSymbol*
+#define cmdl_internal_ParseTOKENTYPE TerminalSymbol*
 typedef union {
   int yyinit;
-  internal_ParseTOKENTYPE yy0;
+  cmdl_internal_ParseTOKENTYPE yy0;
   DisjunctionExpression* yy21;
   ProductExpression* yy28;
   ReactionSpecifiers* yy29;
@@ -226,22 +144,22 @@ typedef union {
 #ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
 #endif
-#define internal_ParseARG_SDECL CmdlParseTree* parseTree;
-#define internal_ParseARG_PDECL ,CmdlParseTree* parseTree
-#define internal_ParseARG_FETCH CmdlParseTree* parseTree = yypParser->parseTree
-#define internal_ParseARG_STORE yypParser->parseTree = parseTree
+#define cmdl_internal_ParseARG_SDECL CmdlParseTree* parseTree;
+#define cmdl_internal_ParseARG_PDECL ,CmdlParseTree* parseTree
+#define cmdl_internal_ParseARG_FETCH CmdlParseTree* parseTree = yypParser->parseTree
+#define cmdl_internal_ParseARG_STORE yypParser->parseTree = parseTree
 #define YYERRORSYMBOL 27
 #define YYERRSYMDT yy89
-#define YYNSTATE             91
-#define YYNRULE              58
-#define YY_MAX_SHIFT         90
-#define YY_MIN_SHIFTREDUCE   114
-#define YY_MAX_SHIFTREDUCE   171
-#define YY_MIN_REDUCE        172
-#define YY_MAX_REDUCE        229
-#define YY_ERROR_ACTION      230
-#define YY_ACCEPT_ACTION     231
-#define YY_NO_ACTION         232
+#define YYNSTATE             97
+#define YYNRULE              59
+#define YY_MAX_SHIFT         96
+#define YY_MIN_SHIFTREDUCE   121
+#define YY_MAX_SHIFTREDUCE   179
+#define YY_MIN_REDUCE        180
+#define YY_MAX_REDUCE        238
+#define YY_ERROR_ACTION      239
+#define YY_ACCEPT_ACTION     240
+#define YY_NO_ACTION         241
 /************* End control #defines *******************************************/
 
 /* Define the yytestcase() macro to be a no-op if is not already defined
@@ -313,70 +231,74 @@ typedef union {
 **  yy_default[]       Default action for each state.
 **
 *********** Begin parsing tables **********************************************/
-#define YY_ACTTAB_COUNT (620)
+#define YY_ACTTAB_COUNT (654)
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */    38,   32,   31,   29,   28,   27,   26,   25,   24,   14,
- /*    10 */    35,   13,   33,   30,   34,   33,   30,  231,    1,   37,
- /*    20 */   164,  162,   38,   32,   31,   29,   28,   27,   26,   25,
- /*    30 */    24,   36,   35,   34,   33,   30,   48,  149,  177,  181,
- /*    40 */   186,  191,  194,   30,    8,  155,   75,  209,   38,   32,
- /*    50 */    31,   29,   28,   27,   26,   25,   24,   36,   35,   34,
- /*    60 */    33,   30,   51,   79,  177,  181,  186,  191,  194,  174,
- /*    70 */     8,   82,   12,  148,   38,   32,   31,   29,   28,   27,
- /*    80 */    26,   25,   24,   36,   35,   34,   33,   30,   38,   32,
- /*    90 */    31,   29,   28,   27,   26,   25,   24,   36,   35,   34,
- /*   100 */    33,   30,  115,  150,   40,  174,  174,   37,  174,  174,
- /*   110 */    38,   32,   31,   29,   28,   27,   26,   25,   24,   36,
- /*   120 */    35,   34,   33,   30,    7,  174,  174,  174,  117,  174,
- /*   130 */   174,    3,   32,   31,   29,   28,   27,   26,   25,   24,
- /*   140 */    36,   35,   34,   33,   30,   38,   32,   31,   29,   28,
- /*   150 */    27,   26,   25,   24,   36,   35,   34,   33,   30,   38,
- /*   160 */    32,   31,   29,   28,   27,   26,   25,   24,   14,   35,
- /*   170 */    13,   33,   30,   38,   32,   31,   29,   28,   27,   26,
- /*   180 */    25,   24,  174,   35,   13,   33,   30,  225,   50,    6,
- /*   190 */   177,  181,  186,  191,  194,  225,  225,   78,  174,    2,
- /*   200 */   215,  174,  174,  225,  174,   31,   29,   28,   27,   26,
- /*   210 */    25,   24,   36,   35,   34,   33,   30,   29,   28,   27,
- /*   220 */    26,   25,   24,   36,   35,   34,   33,   30,  230,  230,
- /*   230 */   230,  230,  230,  230,   36,   35,   34,   33,   30,   50,
- /*   240 */   174,  177,  181,  186,  191,  194,    6,    6,   73,  174,
- /*   250 */    41,  215,  177,  181,  186,  191,  194,    6,    4,   74,
- /*   260 */   165,   50,  215,  177,  181,  186,  191,  194,  174,  174,
- /*   270 */    77,  174,    5,  215,  217,  224,   34,   33,   30,  174,
- /*   280 */   174,  174,  174,  174,  217,  217,  174,   18,  217,  217,
- /*   290 */   174,   19,   68,  116,   39,  174,  174,  174,  174,   10,
- /*   300 */   174,  174,   54,  174,  177,  181,  186,  191,  194,  174,
- /*   310 */   174,  174,  174,   48,  216,  177,  181,  186,  191,  194,
- /*   320 */   219,  174,  174,  174,  210,  174,  174,  174,    8,  221,
- /*   330 */   219,  219,  174,   81,  219,  219,  174,    8,  174,  221,
- /*   340 */   221,   18,   80,  221,  221,   19,   66,  116,   39,  174,
- /*   350 */    18,  174,  174,   10,   19,   76,  116,   39,  174,   18,
- /*   360 */   174,  174,   11,   19,   90,  116,   39,  174,  174,  174,
- /*   370 */    44,   15,  177,  181,  186,  191,  194,   47,  174,  177,
- /*   380 */   181,  186,  191,  194,   42,  174,  177,  181,  186,  191,
- /*   390 */   194,   49,  174,  177,  181,  186,  191,  194,  174,   89,
- /*   400 */   174,  177,  181,  186,  191,  194,   65,  174,  177,  181,
- /*   410 */   186,  191,  194,   43,  174,  177,  181,  186,  191,  194,
- /*   420 */    69,  174,  177,  181,  186,  191,  194,  174,   83,  174,
- /*   430 */   177,  181,  186,  191,  194,   84,  174,  177,  181,  186,
- /*   440 */   191,  194,   85,  174,  177,  181,  186,  191,  194,   57,
- /*   450 */   174,  177,  181,  186,  191,  194,  174,   55,  174,  177,
- /*   460 */   181,  186,  191,  194,   86,  174,  177,  181,  186,  191,
- /*   470 */   194,   70,  174,  177,  181,  186,  191,  194,   58,  174,
- /*   480 */   177,  181,  186,  191,  194,  174,   59,  174,  177,  181,
- /*   490 */   186,  191,  194,   60,  174,  177,  181,  186,  191,  194,
- /*   500 */    61,  174,  177,  181,  186,  191,  194,   62,  174,  177,
- /*   510 */   181,  186,  191,  194,  174,   63,  174,  177,  181,  186,
- /*   520 */   191,  194,   87,  174,  177,  181,  186,  191,  194,   64,
- /*   530 */   174,  177,  181,  186,  191,  194,   56,  174,  177,  181,
- /*   540 */   186,  191,  194,  174,   88,  174,  177,  181,  186,  191,
- /*   550 */   194,   71,  174,  177,  181,  186,  191,  194,   72,  174,
- /*   560 */   177,  181,  186,  191,  194,   53,  174,  177,  181,  186,
- /*   570 */   191,  194,  174,   45,  174,  177,  181,  186,  191,  194,
- /*   580 */    46,  174,  177,  181,  186,  191,  194,   52,  174,  177,
- /*   590 */   181,  186,  191,  194,  174,   18,  174,  174,  174,   19,
- /*   600 */    90,  116,   39,   18,  219,  174,  174,   19,   67,  116,
- /*   610 */    39,  174,    8,  174,  174,  174,    9,   81,  174,  219,
+ /*     0 */    41,   35,   34,   32,   31,   30,   29,   28,   27,   17,
+ /*    10 */    38,   16,   36,   33,   37,   36,   33,  240,    1,   40,
+ /*    20 */   172,  170,   41,   35,   34,   32,   31,   30,   29,   28,
+ /*    30 */    27,   39,   38,   37,   36,   33,   51,  156,  185,  189,
+ /*    40 */   194,  199,  202,   33,   11,  163,   76,  218,   41,   35,
+ /*    50 */    34,   32,   31,   30,   29,   28,   27,   39,   38,   37,
+ /*    60 */    36,   33,   54,   85,  185,  189,  194,  199,  202,  182,
+ /*    70 */    11,   88,   15,  155,   41,   35,   34,   32,   31,   30,
+ /*    80 */    29,   28,   27,   39,   38,   37,   36,   33,   41,   35,
+ /*    90 */    34,   32,   31,   30,   29,   28,   27,   39,   38,   37,
+ /*   100 */    36,   33,  122,  157,   43,  158,  182,   40,  182,  182,
+ /*   110 */    41,   35,   34,   32,   31,   30,   29,   28,   27,   39,
+ /*   120 */    38,   37,   36,   33,   10,  182,   10,  182,  124,  182,
+ /*   130 */   182,    5,   35,   34,   32,   31,   30,   29,   28,   27,
+ /*   140 */    39,   38,   37,   36,   33,   41,   35,   34,   32,   31,
+ /*   150 */    30,   29,   28,   27,   39,   38,   37,   36,   33,   41,
+ /*   160 */    35,   34,   32,   31,   30,   29,   28,   27,   17,   38,
+ /*   170 */    16,   36,   33,   41,   35,   34,   32,   31,   30,   29,
+ /*   180 */    28,   27,  182,   38,   16,   36,   33,  234,   53,    9,
+ /*   190 */   185,  189,  194,  199,  202,  234,  234,   78,  182,  182,
+ /*   200 */   224,  182,  182,  234,    3,   34,   32,   31,   30,   29,
+ /*   210 */    28,   27,   39,   38,   37,   36,   33,   32,   31,   30,
+ /*   220 */    29,   28,   27,   39,   38,   37,   36,   33,  239,  239,
+ /*   230 */   239,  239,  239,  239,   39,   38,   37,   36,   33,   53,
+ /*   240 */   182,  185,  189,  194,  199,  202,    9,  182,   77,    9,
+ /*   250 */    53,  224,  185,  189,  194,  199,  202,    2,    9,   79,
+ /*   260 */     6,   44,  224,  185,  189,  194,  199,  202,    4,  182,
+ /*   270 */    80,    9,   51,  224,  185,  189,  194,  199,  202,    9,
+ /*   280 */   182,  182,   81,  218,   53,  173,  185,  189,  194,  199,
+ /*   290 */   202,  182,  182,   83,    7,   53,  224,  185,  189,  194,
+ /*   300 */   199,  202,  182,  182,   84,  182,  182,  224,  226,  233,
+ /*   310 */    37,   36,   33,  182,  182,  182,  182,  182,  226,  226,
+ /*   320 */   182,   21,  226,  226,  182,   22,   71,  123,   42,  182,
+ /*   330 */   182,  182,  182,   13,  182,  182,   57,  182,  185,  189,
+ /*   340 */   194,  199,  202,  182,  182,  182,  182,   51,  225,  185,
+ /*   350 */   189,  194,  199,  202,  230,  182,  182,  182,  219,  182,
+ /*   360 */   182,  182,   11,  228,  230,  230,  182,   86,  230,  230,
+ /*   370 */   182,   11,  182,  228,  228,   21,   87,  228,  228,   22,
+ /*   380 */    82,  123,   42,  182,   21,  182,  182,   14,   22,   70,
+ /*   390 */   123,   42,  182,   21,  182,  182,   13,   22,   96,  123,
+ /*   400 */    42,  182,  182,  182,   47,   18,  185,  189,  194,  199,
+ /*   410 */   202,   50,  182,  185,  189,  194,  199,  202,   45,  182,
+ /*   420 */   185,  189,  194,  199,  202,   52,  182,  185,  189,  194,
+ /*   430 */   199,  202,  182,   95,  182,  185,  189,  194,  199,  202,
+ /*   440 */    68,  182,  185,  189,  194,  199,  202,   46,  182,  185,
+ /*   450 */   189,  194,  199,  202,   72,  182,  185,  189,  194,  199,
+ /*   460 */   202,  182,   89,  182,  185,  189,  194,  199,  202,   90,
+ /*   470 */   182,  185,  189,  194,  199,  202,   91,  182,  185,  189,
+ /*   480 */   194,  199,  202,   60,  182,  185,  189,  194,  199,  202,
+ /*   490 */   182,   58,  182,  185,  189,  194,  199,  202,   92,  182,
+ /*   500 */   185,  189,  194,  199,  202,   73,  182,  185,  189,  194,
+ /*   510 */   199,  202,   61,  182,  185,  189,  194,  199,  202,  182,
+ /*   520 */    62,  182,  185,  189,  194,  199,  202,   63,  182,  185,
+ /*   530 */   189,  194,  199,  202,   64,  182,  185,  189,  194,  199,
+ /*   540 */   202,   65,  182,  185,  189,  194,  199,  202,  182,   66,
+ /*   550 */   182,  185,  189,  194,  199,  202,   93,  182,  185,  189,
+ /*   560 */   194,  199,  202,   67,  182,  185,  189,  194,  199,  202,
+ /*   570 */    59,  182,  185,  189,  194,  199,  202,  182,   94,  182,
+ /*   580 */   185,  189,  194,  199,  202,   74,  182,  185,  189,  194,
+ /*   590 */   199,  202,   75,  182,  185,  189,  194,  199,  202,   56,
+ /*   600 */   182,  185,  189,  194,  199,  202,  182,   48,  182,  185,
+ /*   610 */   189,  194,  199,  202,   49,  182,  185,  189,  194,  199,
+ /*   620 */   202,   55,  228,  185,  189,  194,  199,  202,  182,  182,
+ /*   630 */    11,  182,  182,    8,   12,   87,   21,  228,  182,  182,
+ /*   640 */    22,   96,  123,   42,  182,  182,   21,  182,  182,  182,
+ /*   650 */    22,   69,  123,   42,
 };
 static const YYCODETYPE yy_lookahead[] = {
  /*     0 */     2,    3,    4,    5,    6,    7,    8,    9,   10,   11,
@@ -389,97 +311,101 @@ static const YYCODETYPE yy_lookahead[] = {
  /*    70 */    19,   25,   21,    1,    2,    3,    4,    5,    6,    7,
  /*    80 */     8,    9,   10,   11,   12,   13,   14,   15,    2,    3,
  /*    90 */     4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
- /*   100 */    14,   15,   20,    1,   22,   44,   44,   21,   44,   44,
+ /*   100 */    14,   15,   20,    1,   22,    1,   44,   21,   44,   44,
  /*   110 */     2,    3,    4,    5,    6,    7,    8,    9,   10,   11,
- /*   120 */    12,   13,   14,   15,   22,   44,   44,   44,   20,   44,
+ /*   120 */    12,   13,   14,   15,   22,   44,   22,   44,   20,   44,
  /*   130 */    44,    2,    3,    4,    5,    6,    7,    8,    9,   10,
  /*   140 */    11,   12,   13,   14,   15,    2,    3,    4,    5,    6,
  /*   150 */     7,    8,    9,   10,   11,   12,   13,   14,   15,    2,
  /*   160 */     3,    4,    5,    6,    7,    8,    9,   10,   11,   12,
  /*   170 */    13,   14,   15,    2,    3,    4,    5,    6,    7,    8,
  /*   180 */     9,   10,   44,   12,   13,   14,   15,   27,   28,   11,
- /*   190 */    30,   31,   32,   33,   34,   35,   36,   37,   44,   21,
- /*   200 */    40,   44,   44,   43,   44,    4,    5,    6,    7,    8,
+ /*   190 */    30,   31,   32,   33,   34,   35,   36,   37,   44,   44,
+ /*   200 */    40,   44,   44,   43,   26,    4,    5,    6,    7,    8,
  /*   210 */     9,   10,   11,   12,   13,   14,   15,    5,    6,    7,
  /*   220 */     8,    9,   10,   11,   12,   13,   14,   15,    5,    6,
  /*   230 */     7,    8,    9,   10,   11,   12,   13,   14,   15,   28,
- /*   240 */    44,   30,   31,   32,   33,   34,   11,   11,   37,   44,
- /*   250 */    28,   40,   30,   31,   32,   33,   34,   11,   22,   37,
- /*   260 */    25,   28,   40,   30,   31,   32,   33,   34,   44,   44,
- /*   270 */    37,   44,   26,   40,   11,    0,   13,   14,   15,   44,
- /*   280 */    44,   44,   44,   44,   21,   22,   44,   12,   25,   26,
- /*   290 */    44,   16,   17,   18,   19,   44,   44,   44,   44,   24,
- /*   300 */    44,   44,   28,   44,   30,   31,   32,   33,   34,   44,
- /*   310 */    44,   44,   44,   28,   40,   30,   31,   32,   33,   34,
- /*   320 */    11,   44,   44,   44,   39,   44,   44,   44,   19,   11,
- /*   330 */    21,   22,   44,   24,   25,   26,   44,   19,   44,   21,
- /*   340 */    22,   12,   24,   25,   26,   16,   17,   18,   19,   44,
- /*   350 */    12,   44,   44,   24,   16,   17,   18,   19,   44,   12,
- /*   360 */    44,   44,   24,   16,   17,   18,   19,   44,   44,   44,
- /*   370 */    28,   24,   30,   31,   32,   33,   34,   28,   44,   30,
- /*   380 */    31,   32,   33,   34,   28,   44,   30,   31,   32,   33,
- /*   390 */    34,   28,   44,   30,   31,   32,   33,   34,   44,   28,
- /*   400 */    44,   30,   31,   32,   33,   34,   28,   44,   30,   31,
- /*   410 */    32,   33,   34,   28,   44,   30,   31,   32,   33,   34,
- /*   420 */    28,   44,   30,   31,   32,   33,   34,   44,   28,   44,
- /*   430 */    30,   31,   32,   33,   34,   28,   44,   30,   31,   32,
- /*   440 */    33,   34,   28,   44,   30,   31,   32,   33,   34,   28,
- /*   450 */    44,   30,   31,   32,   33,   34,   44,   28,   44,   30,
- /*   460 */    31,   32,   33,   34,   28,   44,   30,   31,   32,   33,
- /*   470 */    34,   28,   44,   30,   31,   32,   33,   34,   28,   44,
- /*   480 */    30,   31,   32,   33,   34,   44,   28,   44,   30,   31,
- /*   490 */    32,   33,   34,   28,   44,   30,   31,   32,   33,   34,
- /*   500 */    28,   44,   30,   31,   32,   33,   34,   28,   44,   30,
- /*   510 */    31,   32,   33,   34,   44,   28,   44,   30,   31,   32,
- /*   520 */    33,   34,   28,   44,   30,   31,   32,   33,   34,   28,
- /*   530 */    44,   30,   31,   32,   33,   34,   28,   44,   30,   31,
- /*   540 */    32,   33,   34,   44,   28,   44,   30,   31,   32,   33,
- /*   550 */    34,   28,   44,   30,   31,   32,   33,   34,   28,   44,
- /*   560 */    30,   31,   32,   33,   34,   28,   44,   30,   31,   32,
- /*   570 */    33,   34,   44,   28,   44,   30,   31,   32,   33,   34,
- /*   580 */    28,   44,   30,   31,   32,   33,   34,   28,   44,   30,
- /*   590 */    31,   32,   33,   34,   44,   12,   44,   44,   44,   16,
- /*   600 */    17,   18,   19,   12,   11,   44,   44,   16,   17,   18,
- /*   610 */    19,   44,   19,   44,   44,   44,   23,   24,   44,   26,
+ /*   240 */    44,   30,   31,   32,   33,   34,   11,   44,   37,   11,
+ /*   250 */    28,   40,   30,   31,   32,   33,   34,   22,   11,   37,
+ /*   260 */    22,   28,   40,   30,   31,   32,   33,   34,   21,   44,
+ /*   270 */    37,   11,   28,   40,   30,   31,   32,   33,   34,   11,
+ /*   280 */    44,   44,   38,   39,   28,   25,   30,   31,   32,   33,
+ /*   290 */    34,   44,   44,   37,   26,   28,   40,   30,   31,   32,
+ /*   300 */    33,   34,   44,   44,   37,   44,   44,   40,   11,    0,
+ /*   310 */    13,   14,   15,   44,   44,   44,   44,   44,   21,   22,
+ /*   320 */    44,   12,   25,   26,   44,   16,   17,   18,   19,   44,
+ /*   330 */    44,   44,   44,   24,   44,   44,   28,   44,   30,   31,
+ /*   340 */    32,   33,   34,   44,   44,   44,   44,   28,   40,   30,
+ /*   350 */    31,   32,   33,   34,   11,   44,   44,   44,   39,   44,
+ /*   360 */    44,   44,   19,   11,   21,   22,   44,   24,   25,   26,
+ /*   370 */    44,   19,   44,   21,   22,   12,   24,   25,   26,   16,
+ /*   380 */    17,   18,   19,   44,   12,   44,   44,   24,   16,   17,
+ /*   390 */    18,   19,   44,   12,   44,   44,   24,   16,   17,   18,
+ /*   400 */    19,   44,   44,   44,   28,   24,   30,   31,   32,   33,
+ /*   410 */    34,   28,   44,   30,   31,   32,   33,   34,   28,   44,
+ /*   420 */    30,   31,   32,   33,   34,   28,   44,   30,   31,   32,
+ /*   430 */    33,   34,   44,   28,   44,   30,   31,   32,   33,   34,
+ /*   440 */    28,   44,   30,   31,   32,   33,   34,   28,   44,   30,
+ /*   450 */    31,   32,   33,   34,   28,   44,   30,   31,   32,   33,
+ /*   460 */    34,   44,   28,   44,   30,   31,   32,   33,   34,   28,
+ /*   470 */    44,   30,   31,   32,   33,   34,   28,   44,   30,   31,
+ /*   480 */    32,   33,   34,   28,   44,   30,   31,   32,   33,   34,
+ /*   490 */    44,   28,   44,   30,   31,   32,   33,   34,   28,   44,
+ /*   500 */    30,   31,   32,   33,   34,   28,   44,   30,   31,   32,
+ /*   510 */    33,   34,   28,   44,   30,   31,   32,   33,   34,   44,
+ /*   520 */    28,   44,   30,   31,   32,   33,   34,   28,   44,   30,
+ /*   530 */    31,   32,   33,   34,   28,   44,   30,   31,   32,   33,
+ /*   540 */    34,   28,   44,   30,   31,   32,   33,   34,   44,   28,
+ /*   550 */    44,   30,   31,   32,   33,   34,   28,   44,   30,   31,
+ /*   560 */    32,   33,   34,   28,   44,   30,   31,   32,   33,   34,
+ /*   570 */    28,   44,   30,   31,   32,   33,   34,   44,   28,   44,
+ /*   580 */    30,   31,   32,   33,   34,   28,   44,   30,   31,   32,
+ /*   590 */    33,   34,   28,   44,   30,   31,   32,   33,   34,   28,
+ /*   600 */    44,   30,   31,   32,   33,   34,   44,   28,   44,   30,
+ /*   610 */    31,   32,   33,   34,   28,   44,   30,   31,   32,   33,
+ /*   620 */    34,   28,   11,   30,   31,   32,   33,   34,   44,   44,
+ /*   630 */    19,   44,   44,   22,   23,   24,   12,   26,   44,   44,
+ /*   640 */    16,   17,   18,   19,   44,   44,   12,   44,   44,   44,
+ /*   650 */    16,   17,   18,   19,
 };
-#define YY_SHIFT_USE_DFLT (620)
-#define YY_SHIFT_COUNT    (90)
+#define YY_SHIFT_USE_DFLT (654)
+#define YY_SHIFT_COUNT    (96)
 #define YY_SHIFT_MIN      (-5)
-#define YY_SHIFT_MAX      (593)
+#define YY_SHIFT_MAX      (634)
 static const short yy_shift_ofst[] = {
- /*     0 */   620,  275,  329,  329,  338,  329,  329,  338,  583,  347,
- /*    10 */   583,  583,  583,  591,  583,  583,  583,  583,  583,  583,
- /*    20 */   583,  583,  583,  583,  583,  583,  583,  583,  583,  583,
- /*    30 */   583,  583,  583,  583,  583,  583,  583,  583,  583,  583,
- /*    40 */   583,   -2,   20,   46,   72,   86,  108,  129,  143,  143,
- /*    50 */   157,  143,  143,  143,  171,  201,  201,  212,  223,  223,
- /*    60 */   223,  223,  223,  223,  212,  263,  309,  318,  593,    1,
- /*    70 */     1,    1,    1,  235,  178,  102,   51,  236,  246,   82,
- /*    80 */    -5,   -4,   36,   28,   28,   28,   28,   28,   28,   28,
- /*    90 */    25,
+ /*     0 */   654,  309,  363,  372,  372,  372,  363,  372,  372,  372,
+ /*    10 */   363,  624,  381,  624,  624,  624,  634,  624,  624,  624,
+ /*    20 */   624,  624,  624,  624,  624,  624,  624,  624,  624,  624,
+ /*    30 */   624,  624,  624,  624,  624,  624,  624,  624,  624,  624,
+ /*    40 */   624,  624,  624,  624,   -2,   20,   46,   72,   86,  108,
+ /*    50 */   129,  143,  143,  157,  143,  143,  143,  171,  201,  201,
+ /*    60 */   212,  223,  223,  223,  223,  223,  223,  212,  297,  343,
+ /*    70 */   352,  611,    1,    1,    1,    1,  102,  235,  178,  260,
+ /*    80 */   247,  104,   51,  238,  268,   82,   -5,   -4,   36,   28,
+ /*    90 */    28,   28,   28,   28,   28,   28,   25,
 };
 #define YY_REDUCE_USE_DFLT (-25)
-#define YY_REDUCE_COUNT (40)
+#define YY_REDUCE_COUNT (43)
 #define YY_REDUCE_MIN   (-24)
-#define YY_REDUCE_MAX   (559)
+#define YY_REDUCE_MAX   (593)
 static const short yy_reduce_ofst[] = {
- /*     0 */   -24,  160,  211,  222,    8,  233,  274,  285,   34,  342,
- /*    10 */   349,  356,  363,  371,  378,  385,  392,  400,  407,  414,
- /*    20 */   421,  429,  436,  443,  450,  458,  465,  472,  479,  487,
- /*    30 */   494,  501,  508,  516,  371,  523,  530,  537,  545,  552,
- /*    40 */   559,
+ /*     0 */   -24,  160,    8,  211,  222,  233,  244,  256,  267,  308,
+ /*    10 */   319,   34,  376,  383,  390,  397,  405,  412,  419,  426,
+ /*    20 */   434,  441,  448,  455,  463,  470,  477,  484,  492,  499,
+ /*    30 */   506,  513,  521,  528,  535,  542,  550,  405,  557,  564,
+ /*    40 */   571,  579,  586,  593,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */   226,  214,  214,  214,  230,  214,  230,  230,  178,  230,
- /*    10 */   230,  230,  230,  230,  230,  230,  230,  230,  230,  230,
- /*    20 */   230,  230,  230,  230,  230,  230,  230,  230,  230,  230,
- /*    30 */   230,  230,  230,  230,  230,  230,  230,  230,  230,  230,
- /*    40 */   230,  230,  230,  230,  230,  230,  230,  230,  211,  212,
- /*    50 */   230,  179,  180,  176,  218,  193,  192,  196,  205,  204,
- /*    60 */   203,  202,  201,  200,  195,  182,  172,  172,  172,  185,
- /*    70 */   184,  183,  182,  230,  230,  230,  172,  230,  230,  230,
- /*    80 */   230,  230,  230,  190,  198,  197,  189,  199,  188,  187,
- /*    90 */   172,
+ /*     0 */   235,  223,  239,  223,  223,  223,  239,  223,  223,  239,
+ /*    10 */   239,  186,  239,  239,  239,  239,  239,  239,  239,  239,
+ /*    20 */   239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+ /*    30 */   239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+ /*    40 */   239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+ /*    50 */   239,  220,  221,  239,  187,  188,  184,  227,  201,  200,
+ /*    60 */   204,  213,  212,  211,  210,  209,  208,  203,  190,  180,
+ /*    70 */   180,  180,  193,  192,  191,  190,  239,  239,  239,  239,
+ /*    80 */   239,  239,  180,  239,  239,  239,  239,  239,  239,  198,
+ /*    90 */   206,  205,  197,  207,  196,  195,  180,
 };
 /********** End of lemon-generated parsing tables *****************************/
 
@@ -537,7 +463,7 @@ struct yyParser {
 #ifndef YYNOERRORRECOVERY
   int yyerrcnt;                 /* Shifts left before out of the error */
 #endif
-  internal_ParseARG_SDECL                /* A place to hold %extra_argument */
+  cmdl_internal_ParseARG_SDECL                /* A place to hold %extra_argument */
 #if YYSTACKDEPTH<=0
   int yystksz;                  /* Current side of the stack */
   yyStackEntry *yystack;        /* The parser's stack */
@@ -573,7 +499,7 @@ static char *yyTracePrompt = 0;
 ** Outputs:
 ** None.
 */
-void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt){
+void cmdl_internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt){
   yyTraceFILE = TraceFILE;
   yyTracePrompt = zTracePrompt;
   if( yyTraceFILE==0 ) yyTracePrompt = 0;
@@ -640,27 +566,28 @@ static const char *const yyRuleName[] = {
  /*  34 */ "assignment ::= IDENTIFIER ASSIGN expression SEMICOLON",
  /*  35 */ "assignment ::= IDENTIFIER ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON",
  /*  36 */ "reaction ::= reactionSide ARROW reactionSide COMMA reactionSpecifiers SEMICOLON",
- /*  37 */ "reactionSpecifiers ::= reactionSpecifier",
- /*  38 */ "reactionSpecifiers ::= reactionSpecifiers COMMA reactionSpecifier",
- /*  39 */ "reactionSpecifier ::= expression",
- /*  40 */ "reactionSpecifier ::= IDENTIFIER COLON expression",
- /*  41 */ "reactionSpecifier ::= LEFT_SQUARE expression RIGHT_SQUARE",
- /*  42 */ "reactionSide ::=",
- /*  43 */ "reactionSide ::= reactionComponent",
- /*  44 */ "reactionSide ::= reactionSide PLUS reactionComponent",
- /*  45 */ "reactionSide ::= expression PLUS expression",
- /*  46 */ "reactionSide ::= reactionSide PLUS expression",
- /*  47 */ "reactionComponent ::= IDENTIFIER",
- /*  48 */ "reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
- /*  49 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER",
- /*  50 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
- /*  51 */ "reactionComponent ::= LEFT_SQUARE expression QUESTIONMARK reactionSide COLON reactionSide RIGHT_SQUARE",
- /*  52 */ "model ::= statements",
- /*  53 */ "statements ::= statements statement",
- /*  54 */ "statements ::=",
- /*  55 */ "statement ::= assignment",
- /*  56 */ "statement ::= reaction",
- /*  57 */ "statement ::= error",
+ /*  37 */ "reaction ::= IDENTIFIER COMMA reactionSide ARROW reactionSide COMMA reactionSpecifiers SEMICOLON",
+ /*  38 */ "reactionSpecifiers ::= reactionSpecifier",
+ /*  39 */ "reactionSpecifiers ::= reactionSpecifiers COMMA reactionSpecifier",
+ /*  40 */ "reactionSpecifier ::= expression",
+ /*  41 */ "reactionSpecifier ::= IDENTIFIER COLON expression",
+ /*  42 */ "reactionSpecifier ::= LEFT_SQUARE expression RIGHT_SQUARE",
+ /*  43 */ "reactionSide ::=",
+ /*  44 */ "reactionSide ::= reactionComponent",
+ /*  45 */ "reactionSide ::= reactionSide PLUS reactionComponent",
+ /*  46 */ "reactionSide ::= expression PLUS expression",
+ /*  47 */ "reactionSide ::= reactionSide PLUS expression",
+ /*  48 */ "reactionComponent ::= IDENTIFIER",
+ /*  49 */ "reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
+ /*  50 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER",
+ /*  51 */ "reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE",
+ /*  52 */ "reactionComponent ::= LEFT_SQUARE expression QUESTIONMARK reactionSide COLON reactionSide RIGHT_SQUARE",
+ /*  53 */ "model ::= statements",
+ /*  54 */ "statements ::= statements statement",
+ /*  55 */ "statements ::=",
+ /*  56 */ "statement ::= assignment",
+ /*  57 */ "statement ::= reaction",
+ /*  58 */ "statement ::= error",
 };
 #endif /* NDEBUG */
 
@@ -699,7 +626,7 @@ static int yyGrowStack(yyParser *p){
 #endif
 
 /* Datatype of the argument to the memory allocated passed as the
-** second argument to internal_ParseAlloc() below.  This can be changed by
+** second argument to cmdl_internal_ParseAlloc() below.  This can be changed by
 ** putting an appropriate #define in the %include section of the input
 ** grammar.
 */
@@ -709,7 +636,7 @@ static int yyGrowStack(yyParser *p){
 
 /* Initialize a new parser that has already been allocated.
 */
-void internal_ParseInit(void *yypParser){
+void cmdl_internal_ParseInit(void *yypParser){
   yyParser *pParser = (yyParser*)yypParser;
 #ifdef YYTRACKMAXSTACKDEPTH
   pParser->yyhwm = 0;
@@ -734,7 +661,7 @@ void internal_ParseInit(void *yypParser){
 #endif
 }
 
-#ifndef internal_Parse_ENGINEALWAYSONSTACK
+#ifndef cmdl_internal_Parse_ENGINEALWAYSONSTACK
 /* 
 ** This function allocates a new parser.
 ** The only argument is a pointer to a function which works like
@@ -745,15 +672,15 @@ void internal_ParseInit(void *yypParser){
 **
 ** Outputs:
 ** A pointer to a parser.  This pointer is used in subsequent calls
-** to internal_Parse and internal_ParseFree.
+** to cmdl_internal_Parse and cmdl_internal_ParseFree.
 */
-void *internal_ParseAlloc(void *(*mallocProc)(YYMALLOCARGTYPE)){
+void *cmdl_internal_ParseAlloc(void *(*mallocProc)(YYMALLOCARGTYPE)){
   yyParser *pParser;
   pParser = (yyParser*)(*mallocProc)( (YYMALLOCARGTYPE)sizeof(yyParser) );
-  if( pParser ) internal_ParseInit(pParser);
+  if( pParser ) cmdl_internal_ParseInit(pParser);
   return pParser;
 }
-#endif /* internal_Parse_ENGINEALWAYSONSTACK */
+#endif /* cmdl_internal_Parse_ENGINEALWAYSONSTACK */
 
 
 /* The following function deletes the "minor type" or semantic value
@@ -768,7 +695,7 @@ static void yy_destructor(
   YYCODETYPE yymajor,     /* Type code for object to destroy */
   YYMINORTYPE *yypminor   /* The object to be destroyed */
 ){
-  internal_ParseARG_FETCH;
+  cmdl_internal_ParseARG_FETCH;
   switch( yymajor ){
     /* Here is inserted the actions which take place when a
     ** terminal or non-terminal is destroyed.  This can happen
@@ -814,117 +741,117 @@ static void yy_destructor(
 	delete (yypminor->yy0);
 	(yypminor->yy0) = nullptr;
 
-#line 818 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 745 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 28: /* expression */
 {
-#line 167 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 83 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy64);
 	(yypminor->yy64) = nullptr;
 
-#line 828 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 755 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 29: /* arguments */
 {
-#line 217 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 133 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy59);
 	(yypminor->yy59) = nullptr;
 
-#line 838 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 765 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 30: /* comparison */
 {
-#line 201 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 117 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy51);
 	(yypminor->yy51) = nullptr;
 
-#line 848 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 775 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 31: /* sum */
 {
-#line 238 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 154 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy56);
 	(yypminor->yy56) = nullptr;
 
-#line 858 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 785 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 32: /* product */
 {
-#line 267 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 183 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy28);
 	(yypminor->yy28) = nullptr;
 
-#line 868 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 795 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 33: /* conjunction */
 {
-#line 297 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 213 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy45);
 	(yypminor->yy45) = nullptr;
 
-#line 878 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 805 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 34: /* disjunction */
 {
-#line 317 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 233 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy21);
 	(yypminor->yy21) = nullptr;
 
-#line 888 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 815 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 37: /* reactionSide */
 {
-#line 473 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 405 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy81);
 	(yypminor->yy81) = nullptr;
 
-#line 898 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 825 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 38: /* reactionSpecifiers */
 {
-#line 419 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 351 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy29);
 	(yypminor->yy29) = nullptr;
 
-#line 908 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 835 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 39: /* reactionSpecifier */
 {
-#line 442 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 374 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy74);
 	(yypminor->yy74) = nullptr;
 
-#line 918 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 845 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
     case 40: /* reactionComponent */
 {
-#line 513 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 445 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
  
 	delete (yypminor->yy75);
 	(yypminor->yy75) = nullptr;
 
-#line 928 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 855 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -956,7 +883,7 @@ static void yy_pop_parser_stack(yyParser *pParser){
 /*
 ** Clear all secondary memory allocations from the parser
 */
-void internal_ParseFinalize(void *p){
+void cmdl_internal_ParseFinalize(void *p){
   yyParser *pParser = (yyParser*)p;
   while( pParser->yytos>pParser->yystack ) yy_pop_parser_stack(pParser);
 #if YYSTACKDEPTH<=0
@@ -964,7 +891,7 @@ void internal_ParseFinalize(void *p){
 #endif
 }
 
-#ifndef internal_Parse_ENGINEALWAYSONSTACK
+#ifndef cmdl_internal_Parse_ENGINEALWAYSONSTACK
 /* 
 ** Deallocate and destroy a parser.  Destructors are called for
 ** all stack elements before shutting the parser down.
@@ -973,23 +900,23 @@ void internal_ParseFinalize(void *p){
 ** is defined in a %include section of the input grammar) then it is
 ** assumed that the input pointer is never NULL.
 */
-void internal_ParseFree(
+void cmdl_internal_ParseFree(
   void *p,                    /* The parser to be deleted */
   void (*freeProc)(void*)     /* Function used to reclaim memory */
 ){
 #ifndef YYPARSEFREENEVERNULL
   if( p==0 ) return;
 #endif
-  internal_ParseFinalize(p);
+  cmdl_internal_ParseFinalize(p);
   (*freeProc)(p);
 }
-#endif /* internal_Parse_ENGINEALWAYSONSTACK */
+#endif /* cmdl_internal_Parse_ENGINEALWAYSONSTACK */
 
 /*
 ** Return the peak depth of the stack for a parser.
 */
 #ifdef YYTRACKMAXSTACKDEPTH
-int internal_ParseStackPeak(void *p){
+int cmdl_internal_ParseStackPeak(void *p){
   yyParser *pParser = (yyParser*)p;
   return pParser->yyhwm;
 }
@@ -1093,7 +1020,7 @@ static int yy_find_reduce_action(
 ** The following routine is called if the stack overflows.
 */
 static void yyStackOverflow(yyParser *yypParser){
-   internal_ParseARG_FETCH;
+   cmdl_internal_ParseARG_FETCH;
 #ifndef NDEBUG
    if( yyTraceFILE ){
      fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
@@ -1105,9 +1032,9 @@ static void yyStackOverflow(yyParser *yypParser){
 /******** Begin %stack_overflow code ******************************************/
 #line 5 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 throw std::exception("Parser stack overflow while parsing cmdl file.");
-#line 1109 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1036 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 /******** End %stack_overflow code ********************************************/
-   internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
+   cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
 
 /*
@@ -1137,7 +1064,7 @@ static void yy_shift(
   yyParser *yypParser,          /* The parser to be shifted */
   int yyNewState,               /* The new state to shift in */
   int yyMajor,                  /* The major token to shift in */
-  internal_ParseTOKENTYPE yyMinor        /* The minor token to shift in */
+  cmdl_internal_ParseTOKENTYPE yyMinor        /* The minor token to shift in */
 ){
   yyStackEntry *yytos;
   yypParser->yytos++;
@@ -1216,6 +1143,7 @@ static const struct {
   { 35, -4 },
   { 35, -6 },
   { 36, -6 },
+  { 36, -8 },
   { 38, -1 },
   { 38, -3 },
   { 39, -1 },
@@ -1253,7 +1181,7 @@ static void yy_reduce(
   int yyact;                      /* The next action */
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
-  internal_ParseARG_FETCH;
+  cmdl_internal_ParseARG_FETCH;
   yymsp = yypParser->yytos;
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
@@ -1301,17 +1229,17 @@ static void yy_reduce(
 /********** Begin reduce actions **********************************************/
         YYMINORTYPE yylhsminor;
       case 0: /* expression ::= IDENTIFIER */
-#line 171 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 87 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new VariableExpression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1311 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1239 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 1: /* expression ::= IDENTIFIER LEFT_ROUND arguments RIGHT_ROUND */
-#line 176 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 92 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto func = new FunctionExpression(*yymsp[-3].minor.yy0);
 	delete yymsp[-3].minor.yy0;
@@ -1326,326 +1254,326 @@ static void yy_reduce(
 	yylhsminor.yy64 = func;
 	func = nullptr;
 }
-#line 1330 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1258 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,19,&yymsp[-2].minor);
   yy_destructor(yypParser,20,&yymsp[0].minor);
   yymsp[-3].minor.yy64 = yylhsminor.yy64;
         break;
       case 2: /* expression ::= VALUE */
-#line 191 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 107 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new NumberExpression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1342 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1270 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 3: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
 {  yy_destructor(yypParser,19,&yymsp[-2].minor);
-#line 196 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 112 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yymsp[-2].minor.yy64 = yymsp[-1].minor.yy64;
 }
-#line 1351 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1279 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,20,&yymsp[0].minor);
 }
         break;
       case 4: /* comparison ::= expression QUESTIONMARK expression COLON expression */
-#line 205 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 121 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy51 = new ConditionalExpression(std::unique_ptr<IExpression>(yymsp[-4].minor.yy64), std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 	yymsp[-2].minor.yy64 = nullptr;
 	yymsp[0].minor.yy64 = nullptr;
 	yymsp[-4].minor.yy64 = nullptr;
 }
-#line 1363 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1291 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-3].minor);
   yy_destructor(yypParser,21,&yymsp[-1].minor);
   yymsp[-4].minor.yy51 = yylhsminor.yy51;
         break;
       case 5: /* expression ::= comparison */
-#line 211 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 127 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy51;
 }
-#line 1373 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1301 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 6: /* arguments ::= */
-#line 221 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 137 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yymsp[1].minor.yy59 = new FunctionArguments();
 }
-#line 1381 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1309 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
         break;
       case 7: /* arguments ::= expression */
-#line 224 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 140 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy59 = new FunctionArguments();
 	yylhsminor.yy59->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy64));
 	yymsp[0].minor.yy64 = nullptr;
 }
-#line 1390 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1318 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy59 = yylhsminor.yy59;
         break;
       case 8: /* arguments ::= arguments COMMA expression */
-#line 229 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 145 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy59 = yymsp[-2].minor.yy59;
 	yymsp[-2].minor.yy59 = nullptr;
 	yylhsminor.yy59->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy64));
 	yymsp[0].minor.yy64 = nullptr;
 }
-#line 1401 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1329 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yymsp[-2].minor.yy59 = yylhsminor.yy59;
         break;
       case 9: /* expression ::= sum */
-#line 242 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 158 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy56;
 }
-#line 1410 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1338 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 10: /* sum ::= expression PLUS expression */
-#line 245 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 161 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy56 = new SumExpression();
 	yylhsminor.yy56->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy56->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1420 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1348 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy56 = yylhsminor.yy56;
         break;
       case 11: /* sum ::= expression MINUS expression */
-#line 250 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 166 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy56 = new SumExpression();
 	yylhsminor.yy56->PushBack(false,  std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy56->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1431 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1359 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy56 = yylhsminor.yy56;
         break;
       case 12: /* sum ::= sum PLUS expression */
-#line 255 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 171 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy56 = yymsp[-2].minor.yy56;
 	yylhsminor.yy56->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1441 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1369 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy56 = yylhsminor.yy56;
         break;
       case 13: /* sum ::= sum MINUS expression */
-#line 259 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 175 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy56 = yymsp[-2].minor.yy56;
 	yylhsminor.yy56->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1451 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1379 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy56 = yylhsminor.yy56;
         break;
       case 14: /* expression ::= product */
-#line 271 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 187 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy28;
 }
-#line 1460 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1388 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 15: /* product ::= expression MULTIPLY expression */
-#line 274 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 190 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy28 = new ProductExpression();
 	yylhsminor.yy28->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy28->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1471 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1399 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy28 = yylhsminor.yy28;
         break;
       case 16: /* product ::= expression DIVIDE expression */
-#line 280 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 196 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy28 = new ProductExpression();
 	yylhsminor.yy28->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy28->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1483 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1411 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy28 = yylhsminor.yy28;
         break;
       case 17: /* product ::= product MULTIPLY expression */
-#line 286 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 202 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy28 = yymsp[-2].minor.yy28;
 	yylhsminor.yy28->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1493 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1421 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy28 = yylhsminor.yy28;
         break;
       case 18: /* product ::= product DIVIDE expression */
-#line 290 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 206 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy28 = yymsp[-2].minor.yy28;
 	yylhsminor.yy28->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1503 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1431 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy28 = yylhsminor.yy28;
         break;
       case 19: /* expression ::= conjunction */
-#line 301 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 217 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy45;
 }
-#line 1512 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1440 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 20: /* conjunction ::= expression AND expression */
-#line 304 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 220 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy45 = new ConjunctionExpression();
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1523 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1451 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy45 = yylhsminor.yy45;
         break;
       case 21: /* conjunction ::= conjunction AND expression */
-#line 310 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 226 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy45 = yymsp[-2].minor.yy45;
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1533 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1461 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy45 = yylhsminor.yy45;
         break;
       case 22: /* expression ::= disjunction */
-#line 321 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 237 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy21;
 }
-#line 1542 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1470 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 23: /* disjunction ::= expression OR expression */
-#line 324 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 240 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy21 = new DisjunctionExpression();
 	yylhsminor.yy21->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy21->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1553 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1481 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy21 = yylhsminor.yy21;
         break;
       case 24: /* disjunction ::= disjunction OR expression */
-#line 330 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 246 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy21 = yymsp[-2].minor.yy21;
 	yylhsminor.yy21->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1563 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1491 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy21 = yylhsminor.yy21;
         break;
       case 25: /* expression ::= NOT expression */
 {  yy_destructor(yypParser,16,&yymsp[-1].minor);
-#line 336 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 252 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy64 = new UnaryNotExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1573 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1501 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
         break;
       case 26: /* expression ::= MINUS expression */
 {  yy_destructor(yypParser,12,&yymsp[-1].minor);
-#line 341 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 257 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy64 = new UnaryMinusExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1582 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1510 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 }
         break;
       case 27: /* expression ::= expression EXP expression */
-#line 346 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 262 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ExponentiationExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1590 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1518 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,15,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 28: /* expression ::= expression EQUAL expression */
-#line 352 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 268 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_equal);
 }
-#line 1599 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1527 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 29: /* expression ::= expression NOT_EQUAL expression */
-#line 355 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 271 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_not_equal);
 }
-#line 1608 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1536 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 30: /* expression ::= expression GREATER expression */
-#line 358 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 274 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_greater);
 }
-#line 1617 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1545 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 31: /* expression ::= expression GREATER_EQUAL expression */
-#line 361 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 277 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_greater_equal);
 }
-#line 1626 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1554 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 32: /* expression ::= expression LESS expression */
-#line 364 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 280 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_less);
 }
-#line 1635 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1563 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 33: /* expression ::= expression LESS_EQUAL expression */
-#line 367 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 283 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_less_equal);
 }
-#line 1644 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1572 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 34: /* assignment ::= IDENTIFIER ASSIGN expression SEMICOLON */
-#line 379 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 295 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-3].minor.yy0 and yymsp[-1].minor.yy64 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1657,12 +1585,12 @@ static void yy_reduce(
 
 	parseTree->CreateVariable(std::move(name), parseTree->GetExpressionValue(e_temp.get()));
 }
-#line 1661 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1589 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,23,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 35: /* assignment ::= IDENTIFIER ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 391 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 307 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy0 and yymsp[-2].minor.yy64 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1674,14 +1602,14 @@ static void yy_reduce(
 
 	parseTree->CreateVariable(std::move(name), std::move(e_temp));
 }
-#line 1678 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1606 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,23,&yymsp[-4].minor);
   yy_destructor(yypParser,24,&yymsp[-3].minor);
   yy_destructor(yypParser,25,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 36: /* reaction ::= reactionSide ARROW reactionSide COMMA reactionSpecifiers SEMICOLON */
-#line 405 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 321 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy81, yymsp[-3].minor.yy81 and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1694,13 +1622,36 @@ static void yy_reduce(
 
 	parseTree->CreateReaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
 }
-#line 1698 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1626 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,26,&yymsp[-4].minor);
   yy_destructor(yypParser,22,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
-      case 37: /* reactionSpecifiers ::= reactionSpecifier */
-#line 423 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 37: /* reaction ::= IDENTIFIER COMMA reactionSide ARROW reactionSide COMMA reactionSpecifiers SEMICOLON */
+#line 334 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+{
+	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy81, yymsp[-3].minor.yy81 and e by the parser. We thus have to make sure that
+	// they point to null to avoid double deletion.
+	auto reactants_temp = std::unique_ptr<ReactionSide>(yymsp[-5].minor.yy81);
+	auto products_temp = std::unique_ptr<ReactionSide>(yymsp[-3].minor.yy81);
+	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(yymsp[-1].minor.yy29);
+	identifier name = *yymsp[-7].minor.yy0; 
+	yymsp[-1].minor.yy29 = nullptr;
+	yymsp[-5].minor.yy81 = nullptr;
+	yymsp[-3].minor.yy81 = nullptr;
+	delete yymsp[-7].minor.yy0;
+	yymsp[-7].minor.yy0 = nullptr;
+
+	parseTree->CreateReaction(std::move(name), std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
+}
+#line 1648 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+  yy_destructor(yypParser,22,&yymsp[-6].minor);
+  yy_destructor(yypParser,26,&yymsp[-4].minor);
+  yy_destructor(yypParser,22,&yymsp[-2].minor);
+  yy_destructor(yypParser,1,&yymsp[0].minor);
+        break;
+      case 38: /* reactionSpecifiers ::= reactionSpecifier */
+#line 355 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto rss_temp = std::make_unique<ReactionSpecifiers>();
 	auto rs_temp = std::unique_ptr<ReactionSpecifier>(yymsp[0].minor.yy74);
@@ -1709,11 +1660,11 @@ static void yy_reduce(
 	rss_temp->PushBack(std::move(rs_temp));
 	yylhsminor.yy29 = rss_temp.release();
 }
-#line 1713 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1664 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy29 = yylhsminor.yy29;
         break;
-      case 38: /* reactionSpecifiers ::= reactionSpecifiers COMMA reactionSpecifier */
-#line 431 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 39: /* reactionSpecifiers ::= reactionSpecifiers COMMA reactionSpecifier */
+#line 363 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(yymsp[-2].minor.yy29);
 	yymsp[-2].minor.yy29 = nullptr;
@@ -1723,12 +1674,12 @@ static void yy_reduce(
 	rss_temp->PushBack(std::move(rs_temp));
 	yylhsminor.yy29 = rss_temp.release();
 }
-#line 1727 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1678 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yymsp[-2].minor.yy29 = yylhsminor.yy29;
         break;
-      case 39: /* reactionSpecifier ::= expression */
-#line 446 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 40: /* reactionSpecifier ::= expression */
+#line 378 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64 = nullptr;
@@ -1736,11 +1687,11 @@ static void yy_reduce(
 	auto value = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy74 = new ReactionSpecifier(ReactionSpecifier::rate_type, std::make_unique<NumberExpression>(value));
 }
-#line 1740 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1691 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy74 = yylhsminor.yy74;
         break;
-      case 40: /* reactionSpecifier ::= IDENTIFIER COLON expression */
-#line 454 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 41: /* reactionSpecifier ::= IDENTIFIER COLON expression */
+#line 386 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64 = nullptr;
@@ -1751,32 +1702,32 @@ static void yy_reduce(
 	auto value = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy74 = new ReactionSpecifier(name, std::make_unique<NumberExpression>(value));
 }
-#line 1755 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1706 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,21,&yymsp[-1].minor);
   yymsp[-2].minor.yy74 = yylhsminor.yy74;
         break;
-      case 41: /* reactionSpecifier ::= LEFT_SQUARE expression RIGHT_SQUARE */
+      case 42: /* reactionSpecifier ::= LEFT_SQUARE expression RIGHT_SQUARE */
 {  yy_destructor(yypParser,24,&yymsp[-2].minor);
-#line 465 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 397 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[-1].minor.yy64);
 	yymsp[-1].minor.yy64 = nullptr;
 	yymsp[-2].minor.yy74 = nullptr;
 	yymsp[-2].minor.yy74 = new ReactionSpecifier(ReactionSpecifier::rate_type, std::move(e_temp));
 }
-#line 1768 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1719 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,25,&yymsp[0].minor);
 }
         break;
-      case 42: /* reactionSide ::= */
-#line 477 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 43: /* reactionSide ::= */
+#line 409 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yymsp[1].minor.yy81 = new ReactionSide();
 }
-#line 1777 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1728 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
         break;
-      case 43: /* reactionSide ::= reactionComponent */
-#line 480 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 44: /* reactionSide ::= reactionComponent */
+#line 412 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto rc_temp = std::unique_ptr<ReactionComponent>(yymsp[0].minor.yy75);
 	yymsp[0].minor.yy75 = nullptr;
@@ -1784,11 +1735,11 @@ static void yy_reduce(
 	yylhsminor.yy81 = new ReactionSide();
 	yylhsminor.yy81->PushBack(std::move(rc_temp));
 }
-#line 1788 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1739 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy81 = yylhsminor.yy81;
         break;
-      case 44: /* reactionSide ::= reactionSide PLUS reactionComponent */
-#line 487 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 45: /* reactionSide ::= reactionSide PLUS reactionComponent */
+#line 419 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	yylhsminor.yy81 = yymsp[-2].minor.yy81;
 	yymsp[-2].minor.yy81 = nullptr;
@@ -1797,12 +1748,12 @@ static void yy_reduce(
 
 	yylhsminor.yy81->PushBack(std::move(rc_temp));
 }
-#line 1801 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1752 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy81 = yylhsminor.yy81;
         break;
-      case 45: /* reactionSide ::= expression PLUS expression */
-#line 496 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 46: /* reactionSide ::= expression PLUS expression */
+#line 428 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	delete(yymsp[-2].minor.yy64);
 	yymsp[-2].minor.yy64=nullptr;
@@ -1810,11 +1761,11 @@ static void yy_reduce(
 	yymsp[0].minor.yy64=nullptr;
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1814 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1765 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
-      case 46: /* reactionSide ::= reactionSide PLUS expression */
-#line 504 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 47: /* reactionSide ::= reactionSide PLUS expression */
+#line 436 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	delete(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64=nullptr;
@@ -1822,11 +1773,11 @@ static void yy_reduce(
 	yymsp[-2].minor.yy81=nullptr;
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1826 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1777 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
-      case 47: /* reactionComponent ::= IDENTIFIER */
-#line 517 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 48: /* reactionComponent ::= IDENTIFIER */
+#line 449 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy0;
 	delete yymsp[0].minor.yy0;
@@ -1835,11 +1786,11 @@ static void yy_reduce(
 
 	yylhsminor.yy75 = new ReactionComponent(state, 1, false);
 }
-#line 1839 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1790 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yymsp[0].minor.yy75 = yylhsminor.yy75;
         break;
-      case 48: /* reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
-#line 526 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 49: /* reactionComponent ::= IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
+#line 458 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	identifier state = *yymsp[-2].minor.yy0;
 	delete yymsp[-2].minor.yy0;
@@ -1848,13 +1799,13 @@ static void yy_reduce(
 
 	yylhsminor.yy75 = new ReactionComponent(state, 1, true);
 }
-#line 1852 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1803 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yy_destructor(yypParser,25,&yymsp[0].minor);
   yymsp[-2].minor.yy75 = yylhsminor.yy75;
         break;
-      case 49: /* reactionComponent ::= expression MULTIPLY IDENTIFIER */
-#line 535 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 50: /* reactionComponent ::= expression MULTIPLY IDENTIFIER */
+#line 467 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy0;
 	delete yymsp[0].minor.yy0;
@@ -1866,12 +1817,12 @@ static void yy_reduce(
 	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy75 = new ReactionComponent(state, stochiometry, false);
 }
-#line 1870 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1821 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy75 = yylhsminor.yy75;
         break;
-      case 50: /* reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
-#line 547 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+      case 51: /* reactionComponent ::= expression MULTIPLY IDENTIFIER LEFT_SQUARE RIGHT_SQUARE */
+#line 479 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	identifier state = *yymsp[-2].minor.yy0;
 	delete yymsp[-2].minor.yy0;
@@ -1883,15 +1834,15 @@ static void yy_reduce(
 	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy75 = new ReactionComponent(state, stochiometry, true);
 }
-#line 1887 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1838 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-3].minor);
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yy_destructor(yypParser,25,&yymsp[0].minor);
   yymsp[-4].minor.yy75 = yylhsminor.yy75;
         break;
-      case 51: /* reactionComponent ::= LEFT_SQUARE expression QUESTIONMARK reactionSide COLON reactionSide RIGHT_SQUARE */
+      case 52: /* reactionComponent ::= LEFT_SQUARE expression QUESTIONMARK reactionSide COLON reactionSide RIGHT_SQUARE */
 {  yy_destructor(yypParser,24,&yymsp[-6].minor);
-#line 559 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
+#line 491 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[-5].minor.yy64);
 	yymsp[-5].minor.yy64 = nullptr;
@@ -1904,19 +1855,19 @@ static void yy_reduce(
 	identifier state = parseTree->CreateChoice(std::move(e_temp), std::move(s1_temp), std::move(s2_temp));
 	yymsp[-6].minor.yy75 = new ReactionComponent(state, 1, false);
 }
-#line 1908 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1859 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-4].minor);
   yy_destructor(yypParser,21,&yymsp[-2].minor);
   yy_destructor(yypParser,25,&yymsp[0].minor);
 }
         break;
       default:
-      /* (52) model ::= statements */ yytestcase(yyruleno==52);
-      /* (53) statements ::= statements statement */ yytestcase(yyruleno==53);
-      /* (54) statements ::= */ yytestcase(yyruleno==54);
-      /* (55) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=55);
-      /* (56) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=56);
-      /* (57) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=57);
+      /* (53) model ::= statements */ yytestcase(yyruleno==53);
+      /* (54) statements ::= statements statement */ yytestcase(yyruleno==54);
+      /* (55) statements ::= */ yytestcase(yyruleno==55);
+      /* (56) statement ::= assignment (OPTIMIZED OUT) */ assert(yyruleno!=56);
+      /* (57) statement ::= reaction (OPTIMIZED OUT) */ assert(yyruleno!=57);
+      /* (58) statement ::= error (OPTIMIZED OUT) */ assert(yyruleno!=58);
         break;
 /********** End reduce actions ************************************************/
   };
@@ -1951,7 +1902,7 @@ static void yy_reduce(
 static void yy_parse_failed(
   yyParser *yypParser           /* The parser */
 ){
-  internal_ParseARG_FETCH;
+  cmdl_internal_ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sFail!\n",yyTracePrompt);
@@ -1963,9 +1914,9 @@ static void yy_parse_failed(
 /************ Begin %parse_failure code ***************************************/
 #line 4 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.y"
 throw std::exception("Syntax error.");
-#line 1967 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
+#line 1918 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
 /************ End %parse_failure code *****************************************/
-  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 #endif /* YYNOERRORRECOVERY */
 
@@ -1975,13 +1926,13 @@ throw std::exception("Syntax error.");
 static void yy_syntax_error(
   yyParser *yypParser,           /* The parser */
   int yymajor,                   /* The major type of the error token */
-  internal_ParseTOKENTYPE yyminor         /* The minor type of the error token */
+  cmdl_internal_ParseTOKENTYPE yyminor         /* The minor type of the error token */
 ){
-  internal_ParseARG_FETCH;
+  cmdl_internal_ParseARG_FETCH;
 #define TOKEN yyminor
 /************ Begin %syntax_error code ****************************************/
 /************ End %syntax_error code ******************************************/
-  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -1990,7 +1941,7 @@ static void yy_syntax_error(
 static void yy_accept(
   yyParser *yypParser           /* The parser */
 ){
-  internal_ParseARG_FETCH;
+  cmdl_internal_ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sAccept!\n",yyTracePrompt);
@@ -2004,12 +1955,12 @@ static void yy_accept(
   ** parser accepts */
 /*********** Begin %parse_accept code *****************************************/
 /*********** End %parse_accept code *******************************************/
-  internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /* The main parser program.
 ** The first argument is a pointer to a structure obtained from
-** "internal_ParseAlloc" which describes the current state of the parser.
+** "cmdl_internal_ParseAlloc" which describes the current state of the parser.
 ** The second argument is the major token number.  The third is
 ** the minor token.  The fourth optional argument is whatever the
 ** user wants (and specified in the grammar) and is available for
@@ -2026,11 +1977,11 @@ static void yy_accept(
 ** Outputs:
 ** None.
 */
-void internal_Parse(
+void cmdl_internal_Parse(
   void *yyp,                   /* The parser */
   int yymajor,                 /* The major token code number */
-  internal_ParseTOKENTYPE yyminor       /* The value for the token */
-  internal_ParseARG_PDECL               /* Optional %extra_argument parameter */
+  cmdl_internal_ParseTOKENTYPE yyminor       /* The value for the token */
+  cmdl_internal_ParseARG_PDECL               /* Optional %extra_argument parameter */
 ){
   YYMINORTYPE yyminorunion;
   unsigned int yyact;   /* The parser action. */
@@ -2047,7 +1998,7 @@ void internal_Parse(
 #if !defined(YYERRORSYMBOL) && !defined(YYNOERRORRECOVERY)
   yyendofinput = (yymajor==0);
 #endif
-  internal_ParseARG_STORE;
+  cmdl_internal_ParseARG_STORE;
 
 #ifndef NDEBUG
   if( yyTraceFILE ){

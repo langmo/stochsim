@@ -12,8 +12,46 @@
 #include "DelayReaction.h"
 #include "NumberExpression.h"
 #include "CmdlCodecs.h"
+
+
+// Forward declaration parser functions.
+// These are defined in cmdl_grammar.c, a file which is automatically generated from cmdl_grammar.y.
+void cmdl_internal_Parse(
+	void *yyp,                   /* The parser */
+	int yymajor,                 /* The major token code number */
+	cmdlparser::TerminalSymbol* yyminor,       /* The value for the token */
+	cmdlparser::CmdlParseTree* parse_tree               /* Optional %extra_argument parameter */
+);
+
+void* cmdl_internal_ParseAlloc(void* (*mallocProc)(size_t));
+
+void cmdl_internal_ParseFree(
+	void *p,                    /* The parser to be deleted */
+	void(*freeProc)(void*)     /* Function used to reclaim memory */
+);
+#ifndef NDEBUG
+void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+#endif
+
+
 namespace cmdlparser
 {
+	void ParseToken(void* handle, int tokenID, TerminalSymbol* token, CmdlParseTree& parseTree)
+	{
+		try
+		{
+			cmdl_internal_Parse(handle, tokenID, token, &parseTree);
+		}
+		catch (const std::exception& ex)
+		{
+			throw ex;
+		}
+		catch (...)
+		{
+			throw std::exception("Unknown error");
+		}
+	}
+
 	void Interpret(cmdlparser::CmdlParseTree& parseTree, stochsim::Simulation& sim)
 	{
 		struct state_definition
@@ -111,8 +149,7 @@ namespace cmdlparser
 			{
 				continue;
 			}
-			auto expression = parseTree.GetVariableExpression(state.first);
-			auto initialCondition = parseTree.GetExpressionValue(expression.get());
+			auto initialCondition = parseTree.FindVariableValue(state.first);
 			if (initialCondition + 0.5 < 0)
 			{
 				std::stringstream errorMessage;
@@ -131,30 +168,29 @@ namespace cmdlparser
 			}
 		}
 
-		auto variableLookup = [&parseTree, &states](const expression::identifier variableName) -> std::unique_ptr<expression::IExpression>
+		auto variableRegister = [&parseTree, &states](const expression::identifier variableName) -> std::unique_ptr<expression::IExpression>
 		{
 			// We want to simplify everything away which is not a state name, and not one of the standard variables.
 			if (states.find(variableName) == states.end())
-				return parseTree.GetVariableExpression(variableName);
-			std::stringstream errorMessage;
-			errorMessage << "Variable with name \"" << variableName << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+				return parseTree.FindVariableExpression(variableName);
+			else
+				return nullptr;
 		};
-		auto functionLookup = [&parseTree](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
+		auto functionRegister = [&parseTree](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
 		{
 			if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
 			{
-				return parseTree.GetFunctionHandler(name.substr(0, name.size() - 2));
+				return parseTree.FindFunctionHandler(name.substr(0, name.size() - 2));
 			}
-			throw std::exception("Only binding functions, not variables (we are substituting them instead).");
+			return nullptr;
 		};
 
 		// create choices in order of definition
 		for (auto& choice : parseTree.GetChoices())
 		{
-			auto condition = choice.second->GetCondition()->Simplify(variableLookup);
-			condition->Bind(functionLookup);
-			condition = condition->Simplify(variableLookup);
+			auto condition = choice.second->GetCondition()->Simplify(variableRegister);
+			condition->Bind(functionRegister);
+			condition = condition->Simplify(variableRegister);
 
 			auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
 			for (auto& elem : *choice.second->GetComponentsIfTrue())
@@ -187,9 +223,9 @@ namespace cmdlparser
 			}
 			else if (rateDef)
 			{
-				auto rate = rateDef->Simplify(variableLookup);
-				rate->Bind(functionLookup);
-				rate = rate->Simplify(variableLookup);
+				auto rate = rateDef->Simplify(variableRegister);
+				rate->Bind(functionRegister);
+				rate = rate->Simplify(variableRegister);
 				std::shared_ptr<stochsim::PropensityReaction> reaction;
 				if (dynamic_cast<expression::NumberExpression*>(rate.get()))
 				{
@@ -262,32 +298,19 @@ namespace cmdlparser
 		}
 	}
 
-	cmdlparser::CmdlParser::CmdlParser(std::string logFilePath) noexcept: logFilePath_(std::move(logFilePath)), handle_(nullptr), logFile_(nullptr)
+	cmdlparser::CmdlParser::CmdlParser() noexcept
 	{
 	}
 	cmdlparser::CmdlParser::~CmdlParser()
 	{
-		UninitializeInternal();
 	}
 	void cmdlparser::CmdlParser::AddVariable(expression::identifier name, expression::number value, bool overwritable) noexcept
 	{
 		variables_.emplace(std::move(name), Variable({ value, overwritable }));
 	}
-	void cmdlparser::CmdlParser::Parse(std::string cmdlFilePath, stochsim::Simulation& sim)
+	
+	void ParseFileInternal(std::string cmdlFilePath, stochsim::Simulation& sim, cmdlparser::CmdlParseTree& parseTree, void* handle)
 	{
-		cmdlparser::CmdlParseTree parseTree;
-		for (auto& variable : variables_)
-		{
-			if (variable.second.overwritable_)
-			{
-				parseTree.CreateVariable(variable.first, variable.second.value_);
-			}
-			else
-			{
-				parseTree.CreateFinalVariable(variable.first, variable.second.value_);
-			}
-		}
-
 		// Open file
 		std::ifstream infile(cmdlFilePath);
 		if (infile.fail())
@@ -296,9 +319,6 @@ namespace cmdlparser
 			errorMessage << "File \"" << cmdlFilePath << "\" does not exist or could not be opened.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-
-		// Create effective parser
-		InitializeInternal();
 
 		// Variables to store values and types of tokens
 		int tokenID;
@@ -309,6 +329,7 @@ namespace cmdlparser
 		// Parse lines
 		std::string line;
 		unsigned int currentLine = 0;
+		bool inBlockComment = false;
 		while (std::getline(infile, line))
 		{
 			currentLine++;
@@ -326,7 +347,27 @@ namespace cmdlparser
 						currentCharPtr++;
 						continue;
 					}
-					// Discard rest of the line if comment
+					else if (inBlockComment)
+					{
+						if (CMDLCodecs::isBlockCommentEnd(currentCharPtr[0], currentCharPtr[1]))
+						{
+							currentCharPtr+=2;
+							inBlockComment = false;
+							continue;
+						}
+						else
+						{
+							currentCharPtr++;
+							continue;
+						}
+					}
+					else if (CMDLCodecs::isBlockCommentStart(currentCharPtr[0], currentCharPtr[1]))
+					{
+						currentCharPtr += 2;
+						inBlockComment = true;
+						continue;
+					}
+					// Discard rest of the line if line comment
 					else if (CMDLCodecs::isLineComment(currentCharPtr[0], currentCharPtr[1]))
 						break;
 
@@ -337,7 +378,7 @@ namespace cmdlparser
 					currentCharPtr = CMDLCodecs::GetSimpleToken(currentCharPtr, &tokenID);
 					if (tokenID != 0)
 					{
-						ParseToken(tokenID, new cmdlparser::TerminalSymbol(), parseTree);
+						ParseToken(handle, tokenID, new cmdlparser::TerminalSymbol(), parseTree);
 						continue;
 					}
 
@@ -346,7 +387,7 @@ namespace cmdlparser
 					currentCharPtr = CMDLCodecs::GetIdentifier(currentCharPtr, &tokenID, stringValue, maxStringValueLength);
 					if (tokenID != 0)
 					{
-						ParseToken(tokenID, new cmdlparser::TerminalSymbol(stringValue), parseTree);
+						ParseToken(handle, tokenID, new cmdlparser::TerminalSymbol(stringValue), parseTree);
 						continue;
 					}
 
@@ -355,7 +396,7 @@ namespace cmdlparser
 					currentCharPtr = CMDLCodecs::GetDouble(currentCharPtr, &tokenID, &doubleValue);
 					if (tokenID != 0)
 					{
-						ParseToken(tokenID, new cmdlparser::TerminalSymbol(doubleValue), parseTree);
+						ParseToken(handle, tokenID, new cmdlparser::TerminalSymbol(doubleValue), parseTree);
 						continue;
 					}
 
@@ -367,8 +408,6 @@ namespace cmdlparser
 			}
 			catch (const std::exception& ex)
 			{
-				UninitializeInternal();
-
 				std::stringstream errorMessage;
 				errorMessage << "Parse error in file " << cmdlFilePath << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
 				errorMessage << '\n' << line << '\n';
@@ -380,8 +419,6 @@ namespace cmdlparser
 			}
 			catch (...)
 			{
-				UninitializeInternal();
-
 				std::stringstream errorMessage;
 				errorMessage << "Parse error in file " << cmdlFilePath << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": Unknown error.";
 				errorMessage << '\n' << line << '\n';
@@ -393,29 +430,121 @@ namespace cmdlparser
 			}
 		}
 
+		if (inBlockComment)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Reached end of file " << cmdlFilePath << " while block comment was still active. Did you forget to write \"*/\" somewhere?";
+			throw std::exception(errorMessage.str().c_str());
+		}
+
 		// finish parsing
 		try
 		{
-			ParseToken(0, nullptr, parseTree);
+			ParseToken(handle, 0, nullptr, parseTree);
 		}
 		catch (const std::exception& ex)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: " << ex.what();
 			throw std::exception(errorMessage.str().c_str());
 		}
 		catch (...)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: Unknown error.";
 			throw std::exception(errorMessage.str().c_str());
 		}
 
-		UninitializeInternal();
+		
+	}
+	void ParseFile(const std::string& cmdlFilePath, stochsim::Simulation& sim, cmdlparser::CmdlParseTree& parseTree)
+	{
+		// Initialize the lemon parser
+		auto handle = cmdl_internal_ParseAlloc(malloc);
+		if(!handle)
+			throw std::exception("Could not initialize cmdl parser.");
+
+		// do the actual parsing of the file.
+		// We only catch errors to quickly close the lemon parser (which requires C logic), and then rethrow them.
+		// Indeed, this wrapper around ParseFileInternal only exists for exactly this reason...
+		bool isError = false;
+		std::exception exception;
+		try
+		{
+			ParseFileInternal(cmdlFilePath, sim, parseTree, handle);
+		}
+		catch (const std::exception& ex)
+		{
+			isError = true;
+			exception = ex;
+		}
+		catch (...)
+		{
+			isError = true;
+			exception = std::exception("Unknown error");
+		}
+		cmdl_internal_ParseFree(handle, free);
+
+		if (isError)
+			throw exception;
+
+	}
+	void cmdlparser::CmdlParser::Parse(std::string cmdlFilePath, stochsim::Simulation& sim, std::string logFilePath)
+	{
+		// Initialize parse tree
+		cmdlparser::CmdlParseTree parseTree;
+		for (auto& variable : variables_)
+		{
+			if (variable.second.overwritable_)
+			{
+				parseTree.CreateVariable(variable.first, variable.second.value_);
+			}
+			else
+			{
+				parseTree.CreateFinalVariable(variable.first, variable.second.value_);
+			}
+		}
+
+		// Setup log file if in debug mode.
+		// Note that if not in debug mode, this functionality is deactivated per #ifndef in the cmdl_grammar.template.
+		// Since we try not to change this template, we thus cannot call it.
+		FILE* logFile = nullptr;
+#ifndef NDEBUG
+		if (!logFilePath.empty())
+		{
+			fopen_s(&logFile, logFilePath.c_str(), "w");
+			if (logFile_)
+				cmdl_internal_ParseTrace(logFile, "cmdl_");
+			else
+				cmdl_internal_ParseTrace(0, "cmdl_");
+		}
+#endif
+
+		// Do the actual parsing.
+		// We only catch errors to quickly close the log file (which requires C logic), and then rethrow them.
+		bool isError = false;
+		std::exception exception;
+		try
+		{
+			ParseFile(cmdlFilePath, sim, parseTree);
+		}
+		catch (const std::exception& ex)
+		{
+			isError = true;
+			exception = ex;
+		}
+		catch (...)
+		{
+			isError = true;
+			exception = std::exception("Unknown error");
+		}
+#ifndef NDEBUG
+		cmdl_internal_ParseTrace(0, "cmdl_");
+		if (logFile)
+			fclose(logFile);
+#endif
+		if (isError)
+			throw exception;
 
 		// Interpret parse tree
 		Interpret(std::move(parseTree), sim);

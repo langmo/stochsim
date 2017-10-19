@@ -42,12 +42,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					variables = params.Get<MatlabParams::MatlabStruct>(2);
 				}
 			
-				cmdlparser::CmdlParser cmdlParser(logName);
+				cmdlparser::CmdlParser cmdlParser;
 				for (auto variable : variables)
 				{
 					cmdlParser.AddVariable(expression::identifier(variable.first), static_cast<expression::number>(variable.second), false); 
 				}
-				cmdlParser.Parse(fileName, *simulationWrapper);
+				cmdlParser.Parse(fileName, *simulationWrapper, logName);
 			}
 			catch (const std::exception& ex)
 			{

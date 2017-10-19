@@ -39,7 +39,7 @@ namespace expression
 			}
 			return value ? number_true : number_false;
 		}
-		virtual std::unique_ptr<IExpression> Simplify(const VariableLookup& variableLookup) const override
+		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{
 			bool value = isTrue(baseValue_);
 			std::vector<Element> simElems;
@@ -47,7 +47,7 @@ namespace expression
 			{
 				if (value)
 					return std::make_unique<NumberExpression>(number_true);
-				auto simElem = elem.GetExpression()->Simplify(variableLookup);
+				auto simElem = elem.GetExpression()->Simplify(variableRegister);
 				if (dynamic_cast<NumberExpression*>(simElem.get()))
 				{
 					if (elem.IsNotInverse())
