@@ -206,11 +206,11 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
             
             [modifierRefs, modifierStochiometries] = this.call('GetModifiers');
             modifiers = arrayfun(toString, modifierRefs, modifierStochiometries, 'UniformOutput', false);
-            modifiers = cellfun(@(string)[string,'[]'], modifiers, 'UniformOutput', false);
+            modifiers = cellfun(@(string)['$',string], modifiers, 'UniformOutput', false);
             
             [transformeeRefs, transformeeStochiometries] = this.call('GetTransformees');
             transformees = arrayfun(toString, transformeeRefs, transformeeStochiometries, 'UniformOutput', false);
-            transformees = cellfun(@(string)[string,'[]'], transformees, 'UniformOutput', false);
+            transformees = cellfun(@(string)['$',string], transformees, 'UniformOutput', false);
             
             rateConstant = this.rateConstant;
             if rateConstant ~=-1

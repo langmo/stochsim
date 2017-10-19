@@ -193,6 +193,9 @@ namespace cmdlparser
 			case '?':
 				*tokenID = TOKEN_QUESTIONMARK;
 				return ++stream;
+			case '$':
+				*tokenID = TOKEN_DOLLAR;
+				return ++stream;
 			case '=':
 				if (stream[1] == '=')
 				{

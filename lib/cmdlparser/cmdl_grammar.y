@@ -455,7 +455,7 @@ reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
 	rc = new ReactionComponent(state, 1, false);
 }
 
-reactionComponent(rc) ::= IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
+reactionComponent(rc) ::= DOLLAR IDENTIFIER(I). [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
@@ -476,7 +476,7 @@ reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I). [EXP]{
 	rc = new ReactionComponent(state, stochiometry, false);
 }
 
-reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I) LEFT_SQUARE RIGHT_SQUARE. [EXP]{
+reactionComponent(rc) ::= expression(e) MULTIPLY DOLLAR IDENTIFIER(I). [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
