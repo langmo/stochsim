@@ -59,29 +59,86 @@ namespace cmdlparser
 		{
 			return first == '*' && next == '/'; // C++ style line comments ("/*").
 		}
-
-		inline static const std::string::value_type* GetIdentifier(const std::string::value_type* stream, int* tokenID, std::string::value_type* buffer, unsigned int bufferLength)
+		inline static const std::string::value_type* GetPreprocessor(const std::string::value_type* stream, int* tokenID, std::string::value_type* buffer, unsigned int bufferLength)
 		{
-			// Test if valid start of identifier. Otherwise, return empty buffer and current position in character stream.
-			if (!IsAlpha(*stream))
+			// Test if valid preprocessor directive. Otherwise, return empty buffer and current position in character stream.
+			if (stream[0] != '#')
 			{
 				buffer[0] = '\0';
 				*tokenID = 0;
 				return stream;
 			}
-			// copy characters
-			unsigned int i = 0;
-			while (IsAlphaNum(*stream))
+			stream++;
+			stream = GetIdentifier(stream, tokenID, buffer, bufferLength);
+			std::string name(buffer);
+			buffer[0] = '\0';
+			if (tokenID == 0 || name.size() <= 0)
 			{
-				buffer[i] = *stream;
-				i++;
-				stream++;
-				if (i >= bufferLength)
-					throw std::exception("Identifier too long.");
+				throw std::exception("Hashtag ('#') starting preprocessor directive must be immediately followed by the name of the directive.");
 			}
-			buffer[i] = '\0';
-			*tokenID = TOKEN_IDENTIFIER;
+			if (name == "include")
+			{
+				*tokenID = TOKEN_INCLUDE;
+			}
+			else if (name == "model")
+			{
+				*tokenID = TOKEN_MODEL_NAME;
+			}
+			else
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Preprocessor directive #" << name << " unknown or not supported.";
+				throw std::exception(errorMessage.str().c_str());
+			}
 			return stream;
+		}
+		inline static const std::string::value_type* GetIdentifier(const std::string::value_type* stream, int* tokenID, std::string::value_type* buffer, unsigned int bufferLength)
+		{
+			// Test for identifiers in quotation marks
+			if (stream[0] == '"')
+			{
+				stream++;
+				// copy characters
+				unsigned int i = 0;
+				while (*stream)
+				{
+					if (*stream == '"')
+					{
+						buffer[i] = '\0';
+						*tokenID = TOKEN_IDENTIFIER;
+						return stream+1;
+					}
+					buffer[i] = *stream;
+					i++;
+					stream++;
+					if (i >= bufferLength)
+						throw std::exception("Identifier (string) too long.");
+				}
+				throw std::exception("Quoted identifier (string) does not end in current line. Did you forget a quotation mark ('\"')?");
+			}
+			else
+			{
+				// Test if valid start of identifier. Otherwise, return empty buffer and current position in character stream.
+				if (!IsAlpha(*stream))
+				{
+					buffer[0] = '\0';
+					*tokenID = 0;
+					return stream;
+				}
+				// copy characters
+				unsigned int i = 0;
+				while (IsAlphaNum(*stream))
+				{
+					buffer[i] = *stream;
+					i++;
+					stream++;
+					if (i >= bufferLength)
+						throw std::exception("Identifier (string) too long.");
+				}
+				buffer[i] = '\0';
+				*tokenID = TOKEN_IDENTIFIER;
+				return stream;
+			}
 		}
 		inline static const std::string::value_type* GetDouble(const std::string::value_type* stream, int* tokenID, double* value)
 		{

@@ -501,12 +501,24 @@ reactionComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionSide(s1
 	rc = new ReactionComponent(state, 1, false);
 }
 
+// We just ignore that a model has a name. Included only for compatibility with Dizzy files
+preprocessorDirective ::= MODEL_NAME IDENTIFIER SEMICOLON.
+
+// include a file
+preprocessorDirective ::= INCLUDE IDENTIFIER(I) SEMICOLON. {
+	identifier fileName = *I;
+	delete I;
+	I = nullptr;
+	parseTree->IncludeFile(fileName);
+}
+
 // A model consists of a set of statements.
 model ::= statements.
 statements ::= statements statement.
 statements ::= .
 
-// A statement can either be a variable assignment or a reaction
+// A statement can either be a variable assignment a reaction, or a preprocessor directive
 statement ::= assignment.
 statement ::= reaction.
+statement ::= preprocessorDirective.
 statement ::= error. // we have to define a symbol of type error somewhere to trigger the error handling routines

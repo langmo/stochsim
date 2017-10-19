@@ -24,3 +24,5 @@
 #define TOKEN_LEFT_SQUARE                     24
 #define TOKEN_RIGHT_SQUARE                    25
 #define TOKEN_ARROW                           26
+#define TOKEN_MODEL_NAME                      27
+#define TOKEN_INCLUDE                         28

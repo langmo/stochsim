@@ -391,6 +391,15 @@ namespace cmdlparser
 						continue;
 					}
 
+					// check if preprocessor directive (everything starting with an '#').
+					stringValue[0] = '\0';
+					currentCharPtr = CMDLCodecs::GetPreprocessor(currentCharPtr, &tokenID, stringValue, maxStringValueLength);
+					if (tokenID != 0)
+					{
+						ParseToken(handle, tokenID, new cmdlparser::TerminalSymbol(), parseTree);
+						continue;
+					}
+
 					// check if double value
 					doubleValue = 0;
 					currentCharPtr = CMDLCodecs::GetDouble(currentCharPtr, &tokenID, &doubleValue);
@@ -504,6 +513,10 @@ namespace cmdlparser
 				parseTree.CreateFinalVariable(variable.first, variable.second.value_);
 			}
 		}
+		parseTree.SetIncludeFileCallback([&parseTree, &sim](expression::identifier file)
+		{
+			ParseFile(file, sim, parseTree);
+		});
 
 		// Setup log file if in debug mode.
 		// Note that if not in debug mode, this functionality is deactivated per #ifndef in the cmdl_grammar.template.

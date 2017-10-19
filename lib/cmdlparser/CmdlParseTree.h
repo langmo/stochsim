@@ -13,6 +13,7 @@ namespace cmdlparser
 		typedef std::unordered_map<expression::identifier, std::unique_ptr<expression::IFunctionHolder>> function_collection;
 		typedef std::unordered_map<expression::identifier, std::unique_ptr<ReactionDefinition>> reaction_collection;
 		typedef std::unordered_map<expression::identifier, std::unique_ptr<ChoiceDefinition>> choice_collection;
+		typedef std::function<void(expression::identifier)> include_file_callback;
 	public:
 		CmdlParseTree() : defaultFunctions_(expression::makeDefaultFunctions())
 		{
@@ -39,6 +40,11 @@ namespace cmdlparser
 		void CreateVariable(expression::identifier name, expression::number value)
 		{
 			variables_[name] = std::make_unique<expression::NumberExpression>(value);
+		}
+
+		void SetIncludeFileCallback(include_file_callback callback)
+		{
+			callback_ = callback;
 		}
 
 		/// <summary>
@@ -73,6 +79,10 @@ namespace cmdlparser
 			return nameI;
 		}
 
+		void IncludeFile(expression::identifier file)
+		{
+			callback_(file);
+		}
 		/// <summary>
 		/// Finds the variable with the given name and returns its expression.
 		/// If no variable with the given name exists, a nullptr is returned.
@@ -209,5 +219,6 @@ namespace cmdlparser
 		function_collection defaultFunctions_;
 		reaction_collection reactions_;
 		choice_collection choices_;
+		include_file_callback callback_;
 	};
 }
