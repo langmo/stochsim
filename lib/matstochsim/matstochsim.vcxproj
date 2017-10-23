@@ -73,25 +73,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.mexw32</TargetExt>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.mexw32</TargetExt>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.mexw64</TargetExt>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetExt>.mexw64</TargetExt>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
@@ -116,18 +116,10 @@
       <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)*.m $(OutDir)
-mkdir $(OutDir)toolbox
-copy $(ProjectDir)*.m $(OutDir)toolbox\
-mkdir $(OutDir)toolbox\src
-mkdir $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.h $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.cpp $(OutDir)toolbox\src\matstochsim
-mkdir $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.cpp $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.h $(OutDir)toolbox\src\stochsim
-copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetExt)</Command>
-      <Message>Copying Matlab files</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Message />
@@ -150,18 +142,10 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
       <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)*.m $(OutDir)
-mkdir $(OutDir)toolbox
-copy $(ProjectDir)*.m $(OutDir)toolbox\
-mkdir $(OutDir)toolbox\src
-mkdir $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.h $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.cpp $(OutDir)toolbox\src\matstochsim
-mkdir $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.cpp $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.h $(OutDir)toolbox\src\stochsim
-copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetExt)</Command>
-      <Message>Copying Matlab files</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Message />
@@ -184,18 +168,10 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
       <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)*.m $(OutDir)
-mkdir $(OutDir)toolbox
-copy $(ProjectDir)*.m $(OutDir)toolbox\
-mkdir $(OutDir)toolbox\src
-mkdir $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.h $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.cpp $(OutDir)toolbox\src\matstochsim
-mkdir $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.cpp $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.h $(OutDir)toolbox\src\stochsim
-copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetExt)</Command>
-      <Message>Copying Matlab files</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Message />
@@ -229,20 +205,12 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
       </Outputs>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)*.m $(OutDir)
-mkdir $(OutDir)toolbox
-copy $(ProjectDir)*.m $(OutDir)toolbox\
-mkdir $(OutDir)toolbox\src
-mkdir $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.h $(OutDir)toolbox\src\matstochsim
-copy $(ProjectDir)*.cpp $(OutDir)toolbox\src\matstochsim
-mkdir $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.cpp $(OutDir)toolbox\src\stochsim
-copy $(SolutionDir)stochsim\*.h $(OutDir)toolbox\src\stochsim
-copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetExt)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying Matlab files</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -252,21 +220,25 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
     <ClCompile Include="SimulationWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="communicationhelper.h" />
+    <ClInclude Include="MatlabHandleForPtr.h" />
     <ClInclude Include="MatlabParams.h" />
     <ClInclude Include="MatlabProgressLogger.h" />
     <ClInclude Include="MatlabStateLogger.h" />
     <ClInclude Include="SimulationWrapper.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="install.m" />
+    <None Include="..\..\resources\matstochsim\install.m" />
+    <None Include="..\..\resources\matstochsim\stochChoice.m" />
+    <None Include="..\..\resources\matstochsim\stochComposedState.m" />
+    <None Include="..\..\resources\matstochsim\stochDelayReaction.m" />
+    <None Include="..\..\resources\matstochsim\stochPropensityReaction.m" />
+    <None Include="..\..\resources\matstochsim\stochReadStateFile.m" />
+    <None Include="..\..\resources\matstochsim\stochSimulation.m" />
+    <None Include="..\..\resources\matstochsim\stochSimulationComponent.m" />
+    <None Include="..\..\resources\matstochsim\stochState.m" />
+    <None Include="..\..\resources\matstochsim\stochTimerReaction.m" />
     <None Include="matstochsim.def" />
-    <None Include="stochComposedState.m" />
-    <None Include="stochDelayReaction.m" />
-    <None Include="stochPropensityReaction.m" />
-    <None Include="stochSimulation.m" />
-    <None Include="stochState.m" />
-    <None Include="stochTimerReaction.m" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cmdlparser\cmdlparser.vcxproj">
@@ -281,5 +253,62 @@ copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)toolbox\$(TargetName)$(TargetEx
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets" Condition="Exists('..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets'))" />
+  </Target>
+  <Target Name="AfterBuild">
+    <PropertyGroup>
+      <deployBaseDir>$(SolutionDir)deploy\$(Configuration)\$(Platform)\</deployBaseDir>
+      <deployDir>$(DeployBaseDir)$(ProjectName)\</deployDir>
+      <deployZip>$(DeployBaseDir)$(ProjectName).zip</deployZip>
+      <lib>lib</lib>
+      <include>include</include>
+      <matstochsim>matstochsim</matstochsim>
+      <expression>expression</expression>
+      <stochsim>stochsim</stochsim>
+      <cmdlparser>cmdlparser</cmdlparser>
+      <examples>examples</examples>
+    </PropertyGroup>
+    <Delete Files="$(deployZip)" />
+    <RemoveDir Directories="$(deployDir)" />
+    <ItemGroup>
+      <mainFiles Include="$(SolutionDir)resources\$(ProjectName)\*.m" />
+      <mainFiles Include="$(OutDir)$(ProjectName)$(TargetExt)" />
+      <exampleFiles Include="$(SolutionDir)$(examples)\*.cmdl" />
+      <cmdlparserIncludeFiles Include="$(SolutionDir)$(include)\$(cmdlparser)\**\*.h" />
+      <stochsimIncludeFiles Include="$(SolutionDir)$(include)\$(stochsim)\**\*.h" />
+      <expressionIncludeFiles Include="$(SolutionDir)$(include)\$(expression)\**\*.h" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.h" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.cpp" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.c" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.h" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.cpp" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.c" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.h" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.cpp" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.c" />
+      <matstochsimLibFiles Include="$(SolutionDir)$(lib)\$(matstochsim)\**\*.h" />
+      <matstochsimLibFiles Include="$(SolutionDir)$(lib)\$(matstochsim)\**\*.cpp" />
+      <matstochsimLibFiles Include="$(SolutionDir)$(lib)\$(matstochsim)\**\*.c" />
+    </ItemGroup>
+    <Copy SourceFiles="@(mainFiles)" DestinationFolder="$(DeployDir)" />
+    <Copy SourceFiles="@(exampleFiles)" DestinationFolder="$(DeployDir)$(examples)" />
+    <Copy SourceFiles="@(cmdlparserIncludeFiles)" DestinationFolder="$(deployDir)$(include)\$(cmdlparser)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(stochsimIncludeFiles)" DestinationFolder="$(deployDir)$(include)\$(stochsim)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(expressionIncludeFiles)" DestinationFolder="$(deployDir)$(include)\expression\%(RecursiveDir)" />
+    <Copy SourceFiles="@(cmdlparserLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(cmdlparser)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(stochsimLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(stochsim)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(expressionLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(expression)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(matstochsimLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(matstochsim)\%(RecursiveDir)" />
+    <ItemGroup>
+      <zipFiles Include="$(deployDir)**\*.*" />
+    </ItemGroup>
+    <Zip Files="@(zipFiles)" ZipFileName="$(deployZip)" WorkingDirectory="$(deployDir)">
+    </Zip>
+  </Target>
 </Project>

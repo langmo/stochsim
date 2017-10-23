@@ -73,23 +73,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -104,11 +104,12 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)examples
-copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying Examples</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -124,11 +125,12 @@ copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)examples
-copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying Examples</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,11 +150,12 @@ copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)examples
-copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying Examples</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -172,11 +175,12 @@ copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)examples
-copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying Examples</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -199,7 +203,66 @@ copy $(SolutionDir)examples\*.cmdl $(OutDir)examples</Command>
       <Project>{dd3f410f-fa47-4b25-9ed5-e81bab60159e}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets" Condition="Exists('..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets'))" />
+  </Target>
+  <Target Name="AfterBuild">
+    <PropertyGroup>
+      <deployBaseDir>$(SolutionDir)deploy\$(Configuration)\$(Platform)\</deployBaseDir>
+      <deployDir>$(DeployBaseDir)$(ProjectName)\</deployDir>
+      <deployZip>$(DeployBaseDir)$(ProjectName).zip</deployZip>
+      <lib>lib</lib>
+      <include>include</include>
+      <cmdstochsim>cmdstochsim</cmdstochsim>
+      <expression>expression</expression>
+      <stochsim>stochsim</stochsim>
+      <cmdlparser>cmdlparser</cmdlparser>
+      <examples>examples</examples>
+    </PropertyGroup>
+    <Delete Files="$(deployZip)" />
+    <RemoveDir Directories="$(deployDir)" />
+    <ItemGroup>
+      <mainFiles Include="$(OutDir)$(ProjectName)$(TargetExt)" />
+      <exampleFiles Include="$(SolutionDir)$(examples)\*.cmdl" />
+      <cmdlparserIncludeFiles Include="$(SolutionDir)$(include)\$(cmdlparser)\**\*.h" />
+      <stochsimIncludeFiles Include="$(SolutionDir)$(include)\$(stochsim)\**\*.h" />
+      <expressionIncludeFiles Include="$(SolutionDir)$(include)\$(expression)\**\*.h" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.h" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.cpp" />
+      <cmdlparserLibFiles Include="$(SolutionDir)$(lib)\$(cmdlparser)\**\*.c" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.h" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.cpp" />
+      <stochsimLibFiles Include="$(SolutionDir)$(lib)\$(stochsim)\**\*.c" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.h" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.cpp" />
+      <expressionLibFiles Include="$(SolutionDir)$(lib)\$(expression)\**\*.c" />
+      <cmdstochsimLibFiles Include="$(SolutionDir)$(lib)\$(cmdstochsim)\**\*.h" />
+      <cmdstochsimLibFiles Include="$(SolutionDir)$(lib)\$(cmdstochsim)\**\*.cpp" />
+      <cmdstochsimLibFiles Include="$(SolutionDir)$(lib)\$(cmdstochsim)\**\*.c" />
+    </ItemGroup>
+    <Copy SourceFiles="@(mainFiles)" DestinationFolder="$(DeployDir)" />
+    <Copy SourceFiles="@(exampleFiles)" DestinationFolder="$(DeployDir)$(examples)" />
+    <Copy SourceFiles="@(cmdlparserIncludeFiles)" DestinationFolder="$(deployDir)$(include)\$(cmdlparser)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(stochsimIncludeFiles)" DestinationFolder="$(deployDir)$(include)\$(stochsim)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(expressionIncludeFiles)" DestinationFolder="$(deployDir)$(include)\expression\%(RecursiveDir)" />
+    <Copy SourceFiles="@(cmdlparserLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(cmdlparser)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(stochsimLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(stochsim)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(expressionLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(expression)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(cmdstochsimLibFiles)" DestinationFolder="$(deployDir)$(lib)\$(cmdstochsim)\%(RecursiveDir)" />
+    <ItemGroup>
+      <zipFiles Include="$(deployDir)**\*.*" />
+    </ItemGroup>
+    <Zip Files="@(zipFiles)" ZipFileName="$(deployZip)" WorkingDirectory="$(deployDir)">
+    </Zip>
+  </Target>
 </Project>

@@ -1,5 +1,5 @@
 #include "mex.h"
-#include "communicationhelper.h"
+#include "MatlabHandleForPtr.h"
 #include <string>
 #include "SimulationWrapper.h"
 #include "MatlabParams.h"
@@ -26,7 +26,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	}
 
     // Create new simulation
-	if(command =="new")
+	if(command =="new") 
 	{
         SimulationWrapper* simulationWrapper = new SimulationWrapper();
 		if (params.NumParams() > 1)
@@ -58,7 +58,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				mexErrMsgTxt("Unexpected error while trying to parse CMDL file.");
 			}
 		}
-		params.Set(0, convertPtr2Mat<SimulationWrapper>(simulationWrapper));
+		params.Set(0, CreateMatlabHandle<SimulationWrapper>(simulationWrapper));
         return;
     }
 	const mxArray* simulationRaw;
@@ -83,12 +83,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (command == "delete") 
 	{
         // Destroy the C++ object
-		destroyObject<SimulationWrapper>(simulationRaw);
+		DeleteMatlabHandle<SimulationWrapper>(simulationRaw);
         return;
     }
     
     // Get the class instance pointer from the second input
-	SimulationWrapper* simulation = convertMat2Ptr<SimulationWrapper>(simulationRaw);
+	SimulationWrapper* simulation = GetPtrFromMatlabHandle<SimulationWrapper>(simulationRaw);
 	try
 	{
 		simulation->ParseCommand(command, params.ShiftInputs(2));

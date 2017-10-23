@@ -30,7 +30,7 @@ void cmdl_internal_ParseFree(
 	void(*freeProc)(void*)     /* Function used to reclaim memory */
 );
 #ifndef NDEBUG
-void internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+void cmdl_internal_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
 #endif
 
 
@@ -526,7 +526,7 @@ namespace cmdlparser
 		if (!logFilePath.empty())
 		{
 			fopen_s(&logFile, logFilePath.c_str(), "w");
-			if (logFile_)
+			if (logFile)
 				cmdl_internal_ParseTrace(logFile, "cmdl_");
 			else
 				cmdl_internal_ParseTrace(0, "cmdl_");

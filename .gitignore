@@ -9,6 +9,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Bb]in/
+[Dd]eploy/
+[Pp]ackages/
 
 # Visual C++ project user files
 *.vcxproj.user

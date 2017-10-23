@@ -17,9 +17,6 @@
     <ClInclude Include="SimulationWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="communicationhelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MatlabParams.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -29,32 +26,45 @@
     <ClInclude Include="MatlabStateLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MatlabHandleForPtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="matstochsim.def">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="stochSimulation.m">
+    <None Include="..\..\resources\matstochsim\install.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochState.m">
+    <None Include="..\..\resources\matstochsim\stochChoice.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochComposedState.m">
+    <None Include="..\..\resources\matstochsim\stochComposedState.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochDelayReaction.m">
+    <None Include="..\..\resources\matstochsim\stochDelayReaction.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochPropensityReaction.m">
+    <None Include="..\..\resources\matstochsim\stochPropensityReaction.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="stochTimerReaction.m">
+    <None Include="..\..\resources\matstochsim\stochReadStateFile.m">
       <Filter>Matlab Files</Filter>
     </None>
-    <None Include="install.m">
+    <None Include="..\..\resources\matstochsim\stochSimulation.m">
       <Filter>Matlab Files</Filter>
     </None>
+    <None Include="..\..\resources\matstochsim\stochSimulationComponent.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="..\..\resources\matstochsim\stochState.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="..\..\resources\matstochsim\stochTimerReaction.m">
+      <Filter>Matlab Files</Filter>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="matstochsim.cpp">

@@ -189,6 +189,22 @@ namespace stochsim
 		}
 
 		/// <summary>
+		/// Adds a species which can be used in the expression determining the choice.
+		/// </summary>
+		/// <param name="state">Species to add as a modifier.</param>
+		void AddModifier(std::shared_ptr<IState> state) noexcept
+		{
+			for (auto& modifier : modifiers_)
+			{
+				if (state == modifier)
+				{
+					return;
+				}
+			}
+			modifiers_.emplace_back(std::move(state));
+		}
+
+		/// <summary>
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to true.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to true.</returns>
@@ -198,6 +214,20 @@ namespace stochsim
 			for (auto& product : productsIfTrue_)
 			{
 				returnVal.emplace_back(product.state_, product.stochiometry_);
+			}
+			return std::move(returnVal);
+		}
+
+		/// <summary>
+		/// Returns all modifiers.
+		/// </summary>
+		/// <returns>Collection of all modifiers.</returns>
+		stochsim::Collection<std::shared_ptr<IState>> GetModifiers() const noexcept
+		{
+			stochsim::Collection<std::shared_ptr<IState>> returnVal;
+			for (auto& modifier : modifiers_)
+			{
+				returnVal.emplace_back(modifier);
 			}
 			return std::move(returnVal);
 		}
@@ -352,6 +382,7 @@ namespace stochsim
 		std::unique_ptr<expression::IExpression> boundChoiceEquation_;
 		std::vector<ReactionElementWithModifiers> productsIfTrue_;
 		std::vector<ReactionElementWithModifiers> productsIfFalse_;
+		std::vector<std::shared_ptr<IState>> modifiers_;
 		VariablesMap variables_;
 	};
 }
