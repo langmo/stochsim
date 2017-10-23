@@ -1,13 +1,12 @@
 ------------------------------------------------------------------------------------------
 The GNU LESSER GENERAL PUBLIC LICENSE
 This license applies to
-  - Dizzy CMDL example models, 
+  - CMDL example models from Dizzy, 
     Copyright unclear, probably 2003/2004, Stephen Ramsey
 	(Stephen Ramsey is stated as the author of the files).
     See http://magnet.systemsbiology.net/software/Dizzy/ for details.
     Files: + examples/GAL.cmdl
            + examples/Michaelis.cmdl
-           + examples/singlegene.cmdl
            
 ------------------------------------------------------------------------------------------
 
