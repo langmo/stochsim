@@ -278,8 +278,12 @@
     <RemoveDir Directories="$(deployDir)" />
     <ItemGroup>
       <mainFiles Include="$(SolutionDir)resources\$(ProjectName)\*.m" />
+      <mainFiles Include="$(SolutionDir)LICENSE" />
+      <mainFiles Include="$(SolutionDir)LICENSE-3RD-PARTY" />
+      <mainFiles Include="$(SolutionDir)README.md" />
       <mainFiles Include="$(OutDir)$(ProjectName)$(TargetExt)" />
       <exampleFiles Include="$(SolutionDir)$(examples)\*.cmdl" />
+      <exampleFiles Include="$(SolutionDir)$(examples)\*.m" />
       <cmdlparserIncludeFiles Include="$(SolutionDir)$(include)\$(cmdlparser)\**\*.h" />
       <stochsimIncludeFiles Include="$(SolutionDir)$(include)\$(stochsim)\**\*.h" />
       <expressionIncludeFiles Include="$(SolutionDir)$(include)\$(expression)\**\*.h" />

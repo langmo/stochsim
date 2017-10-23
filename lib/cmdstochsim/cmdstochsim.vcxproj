@@ -233,6 +233,9 @@
     <RemoveDir Directories="$(deployDir)" />
     <ItemGroup>
       <mainFiles Include="$(OutDir)$(ProjectName)$(TargetExt)" />
+      <mainFiles Include="$(SolutionDir)LICENSE" />
+      <mainFiles Include="$(SolutionDir)LICENSE-3RD-PARTY" />
+      <mainFiles Include="$(SolutionDir)README.md" />
       <exampleFiles Include="$(SolutionDir)$(examples)\*.cmdl" />
       <cmdlparserIncludeFiles Include="$(SolutionDir)$(include)\$(cmdlparser)\**\*.h" />
       <stochsimIncludeFiles Include="$(SolutionDir)$(include)\$(stochsim)\**\*.h" />
