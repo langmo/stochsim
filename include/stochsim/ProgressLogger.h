@@ -14,16 +14,16 @@ namespace stochsim
 		ProgressLogger() : runtime_(1)
 		{
 		}
-		virtual void WriteLog(double time) override
+		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
 			std::cout << "\b\b\b\b\b\b" << std::setw(5) << std::fixed << std::setprecision(1) << (time / runtime_ * 100) << '%';
 		}
-		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
+		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			runtime_ = simInfo.RunTime();
+			runtime_ = simInfo.GetRunTime();
 			std::cout << "Simulating model:   0.0%";
 		}
-		virtual void Uninitialize() override
+		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			std::cout << "\b\b\b\b\b\b Finished!" << std::endl;
 		}

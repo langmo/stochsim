@@ -98,9 +98,9 @@ namespace stochsim
 					{
 						if (reactant->GetName() == name)
 						{
-							std::function<expression::number()> holder = [reactant]() -> expression::number
+							std::function<expression::number()> holder = [reactant, &simInfo]() -> expression::number
 							{
-								return static_cast<expression::number>(reactant->Num());
+								return static_cast<expression::number>(reactant->Num(simInfo));
 							};
 							return expression::makeFunctionHolder(holder, true);
 						}
@@ -109,7 +109,7 @@ namespace stochsim
 					{
 						std::function<expression::number()> holder = [&simInfo]() -> expression::number
 						{
-							return static_cast<expression::number>(simInfo.SimTime());
+							return static_cast<expression::number>(simInfo.GetSimTime());
 						};
 						return expression::makeFunctionHolder(holder, true);
 					}

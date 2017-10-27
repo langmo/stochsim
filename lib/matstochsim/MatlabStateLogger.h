@@ -11,9 +11,9 @@ public:
 	MatlabStateLogger();
 	virtual ~MatlabStateLogger();
 
-	virtual void WriteLog(double time) override;
-	virtual void Initialize(std::string baseFolder, stochsim::ISimInfo& simInfo) override;
-	virtual void Uninitialize() override;
+	virtual void WriteLog(stochsim::ISimInfo& simInfo, double time) override;
+	virtual void Initialize(stochsim::ISimInfo& simInfo) override;
+	virtual void Uninitialize(stochsim::ISimInfo& simInfo) override;
 
 	void AddState(std::shared_ptr<stochsim::IState> state);
 

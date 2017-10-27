@@ -65,15 +65,58 @@ namespace stochsim
 			SetChoiceEquation(choiceEquation);
 		}
 		/// <summary>
-		/// A choice is not really a state, but only implements the state interface such that it can be added as a product of any reaction which allows to add an arbitrary state as a product.
-		/// Since, however, a choice does not really have a concentration, this function always returns zero. This prevents at least some possible exceptions, e.g. when (invalidly) adding a Choice as a
-		/// reactant to a propensity reaction following mass action kinetics, this reaction will never fire since a zero concentration of the choice then implies zero propensity of the reaction.
+		/// A choice is not really a state, but only implements the state interface such that it can be added as a reactant or product of any reaction.
+		/// Instead of the molecular number of the choice, we here evaluate the choice condition, and return a value which is compatible with mass action kinetics.
+		/// That is, if the choice is between 2*A+C and 3*D, we return A*(A-1)*C if the choice condition evaluates to true, and D*(D-1)*(D-2) if not.
 		/// </summary>
-		/// <returns>Returns always zero.</returns>
-		virtual size_t Num() const override
+		/// <returns>Returns value compatible to mass action kinetics.</returns>
+		virtual size_t Num(ISimInfo& simInfo) const override
 		{
-			// Special kind of state, which only forwards addition of molecules to one of two choices. Thus, its concentration is always zero.
-			return 0;
+			// Find out which choice was made by evaluating the formula with the current variable values.
+			expression::number choice;
+			try
+			{
+				choice = boundChoiceEquation_->Eval();
+			}
+			catch (const std::exception& e)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Could not evaluate expression \"";
+				choiceEquation_->PrintCmdl(errorMessage, false);
+				errorMessage << "\" for choice " << name_ << ": " << e.what();
+				throw std::exception(errorMessage.str().c_str());
+			}
+			// Depending of the choice, either increase one or the other sets of products.
+			if (choice != 0)
+			{
+				size_t rate = 1;
+				for (const auto& state : productsIfTrue_)
+				{
+					const size_t stoch = state.stochiometry_;
+					const size_t num = state.state_->Num(simInfo);
+					for (size_t s = 0; s < stoch; s++)
+					{
+						rate *= num - s;
+					}
+
+				}
+				return rate;
+			}
+			else
+			{
+				size_t rate = 1;
+				for (const auto& state : productsIfFalse_)
+				{
+					const size_t stoch = state.stochiometry_;
+					const size_t num = state.state_->Num(simInfo);
+					for (size_t s = 0; s < stoch; s++)
+					{
+						rate *= num - s;
+					}
+
+				}
+				return rate;
+			}
 		}
 		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
@@ -129,11 +172,107 @@ namespace stochsim
 		}
 		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
-			throw std::exception("Trying to decrease the concentration of a Choice state. Choices must only be used on the RHS of a reaction, and their concentration must only be increased.");
+			// Set parser variables
+			bool rebind = false;
+			for (auto& variable : variables)
+			{
+				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
+				if (!valuePtr)
+				{
+					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
+					rebind = true;
+				}
+				else
+				{
+					*valuePtr = static_cast<expression::number>(variable.second);
+				}
+			}
+			if (rebind)
+				rebind_variables(simInfo, false);
+			for (size_t i = 0; i < num; i++)
+			{
+				// Find out which choice was made by evaluating the formula with the current variable values.
+				expression::number choice;
+				try
+				{
+					choice = boundChoiceEquation_->Eval();
+				}
+				catch (const std::exception& e)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Could not evaluate expression \"";
+					choiceEquation_->PrintCmdl(errorMessage, false);
+					errorMessage << "\" for choice " << name_ << ": " << e.what();
+					throw std::exception(errorMessage.str().c_str());
+				}
+				// Depending of the choice, either increase one or the other sets of products.
+				if (choice != 0)
+				{
+					for (const auto& product : productsIfTrue_)
+					{
+						product.state_->Remove(simInfo, product.stochiometry_, variables);
+					}
+				}
+				else
+				{
+					for (const auto& product : productsIfFalse_)
+					{
+						product.state_->Remove(simInfo, product.stochiometry_, variables);
+					}
+				}
+			}
 		}
 		virtual void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
 		{
-			// do nothing.
+			// Set parser variables
+			bool rebind = false;
+			for (auto& variable : variables)
+			{
+				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
+				if (!valuePtr)
+				{
+					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
+					rebind = true;
+				}
+				else
+				{
+					*valuePtr = static_cast<expression::number>(variable.second);
+				}
+			}
+			if (rebind)
+				rebind_variables(simInfo, false);
+			for (size_t i = 0; i < num; i++)
+			{
+				// Find out which choice was made by evaluating the formula with the current variable values.
+				expression::number choice;
+				try
+				{
+					choice = boundChoiceEquation_->Eval();
+				}
+				catch (const std::exception& e)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Could not evaluate expression \"";
+					choiceEquation_->PrintCmdl(errorMessage, false);
+					errorMessage << "\" for choice " << name_ << ": " << e.what();
+					throw std::exception(errorMessage.str().c_str());
+				}
+				// Depending of the choice, either increase one or the other sets of products.
+				if (choice != 0)
+				{
+					for (const auto& product : productsIfTrue_)
+					{
+						product.state_->Transform(simInfo, product.stochiometry_, variables);
+					}
+				}
+				else
+				{
+					for (const auto& product : productsIfFalse_)
+					{
+						product.state_->Transform(simInfo, product.stochiometry_, variables);
+					}
+				}
+			}
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
@@ -317,9 +456,9 @@ namespace stochsim
 							auto& state = component.state_;
 							if (state->GetName() == name)
 							{
-								std::function<expression::number()> holder = [state]() -> expression::number
+								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
 								{
-									return static_cast<expression::number>(state->Num());
+									return static_cast<expression::number>(state->Num(simInfo));
 								};
 								return expression::makeFunctionHolder(holder, true);
 							}
@@ -329,9 +468,9 @@ namespace stochsim
 							auto& state = component.state_;
 							if (state->GetName() == name)
 							{
-								std::function<expression::number()> holder = [state]() -> expression::number
+								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
 								{
-									return static_cast<expression::number>(state->Num());
+									return static_cast<expression::number>(state->Num(simInfo));
 								};
 								return expression::makeFunctionHolder(holder, true);
 							}
@@ -340,7 +479,7 @@ namespace stochsim
 						{
 							std::function<expression::number()> holder = [&simInfo]() -> expression::number
 							{
-								return static_cast<expression::number>(simInfo.SimTime());
+								return static_cast<expression::number>(simInfo.GetSimTime());
 							};
 							return expression::makeFunctionHolder(holder, true);
 						}

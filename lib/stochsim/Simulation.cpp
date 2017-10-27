@@ -2,7 +2,8 @@
 #include <math.h>    
 #include <cassert>
 #include <sstream> 
-#include <ctime>
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <time.h>
 #include <locale>
 #include <codecvt>
 #include <iostream>
@@ -22,7 +23,7 @@ namespace stochsim
 	class LogManager
 	{
 	public:
-		LogManager() : logPeriod_(1.0), baseFolder_("simulations"), uniqueSubFolder_(true)
+		LogManager() : logPeriod_(1.0), baseFolder_("simulations"), uniqueSubFolder_(true), saveFolder_("")
 		{
 		}
 		void SetUniqueSubfolder(bool uniqueSubFolder)
@@ -42,11 +43,16 @@ namespace stochsim
 			return baseFolder_;
 		}
 
+		std::string GetSaveFolder() const
+		{
+			return saveFolder_;
+		}
+
 		void AddTask(std::shared_ptr<ILogger> task)
 		{
 			tasks_.push_back(std::move(task));
 		}
-		void Initialize(double time, ISimInfo& simInfo)
+		void Initialize(ISimInfo& simInfo)
 		{
 			// Test if any logger is writing anything to the disk, i.e. if we have to create a results folder at all...
 			bool shouldCreate = false;
@@ -58,52 +64,55 @@ namespace stochsim
 					break;
 				}
 			}
-			std::string folder;
 			if (shouldCreate)
 			{
 				time_t t = std::time(0);
-				struct tm * now = localtime(&t);
+				struct tm now;
+				localtime_s(&now, &t);
 				std::stringstream buffer;
 				buffer << baseFolder_;
 				if (uniqueSubFolder_)
 				{
 					buffer << "/"
-						<< (now->tm_year + 1900) << '-'
-						<< (now->tm_mon + 1) << '-'
-						<< now->tm_mday << '_'
-						<< now->tm_hour << '-'
-						<< now->tm_min << '-'
-						<< now->tm_sec << '/';
+						<< (now.tm_year + 1900) << '-'
+						<< (now.tm_mon + 1) << '-'
+						<< now.tm_mday << '_'
+						<< now.tm_hour << '-'
+						<< now.tm_min << '-'
+						<< now.tm_sec << '/';
 				}
-				folder = buffer.str();
-				folder = CreatePathRecursively(folder);
+				saveFolder_ = buffer.str();
+				saveFolder_ = CreatePathRecursively(saveFolder_);
 			}
 			else
-				folder = "";
+				saveFolder_ = "";
 
 			for (auto& task : tasks_)
 			{
-				task->Initialize(folder, simInfo);
+				task->Initialize(simInfo);
 			}
-			WriteLog(time);
+			auto time = simInfo.GetSimTime();
+			WriteLog(simInfo, time);
 			lastLogTime_ = time;
 		}
-		void Uninitialize(double time)
+		void Uninitialize(ISimInfo& simInfo)
 		{
-			NotifyNextChange(time);
-			WriteLog(time);
+			auto time = simInfo.GetSimTime();
+			NotifyBeforeChange(simInfo);
+			WriteLog(simInfo, time);
 			lastLogTime_ = time;
 			for (auto& task : tasks_)
 			{
-				task->Uninitialize();
+				task->Uninitialize(simInfo);
 			}
 		}
-		void NotifyNextChange(double time)
+		void NotifyBeforeChange(ISimInfo& simInfo)
 		{
+			auto time = simInfo.GetSimTime();
 			while (lastLogTime_ + logPeriod_ < time)
 			{
 				lastLogTime_ += logPeriod_;
-				WriteLog(lastLogTime_);
+				WriteLog(simInfo, lastLogTime_);
 			}
 		}
 		void SetLogPeriod(double logPeriod)
@@ -116,11 +125,11 @@ namespace stochsim
 			baseFolder_ = std::move(baseFolder);
 		}
 	private:
-		inline void WriteLog(double time)
+		inline void WriteLog(ISimInfo& simInfo, double time)
 		{
 			for (auto& task : tasks_)
 			{
-				task->WriteLog(time);
+				task->WriteLog(simInfo, time);
 			}
 		}
 		std::vector<std::shared_ptr<ILogger>> tasks_;
@@ -128,6 +137,7 @@ namespace stochsim
 		double logPeriod_;
 		std::string baseFolder_;
 		bool uniqueSubFolder_;
+		std::string saveFolder_;
 	};
 	
 	class Simulation::Impl : public ISimInfo
@@ -160,7 +170,7 @@ namespace stochsim
 			{
 				reaction->Initialize(*this);
 			}
-			logger_.Initialize(time_, *this);
+			logger_.Initialize(*this);
 
 			// propensities of reactions
 			std::vector<double> ai(propensityReactions_.size());
@@ -213,7 +223,7 @@ namespace stochsim
 					}
 
 					// notify logger about the time of the next reaction event
-					logger_.NotifyNextChange(time_);
+					logger_.NotifyBeforeChange(*this);
 
 					// decide on identity of next reaction event and fire this event
 					double r2 = randomUniform_(randomEngine_);
@@ -238,28 +248,32 @@ namespace stochsim
 						break;
 					}
 					// notify logger about the time of the next reaction event
-					logger_.NotifyNextChange(time_);
+					logger_.NotifyBeforeChange(*this);
 					eventReactions_[nextEventIndex]->Fire(*this);
 				}
 			}
 
 			// Uninitialize
-			logger_.Uninitialize(time_);
+			logger_.Uninitialize(*this);
 			for (auto& state : states_)
 			{
 				state->Uninitialize(*this);
 			}
 		}
 		
-		virtual double SimTime() const override
+		virtual double GetSimTime() const override
 		{
 			return time_;
 		}
-		virtual double LogPeriod() const override
+		virtual double GetLogPeriod() const override
 		{
 			return logger_.GetLogPeriod();
 		}
-		virtual double RunTime() const override
+		virtual std::string GetSaveFolder() const override
+		{
+			return logger_.GetSaveFolder();
+		}
+		virtual double GetRunTime() const override
 		{
 			return runtime_;
 		}

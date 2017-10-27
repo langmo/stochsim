@@ -13,7 +13,7 @@ MatlabStateLogger::~MatlabStateLogger()
 {
 }
 
-void MatlabStateLogger::WriteLog(double time)
+void MatlabStateLogger::WriteLog(stochsim::ISimInfo& simInfo, double time)
 {
 	if (!shouldLog_)
 		return;
@@ -23,18 +23,18 @@ void MatlabStateLogger::WriteLog(double time)
 	MatlabParams::AssignArrayElement(*result_, currentRow_, 0, time);
 	for (size_t i = 0; i < states_.size(); i++)
 	{
-		MatlabParams::AssignArrayElement(*result_, currentRow_, i + 1, static_cast<double>(states_[i]->Num()));
+		MatlabParams::AssignArrayElement(*result_, currentRow_, i + 1, static_cast<double>(states_[i]->Num(simInfo)));
 	}
 	currentRow_++;
 }
 
-void MatlabStateLogger::Initialize(std::string baseFolder, stochsim::ISimInfo & simInfo)
+void MatlabStateLogger::Initialize(stochsim::ISimInfo & simInfo)
 {
 	if (!shouldLog_)
 		return;
 	currentRow_ = 0;
 	columns_ = states_.size() + 1; // time is first column.
-	rows_= static_cast<size_t>(::ceil(simInfo.RunTime() / simInfo.LogPeriod())+1); // we also have to count initial and final state.
+	rows_= static_cast<size_t>(::ceil(simInfo.GetRunTime() / simInfo.GetLogPeriod())+1); // we also have to count initial and final state.
 	result_ = MatlabParams::CreateDoubleMatrix(rows_, columns_);
 	headers_ = MatlabParams::CreateCell(1, columns_);
 	MatlabParams::AssignCellElement(*headers_, 0, 0, "Time");
@@ -56,7 +56,7 @@ bool MatlabStateLogger::WritesToDisk() const
 {
 	return false;
 }
-void MatlabStateLogger::Uninitialize()
+void MatlabStateLogger::Uninitialize(stochsim::ISimInfo& simInfo)
 {
 }
 void MatlabStateLogger::AddState(std::shared_ptr<stochsim::IState> state)

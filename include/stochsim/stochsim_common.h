@@ -44,18 +44,13 @@ namespace stochsim
 		/// Should only be called while a simulation is running.
 		/// </summary>
 		/// <returns>Simulation time, starting at zero.</returns>
-		virtual double SimTime() const = 0;
+		virtual double GetSimTime() const = 0;
 		/// <summary>
 		/// Returns the runtime of the simulation, i.e. when the simulation stops.
 		/// Should only be called while a simulation is running.
 		/// </summary>
 		/// <returns>Total runtime of simulation, in simulation time units.</returns>
-		virtual double RunTime() const = 0;
-		/// <summary>
-		/// Returns the period for logging, e.g. "1.0" if every 1 units of simulation the current state is logged.
-		/// </summary>
-		/// <returns>Period of logging in simulation time units</returns>
-		virtual double LogPeriod() const = 0;
+		virtual double GetRunTime() const = 0;
 		/// <summary>
 		/// Generates a uniformly distributed random integer number between the lower and the upper bound. Both bounds are included.
 		/// </summary>
@@ -68,6 +63,16 @@ namespace stochsim
 		/// </summary>
 		/// <returns></returns>
 		virtual double Rand() = 0;
+		/// <summary>
+		/// Returns the folder under which the results of the simulation should be saved.
+		/// </summary>
+		/// <returns>Folder where simulation results are saved.</returns>
+		virtual std::string GetSaveFolder() const = 0;
+		/// <summary>
+		/// Returns the time period of logging. Default = 0.1.
+		/// </summary>
+		/// <returns>Log period in simulation time units</returns>
+		virtual double GetLogPeriod() const = 0;
 	};
 
 	/// <summary>
@@ -80,8 +85,9 @@ namespace stochsim
 		/// <summary>
 		/// Returns the current value of the state, i.e. the concentration times the volume.
 		/// </summary>
+		/// <param name="simInfo">Simulation context.</param>
 		/// <returns>Number of elements the state represents/value of the state. At t=0, must be equal to the initial condition.</returns>
-		virtual size_t Num() const = 0;
+		virtual size_t Num(ISimInfo& simInfo) const = 0;
 		/// <summary>
 		/// Increases the value of the state by the given number. Typically called by the simulation as a result of a reaction firing, with this state being a product of the reaction.
 		/// </summary>
@@ -116,7 +122,7 @@ namespace stochsim
 		/// Returns the name of the state/species.
 		/// </summary>
 		/// <returns>Name of the species/state.</returns>
-		virtual std::string GetName() const = 0;
+		virtual std::string GetName() const noexcept= 0;
 	};
 
 	/// <summary>
@@ -202,18 +208,19 @@ namespace stochsim
 		/// <summary>
 		/// Called when the task should write whatever information it is responsible to write to the disk/display on the screen.
 		/// </summary>
-		/// <param name="time">The current simulation time.</param>
-		virtual void WriteLog(double time) = 0;
+		/// <param name="simInfo">Simulation context.</param>
+		/// <param name="time">Time of logging. Note that this can be different to the current simulation time.</param>
+		virtual void WriteLog(ISimInfo& simInfo, double time) = 0;
 		/// <summary>
 		/// Called before a new simulation is started.
 		/// </summary>
-		/// <param name="baseFolder">The folder where the results of the simulation should be stored on the disk, if this task actually stores anything on the disk.</param>
 		/// <param name="simInfo">Simulation context.</param>
-		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) = 0;
+		virtual void Initialize(ISimInfo& simInfo) = 0;
 		/// <summary>
 		/// Called after the simulation has finished. Perfect place to release e.g. file handles.
 		/// </summary>
-		virtual void Uninitialize() = 0;
+		/// <param name="simInfo">Simulation context.</param>
+		virtual void Uninitialize(ISimInfo& simInfo) = 0;
 		/// <summary>
 		/// Should return true if the logger, in its current configuration, will write anything to the disk/file system, and false otherwise.
 		/// </summary>

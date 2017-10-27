@@ -27,7 +27,7 @@ namespace stochsim
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
-			return state_->Num() > 0 ? fireTime_((*state_)[0]) : stochsim::inf;
+			return state_->Num(simInfo) > 0 ? fireTime_((*state_)[0]) : stochsim::inf;
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{

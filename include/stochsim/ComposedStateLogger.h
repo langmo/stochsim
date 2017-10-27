@@ -35,7 +35,7 @@ namespace stochsim
 			}
 			modificationCounter_[molecule.numModified]++;
 		}
-		virtual void WriteLog(double time) override
+		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
 			*file_ << time;
 			for (auto& numMolecules : modificationCounter_)
@@ -45,14 +45,14 @@ namespace stochsim
 			}
 			*file_ << std::endl;
 		}
-		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
+		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			if (file_)
 			{
 				file_->close();
 				file_.reset();
 			}
-			std::string fileName = baseFolder;
+			std::string fileName = simInfo.GetSaveFolder();
 			fileName += "/";
 			fileName += fileName_;
 
@@ -73,7 +73,7 @@ namespace stochsim
 			}
 			*file_ << std::endl;
 		}
-		virtual void Uninitialize() override
+		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			if (file_)
 			{

@@ -303,7 +303,7 @@ namespace stochsim
 				for (const auto& reactant : reactants_)
 				{
 					const long stoch = reactant.stochiometry_;
-					const size_t num = reactant.state_->Num();
+					const size_t num = reactant.state_->Num(simInfo);
 					for (size_t s = 0; s < stoch; s++)
 					{
 						rate *= num - s;

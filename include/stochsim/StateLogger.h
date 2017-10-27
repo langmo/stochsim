@@ -31,14 +31,14 @@ namespace stochsim
 		{
 			return shouldLog_;
 		}
-		virtual void WriteLog(double time) override
+		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
 			if (!shouldLog_)
 				return;
 			(*file_) << time;
 			for (const auto& state : states_)
 			{
-				(*file_) << "," << state->Num();
+				(*file_) << "," << state->Num(simInfo);
 			}
 			(*file_) << std::endl;
 		}
@@ -72,7 +72,7 @@ namespace stochsim
 			AddState(state);
 			AddState(others...);
 		}
-		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
+		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			if (!shouldLog_)
 				return;
@@ -81,7 +81,7 @@ namespace stochsim
 				file_->close();
 				file_.reset();
 			}
-			std::string fileName = baseFolder;
+			std::string fileName = simInfo.GetSaveFolder();
 			fileName += "/";
 			fileName += fileName_;
 
@@ -101,7 +101,7 @@ namespace stochsim
 			}
 			(*file_) << std::endl;
 		}
-		virtual void Uninitialize() override
+		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			if (file_)
 			{

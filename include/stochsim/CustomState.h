@@ -49,14 +49,14 @@ namespace stochsim
 			buffer_.Clear();
 			for (size_t i = 0; i < GetInitialCondition(); i++)
 			{
-				initializer_(buffer_.PushTail(), simInfo.SimTime());
+				initializer_(buffer_.PushTail(), simInfo.GetSimTime());
 			}
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			buffer_.Clear();
 		}
-		virtual inline size_t Num() const override
+		virtual inline size_t Num(ISimInfo& simInfo) const override
 		{
 			return buffer_.Size();
 		}
@@ -64,7 +64,7 @@ namespace stochsim
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				initializer_(buffer_.PushTail(), simInfo.SimTime());
+				initializer_(buffer_.PushTail(), simInfo.GetSimTime());
 			}
 		}
 		
@@ -75,7 +75,7 @@ namespace stochsim
 				if (!removeListeners_.empty())
 				{
 					T& molecule = buffer_[0];
-					double time = simInfo.SimTime();
+					double time = simInfo.GetSimTime();
 					for (auto& removeListener : removeListeners_)
 					{
 						removeListener(molecule, time);
@@ -88,7 +88,7 @@ namespace stochsim
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.SimTime());
+				modifier_(buffer_[simInfo.Rand(0, buffer_.Size() - 1)], simInfo.GetSimTime());
 			}
 		}
 		/// <summary>
@@ -101,7 +101,7 @@ namespace stochsim
 			return buffer_[pos];
 		}
 
-		virtual std::string GetName() const override
+		virtual std::string GetName() const noexcept override
 		{
 			return name_;
 		}

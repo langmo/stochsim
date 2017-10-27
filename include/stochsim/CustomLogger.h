@@ -27,18 +27,18 @@ namespace stochsim
 		{
 			return true;
 		}
-		virtual void WriteLog(double time) override
+		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
 			logFunc_(*file_, time);
 		}
-		virtual void Initialize(std::string baseFolder, ISimInfo& simInfo) override
+		virtual void Initialize(ISimInfo& simInfo) override
 		{
 			if (file_)
 			{
 				file_->close();
 				file_.reset();
 			}
-			std::string fileName = baseFolder;
+			std::string fileName = simInfo.GetSaveFolder();
 			fileName += "/";
 			fileName += fileName_;
 
@@ -53,7 +53,7 @@ namespace stochsim
 
 			headerFunc_(*file_);
 		}
-		virtual void Uninitialize() override
+		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
 			if (file_)
 			{

@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <algorithm> 
 namespace stochsim
 {
 	// Forward declariation for the iteration
@@ -15,11 +16,23 @@ namespace stochsim
 		typedef CircularBufferIterator<T> iterator;
 		typedef CircularBufferIterator<const T> const_iterator;
 		typedef typename std::vector<T>::size_type size_type;
-		iterator                                       begin() { return iterator(*this, 0); }
-		iterator                                       end() { return iterator(*this, Size()); }
+		iterator                                       begin() 
+		{ 
+			return iterator(this, 0); 
+		}
+		iterator                                       end() 
+		{ 
+			return iterator(this, Size()); 
+		}
 
-		const_iterator                                 cbegin() const { return const_iterator(*this, 0); }
-		const_iterator                                 cend() const { return const_iterator(*this, Size()); }
+		const_iterator                                 cbegin() const 
+		{ 
+			return const_iterator(this, 0); 
+		}
+		const_iterator                                 cend() const 
+		{ 
+			return const_iterator(this, Size()); 
+		}
 
 		CircularBuffer(size_type initialCapacity = 1000) : capacity_(initialCapacity), elements_(initialCapacity), start_(0), end_(0)
 		{
@@ -46,20 +59,81 @@ namespace stochsim
 				return elements_[oldEnd];
 		}
 
-		inline void PopTop()
+		inline void PopTop(size_type num=1)
 		{
 			if (end_ == start_)
 				throw std::exception("Circular buffer empty!");
-			start_ = (start_ + 1) % capacity_;
+			start_ = (start_ + num) % capacity_;
 		}
 		/// <summary>
 		/// Returns the pos^th element in the buffer. 
 		/// </summary>
-		/// <param name="pos">Index greater equal to zero and smaller than Num().</param>
-		/// <returns>Properties of the molecule.</returns>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <returns>pos^th element in the buffer.</returns>
 		inline T& operator[](size_type pos)
 		{
 			return elements_[(start_ + pos) % capacity_];
+		}
+
+		/// <summary>
+		/// Returns the pos^th element in the buffer. 
+		/// </summary>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <returns>pos^th element in the buffer.</returns>
+		inline const T& operator[](size_type pos) const
+		{
+			return elements_[(start_ + pos) % capacity_];
+		}
+
+		/// <summary>
+		/// Returns the pos^th element in the buffer. 
+		/// </summary>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <returns>pos^th element in the buffer.</returns>
+		inline T& Get(size_type pos)
+		{
+			return elements_[(start_ + pos) % capacity_];
+		}
+
+		/// <summary>
+		/// Returns the pos^th element in the buffer. 
+		/// </summary>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <returns>pos^th element in the buffer.</returns>
+		inline const T& Get(size_type pos) const
+		{
+			return elements_[(start_ + pos) % capacity_];
+		}
+
+		/// <summary>
+		/// Sets the pos^th element in the buffer
+		/// </summary>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <param name="other">New value of pos^th element.</param>
+		inline void Set(size_type pos, const T& other)
+		{
+			elements_[(start_ + pos) % capacity_] = other;
+		}
+		/// <summary>
+		/// Sets the pos^th element in the buffer
+		/// </summary>
+		/// <param name="pos">Index greater equal to zero and smaller than Size().</param>
+		/// <param name="other">New value of pos^th element.</param>
+		inline void Set(size_type pos, T&& other)
+		{
+			elements_[(start_ + pos) % capacity_] = std::move(other);
+		}
+
+		/// <summary>
+		/// Sorts the buffer according to the order defined by the comparator.
+		/// The comparatormust satisfy the requirements of Compare (see std documentation), e.g. a lambda function
+		/// [](const T& a, const T& b) -> bool, which returns true if a is smaller than b. The ordering must be a strict weak ordering relation,
+		/// which implies that false should be returned if two elements are equal.
+		/// </summary>
+		/// <param name="comp">Comparator.</param>
+		template<class Compare> inline void Sort(Compare comp)
+		{
+			std::sort(begin(), end(), comp);
 		}
 
 	private:
@@ -86,38 +160,140 @@ namespace stochsim
 		}
 	};
 
-	template<class T> class CircularBufferIterator
+	template<class T> class CircularBufferIterator : public std::iterator<std::random_access_iterator_tag, T, ptrdiff_t>
 	{
 	private:
-		CircularBuffer<T> & buffer_;
+		CircularBuffer<T>* buffer_;
 		typename CircularBuffer<T>::size_type pos_;
 	public:
-		CircularBufferIterator(CircularBuffer<T> & buffer, typename CircularBuffer<T>::size_type pos)
+		CircularBufferIterator(CircularBuffer<T>* buffer, typename CircularBuffer<T>::size_type pos)
 			: buffer_(buffer), pos_(pos)
-		{}
-
-		operator bool()const
 		{
-			if (pos_ < buffer_.Size() && pos_ >= 0)
+		}
+		CircularBufferIterator(const CircularBufferIterator<T>& other)
+			: buffer_(other.buffer_), pos_(other.pos_)
+		{
+		}
+		CircularBufferIterator() : buffer_(nullptr), pos_(0)
+		{
+		}
+		CircularBufferIterator<T>& operator= (const CircularBufferIterator<T>& other)
+		{
+			buffer_ = other.buffer_;
+			pos_ = other.pos_;
+			return *this;
+		}
+
+		bool IsValid() const
+		{
+			if (buffer_ && pos_ < buffer_->Size() && pos_ >= 0)
 				return true;
 			else
 				return false;
 		}
 
-		bool operator==(const CircularBufferIterator<T>& rawIterator)const { return (pos_ == rawIterator.pos_); }
-		bool operator!=(const CircularBufferIterator<T>& rawIterator)const { return (pos_ != rawIterator.pos_); }
+		bool operator==(const CircularBufferIterator<T>& rawIterator) const 
+		{ 
+			return (pos_ == rawIterator.pos_ && buffer_ == rawIterator.buffer_); 
+		}
+		bool operator<=(const CircularBufferIterator<T>& rawIterator) const
+		{
+			return pos_ <= rawIterator.pos_;
+		}
+		bool operator>=(const CircularBufferIterator<T>& rawIterator) const
+		{
+			return pos_ >= rawIterator.pos_;
+		}
+		bool operator<(const CircularBufferIterator<T>& rawIterator) const
+		{
+			return pos_ < rawIterator.pos_;
+		}
+		bool operator>(const CircularBufferIterator<T>& rawIterator) const
+		{
+			return pos_ > rawIterator.pos_;
+		}
+		bool operator!=(const CircularBufferIterator<T>& rawIterator) const 
+		{ 
+			return (pos_ != rawIterator.pos_ || buffer_ != rawIterator.buffer_);
+		}
 
-		CircularBufferIterator<T>&                  operator+=(const ptrdiff_t& movement) { pos_ += movement; return (*this); }
-		CircularBufferIterator<T>&                  operator-=(const ptrdiff_t& movement) { pos_ -= movement; return (*this); }
-		CircularBufferIterator<T>&                  operator++() { ++pos_; return (*this); }
-		CircularBufferIterator<T>&                  operator--() { --pos_; return (*this); }
-		CircularBufferIterator<T>                   operator++(int) { auto temp(*this); ++pos_; return temp; }
-		CircularBufferIterator<T>                   operator--(int) { auto temp(*this); --pos_; return temp; }
-		CircularBufferIterator<T>                   operator+(const ptrdiff_t& movement) { auto oldPos = pos_; pos_ += movement; auto temp(*this); pos_ = oldPos; return temp; }
-		CircularBufferIterator<T>                   operator-(const ptrdiff_t& movement) { auto oldPos = pos_; pos_ -= movement; auto temp(*this); pos_ = oldPos; return temp; }
+		CircularBufferIterator<T>&                  operator+=(const ptrdiff_t& movement) 
+		{ 
+			pos_ += movement; 
+			return (*this); 
+		}
+		CircularBufferIterator<T>&                  operator-=(const ptrdiff_t& movement) 
+		{ 
+			pos_ -= movement; 
+			return (*this); 
+		}
+		CircularBufferIterator<T>&                  operator++() 
+		{ 
+			++pos_; 
+			return (*this); 
+		}
+		CircularBufferIterator<T>&                  operator--() 
+		{ 
+			--pos_; return (*this); 
+		}
+		CircularBufferIterator<T>                   operator++(int) 
+		{ 
+			auto temp(*this); 
+			++pos_; 
+			return std::move(temp);
+		}
+		CircularBufferIterator<T>                   operator--(int) 
+		{ 
+			auto temp(*this); 
+			--pos_; 
+			return std::move(temp);
+		}
+		CircularBufferIterator<T>                   operator+(const ptrdiff_t& movement) 
+		{ 
+			auto oldPos = pos_; 
+			pos_ += movement; 
+			auto temp(*this); 
+			pos_ = oldPos; 
+			return std::move(temp);
+		}
+		CircularBufferIterator<T>                   operator-(const ptrdiff_t& movement) 
+		{ 
+			auto oldPos = pos_; 
+			pos_ -= movement; 
+			auto temp(*this); 
+			pos_ = oldPos; 
+			return std::move(temp); 
+		}
 
-		T&											operator*() { return buffer_.Get(pos_); }
-		const T&									operator*()const { return buffer_.Get(pos_); }
-		T*											operator->() { return &buffer_.Get(pos_); }
+		ptrdiff_t									operator-(const CircularBufferIterator<T>& other)
+		{
+			return static_cast<ptrdiff_t>(pos_) - static_cast<ptrdiff_t>(other.pos_);
+		}
+
+		T&											operator*() 
+		{ 
+			return buffer_->Get(pos_);
+		}
+		const T&									operator*() const 
+		{ 
+			return buffer_->Get(pos_); 
+		}
+		T*											operator->() 
+		{ 
+			return buffer_ ? &buffer_->Get(pos_) : nullptr;
+		}
+		const T*									operator->() const
+		{
+			return buffer_ ? &buffer_->Get(pos_) : nullptr;
+		}
+
+		T&											operator[](ptrdiff_t movement)
+		{
+			return buffer_->Get(pos_+ movement);
+		}
+		const T&									operator[](ptrdiff_t movement) const
+		{
+			return buffer_->Get(pos_+ movement);
+		}
 	};
 }

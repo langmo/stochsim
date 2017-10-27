@@ -6,7 +6,7 @@
 MatlabProgressLogger::MatlabProgressLogger() : runtime_(1), shouldLog_(true), lastProgressPermille(0)
 {
 }
-void MatlabProgressLogger::WriteLog(double time)
+void MatlabProgressLogger::WriteLog(stochsim::ISimInfo& simInfo, double time)
 {
 	if (!shouldLog_)
 		return;
@@ -19,16 +19,16 @@ void MatlabProgressLogger::WriteLog(double time)
 	::mexEvalString("drawnow;");
 	lastProgressPermille = progressPermille;
 }
-void MatlabProgressLogger::Initialize(std::string baseFolder, stochsim::ISimInfo& simInfo)
+void MatlabProgressLogger::Initialize(stochsim::ISimInfo& simInfo)
 {
 	if (!shouldLog_)
 		return;
-	runtime_ = simInfo.RunTime();
+	runtime_ = simInfo.GetRunTime();
 	::mexPrintf("Simulating model:   0.0%");
 	::mexEvalString("drawnow;");
 	lastProgressPermille = 0;
 }
-void MatlabProgressLogger::Uninitialize()
+void MatlabProgressLogger::Uninitialize(stochsim::ISimInfo& simInfo)
 {
 	if (!shouldLog_)
 		return;

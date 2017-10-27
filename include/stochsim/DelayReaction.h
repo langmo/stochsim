@@ -30,15 +30,15 @@ namespace stochsim
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
-			return state_->Num() > 0 ? (*state_)[0].creationTime + delay_ : stochsim::inf;
+			return state_->Num(simInfo) > 0 ? state_->PeakFirst().creationTime + delay_ : stochsim::inf;
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
+			state_->RemoveFirst(simInfo);
 			for (const auto& product : products_)
 			{
-				product.state_->Add(simInfo, product.stochiometry_, { stochsim::make_variable("numModified", static_cast<double>((*state_)[0].numModified)) });
+				product.state_->Add(simInfo, product.stochiometry_, { stochsim::make_variable("numModified", static_cast<double>(state_->PeakFirst().numModified)) });
 			}
-			state_->Remove(simInfo);
 		}
 		virtual std::string GetName() const override
 		{

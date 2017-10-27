@@ -13,7 +13,7 @@ namespace stochsim
 		State(std::string name, size_t initialCondition) : num_(0), name_(name), initialCondition_(initialCondition)
 		{
 		}
-		virtual size_t Num() const override
+		virtual size_t Num(ISimInfo& simInfo) const override
 		{
 			return num_;
 		}
@@ -37,7 +37,7 @@ namespace stochsim
 		{
 			num_ = 0;
 		}
-		virtual std::string GetName() const override
+		virtual std::string GetName() const noexcept override
 		{
 			return name_;
 		}
