@@ -5,23 +5,51 @@
 #include "ExpressionCodecs.h"
 #include "expression_symbols.h"
 #include "ExpressionParseTree.h"
+
+// Forward declaration parser functions.
+// These are defined in expression_grammar.c, a file which is automatically generated from expression_grammar.y.
+void expression_Parse(
+	void *yyp,                   /* The parser */
+	int yymajor,                 /* The major token code number */
+	expression::TerminalSymbol* yyminor,       /* The value for the token */
+	expression::ExpressionParseTree* parse_tree               /* Optional %extra_argument parameter */
+);
+
+void *expression_ParseAlloc(void* (*mallocProc)(size_t));
+
+void expression_ParseFree(
+	void *p,                    /* The parser to be deleted */
+	void(*freeProc)(void*)     /* Function used to reclaim memory */
+);
+#ifndef NDEBUG
+void expression_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
+#endif
+
 namespace expression
 {
-
-	ExpressionParser::ExpressionParser(std::string logFilePath) : logFilePath_(std::move(logFilePath)), handle_(nullptr), logFile_(nullptr)
+	void ParseToken(void* handle, int tokenID, TerminalSymbol* token, ExpressionParseTree& parseTree)
+	{
+		try
+		{
+			expression_Parse(handle, tokenID, token, &parseTree);
+		}
+		catch (const std::exception& ex)
+		{
+			throw ex;
+		}
+		catch (...)
+		{
+			throw std::exception("Unknown error");
+		}
+	}
+	ExpressionParser::ExpressionParser() noexcept
 	{
 	}
 	expression::ExpressionParser::~ExpressionParser()
 	{
-		UninitializeInternal();
 	}
-	std::unique_ptr<IExpression> expression::ExpressionParser::Parse(std::string expressionStr, bool bind, bool simplify)
+	std::unique_ptr<IExpression> ParseInternal(std::string expressionStr, bool bind, bool simplify, expression::ExpressionParseTree& parseTree, void* handle)
 	{
-		expression::ExpressionParseTree parseTree;
-
-		// Create effective parser
-		InitializeInternal();
-
 		// Variables to store values and types of tokens
 		int tokenID;
 		double doubleValue;
@@ -53,7 +81,7 @@ namespace expression
 				currentCharPtr = ExpressionCodecs::GetSimpleToken(currentCharPtr, &tokenID);
 				if (tokenID != 0)
 				{
-					ParseToken(tokenID, new TerminalSymbol(), parseTree);
+					ParseToken(handle, tokenID, new TerminalSymbol(), parseTree);
 					continue;
 				}
 
@@ -62,7 +90,7 @@ namespace expression
 				currentCharPtr = ExpressionCodecs::GetIdentifier(currentCharPtr, &tokenID, stringValue, maxStringValueLength);
 				if (tokenID != 0)
 				{
-					ParseToken(tokenID, new expression::TerminalSymbol(stringValue), parseTree);
+					ParseToken(handle, tokenID, new expression::TerminalSymbol(stringValue), parseTree);
 					continue;
 				}
 
@@ -71,7 +99,7 @@ namespace expression
 				currentCharPtr = ExpressionCodecs::GetDouble(currentCharPtr, &tokenID, &doubleValue);
 				if (tokenID != 0)
 				{
-					ParseToken(tokenID, new expression::TerminalSymbol(doubleValue), parseTree);
+					ParseToken(handle, tokenID, new expression::TerminalSymbol(doubleValue), parseTree);
 					continue;
 				}
 
@@ -83,8 +111,6 @@ namespace expression
 		}
 		catch (const std::exception& ex)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in expression close to position " << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
 			errorMessage << '\n' << expressionStr << '\n';
@@ -96,8 +122,6 @@ namespace expression
 		}
 		catch (...)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in expression close to position " << (lastCharPtr - startCharPtr + 1) << ": Unknown error.";
 			errorMessage << '\n' << expressionStr << '\n';
@@ -112,27 +136,20 @@ namespace expression
 		// finish parsing
 		try
 		{
-			ParseToken(0, nullptr, parseTree);
+			ParseToken(handle, 0, nullptr, parseTree);
 		}
 		catch (const std::exception& ex)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error while finishing parsing: " << ex.what();
 			throw std::exception(errorMessage.str().c_str());
 		}
 		catch (...)
 		{
-			UninitializeInternal();
-
 			std::stringstream errorMessage;
 			errorMessage << "Parse error while finishing parsing: Unknown error.";
 			throw std::exception(errorMessage.str().c_str());
 		}
-
-		UninitializeInternal();
-		
 		
 		// Prepare result
 		auto orgResult = parseTree.GetResult();
@@ -148,5 +165,61 @@ namespace expression
 			result = result->Simplify();
 		}
 		return std::move(result); 
+	}
+
+	std::unique_ptr<IExpression> expression::ExpressionParser::Parse(std::string expressionStr, bool bind, bool simplify, std::string logFilePath)
+	{
+		// Initialize parse tree
+		expression::ExpressionParseTree parseTree;
+
+		// Initialize the lemon parser
+		auto handle = expression_ParseAlloc(malloc);
+		if (!handle)
+			throw std::exception("Could not initialize expression parser.");
+
+		// Setup log file if in debug mode.
+		// Note that if not in debug mode, this functionality is deactivated per #ifndef in the expression_grammar.template.
+		// Since we try not to change this template, we thus cannot call it.
+		FILE* logFile = nullptr;
+#ifndef NDEBUG
+		if (!logFilePath.empty())
+		{
+			fopen_s(&logFile, logFilePath.c_str(), "w");
+			if (logFile)
+				expression_ParseTrace(logFile, "expression_");
+			else
+				expression_ParseTrace(0, "expression_");
+		}
+#endif
+
+		// Do the actual parsing.
+		// We only catch errors to quickly close the log file (which requires C logic), and then rethrow them.
+		bool isError = false;
+		std::exception exception;
+		std::unique_ptr<IExpression> result;
+		try
+		{
+			result = ParseInternal(expressionStr, bind, simplify, parseTree, handle);
+		}
+		catch (const std::exception& ex)
+		{
+			isError = true;
+			exception = ex;
+		}
+		catch (...)
+		{
+			isError = true;
+			exception = std::exception("Unknown error");
+		}
+		expression_ParseFree(handle, free);
+#ifndef NDEBUG
+		expression_ParseTrace(0, "expression_");
+		if (logFile)
+			fclose(logFile);
+#endif
+		if (isError)
+			throw exception;
+
+		return std::move(result);
 	}
 }

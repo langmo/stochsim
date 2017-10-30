@@ -14,8 +14,7 @@ namespace expression
 		/// <summary>
 		/// Constructor.
 		/// </summary>
-		/// <param name="logFilePath">Full path of a log file which is created while parsing. Set to an empty string to not print logs. Only has an effect if NDEBUG is not set.</param>
-		ExpressionParser(std::string logFilePath="");
+		ExpressionParser() noexcept;
 		~ExpressionParser();
 		/// <summary>
 		/// Parses the mathematical expression passed to the constructor, and returns a class representation of the expression which can be executed to evaluate the expression.
@@ -29,16 +28,8 @@ namespace expression
 		/// <param name="simplify">If true, it is tried to simplify the expression. This involves substituting all common variables and functions which were bound (given that the parameter "bound" is true) by their respective values. 
 		/// If this is not wanted, because e.g. "pi" can be the name of a variable in the expression which is not equal to 3.14..., set either this parameter or the parameter "bind" to false. 
 		///</param>
+		/// <param name="logFilePath">Full path of a log file which is created while parsing. Set to an empty string to not print logs. Only has an effect if NDEBUG is not set.</param>
 		/// <returns>An object representing the parsed expression.</returns>
-		std::unique_ptr<IExpression> Parse(std::string expression, bool bind = true, bool simplify=false);
-
-	private:
-		std::string logFilePath_;
-		void* handle_;
-		FILE* logFile_;
-
-		void ParseToken(int tokenID, TerminalSymbol* token, ExpressionParseTree& parseTree);
-		void InitializeInternal();
-		void UninitializeInternal();
+		std::unique_ptr<IExpression> Parse(std::string expression, bool bind = true, bool simplify=false, std::string logFilePath = "");
 	};
 }

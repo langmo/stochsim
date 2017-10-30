@@ -60,89 +60,7 @@
 #include  <assert.h>
 #line 33 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 using namespace expression;
-#line 36 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
-
-	// Forward declaration parser functions.
-	void expression_Parse(
-		void *yyp,                   /* The parser */
-		int yymajor,                 /* The major token code number */
-		TerminalSymbol* yyminor,       /* The value for the token */
-		ExpressionParseTree* parse_tree               /* Optional %extra_argument parameter */
-	);
-
-	void *expression_ParseAlloc(void* (*mallocProc)(size_t));
-
-	void expression_ParseFree(
-		void *p,                    /* The parser to be deleted */
-		void(*freeProc)(void*)     /* Function used to reclaim memory */
-	);
-	#ifndef NDEBUG
-		void expression_ParseTrace(FILE *TraceFILE, char *zTracePrompt);
-	#endif
-	void expression::ExpressionParser::InitializeInternal()
-	{
-		UninitializeInternal();
-	#ifndef NDEBUG
-		if (logFilePath_.empty())
-		{
-			logFile_ = nullptr;
-		}
-		else
-		{
-			fopen_s(&logFile_, logFilePath_.c_str(), "w");
-			if(logFile_)
-				expression_ParseTrace(logFile_, "cmdl_");
-			else
-				expression_ParseTrace(0, "cmdl_");
-		}
-	#endif
-		try
-		{
-			handle_ = expression_ParseAlloc(malloc);
-		}
-		catch (...)
-		{
-			throw std::exception("Could not allocate space for expression parser.");
-		}
-		if (!handle_)
-		{
-			throw std::exception("Could not create expression parser.");
-		}
-	}
-	void expression::ExpressionParser::UninitializeInternal()
-	{
-		if(!handle_)
-			return;
-		expression_ParseFree(handle_, free); 
-		handle_ = nullptr;
-	#ifndef NDEBUG
-		expression_ParseTrace(0, "cmdl_");
-		if (logFile_)
-			fclose(logFile_);
-		logFile_ = nullptr;
-	#endif
-	}
-
-	void expression::ExpressionParser::ParseToken(int tokenID, TerminalSymbol* token, ExpressionParseTree& parseTree)
-	{
-		if (!handle_)
-		{
-			throw std::exception("Parser handle invalid.");
-		}
-		try
-		{
-			expression_Parse(handle_, tokenID, token, &parseTree);
-		}
-		catch (const std::exception& ex)
-		{
-			throw ex;
-		}
-		catch (...)
-		{
-			throw std::exception("Unknown error");
-		}
-	}
-#line 146 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 64 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -713,77 +631,77 @@ static void yy_destructor(
 	delete (yypminor->yy0);
 	(yypminor->yy0) = nullptr;
 
-#line 717 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 635 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 24: /* expression */
 {
-#line 166 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 82 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy16);
 	(yypminor->yy16) = nullptr;
 
-#line 727 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 645 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 25: /* arguments */
 {
-#line 216 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 132 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy43);
 	(yypminor->yy43) = nullptr;
 
-#line 737 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 655 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 26: /* comparison */
 {
-#line 200 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 116 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy19);
 	(yypminor->yy19) = nullptr;
 
-#line 747 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 665 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 27: /* sum */
 {
-#line 237 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 153 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy8);
 	(yypminor->yy8) = nullptr;
 
-#line 757 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 675 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 28: /* product */
 {
-#line 266 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 182 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy20);
 	(yypminor->yy20) = nullptr;
 
-#line 767 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 685 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 29: /* conjunction */
 {
-#line 296 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 212 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy13);
 	(yypminor->yy13) = nullptr;
 
-#line 777 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 695 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
     case 30: /* disjunction */
 {
-#line 316 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 232 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
  
 	delete (yypminor->yy14);
 	(yypminor->yy14) = nullptr;
 
-#line 787 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 705 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -964,7 +882,7 @@ static void yyStackOverflow(yyParser *yypParser){
 /******** Begin %stack_overflow code ******************************************/
 #line 5 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 throw std::exception("Parser stack overflow while parsing expression.");
-#line 968 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 886 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 /******** End %stack_overflow code ********************************************/
    expression_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
@@ -1138,17 +1056,17 @@ static void yy_reduce(
 /********** Begin reduce actions **********************************************/
         YYMINORTYPE yylhsminor;
       case 0: /* expression ::= IDENTIFIER */
-#line 170 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 86 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new VariableExpression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1148 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1066 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 1: /* expression ::= IDENTIFIER LEFT_ROUND arguments RIGHT_ROUND */
-#line 175 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 91 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	auto func = new FunctionExpression(*yymsp[-3].minor.yy0);
 	delete yymsp[-3].minor.yy0;
@@ -1163,338 +1081,338 @@ static void yy_reduce(
 	yylhsminor.yy16 = func;
 	func = nullptr;
 }
-#line 1167 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1085 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,19,&yymsp[-2].minor);
   yy_destructor(yypParser,20,&yymsp[0].minor);
   yymsp[-3].minor.yy16 = yylhsminor.yy16;
         break;
       case 2: /* expression ::= VALUE */
-#line 190 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 106 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new NumberExpression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1179 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1097 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 3: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
 {  yy_destructor(yypParser,19,&yymsp[-2].minor);
-#line 195 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 111 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yymsp[-2].minor.yy16 = yymsp[-1].minor.yy16;
 }
-#line 1188 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1106 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,20,&yymsp[0].minor);
 }
         break;
       case 4: /* comparison ::= expression QUESTIONMARK expression COLON expression */
-#line 204 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 120 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy19 = new ConditionalExpression(std::unique_ptr<IExpression>(yymsp[-4].minor.yy16), std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 	yymsp[-2].minor.yy16 = nullptr;
 	yymsp[0].minor.yy16 = nullptr;
 	yymsp[-4].minor.yy16 = nullptr;
 }
-#line 1200 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1118 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-3].minor);
   yy_destructor(yypParser,21,&yymsp[-1].minor);
   yymsp[-4].minor.yy19 = yylhsminor.yy19;
         break;
       case 5: /* expression ::= comparison */
-#line 210 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 126 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy19;
 }
-#line 1210 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1128 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 6: /* arguments ::= */
-#line 220 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 136 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yymsp[1].minor.yy43 = new FunctionArguments();
 }
-#line 1218 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1136 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
         break;
       case 7: /* arguments ::= expression */
-#line 223 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 139 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy43 = new FunctionArguments();
 	yylhsminor.yy43->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1227 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1145 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy43 = yylhsminor.yy43;
         break;
       case 8: /* arguments ::= arguments COMMA expression */
-#line 228 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 144 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy43 = yymsp[-2].minor.yy43;
 	yymsp[-2].minor.yy43 = nullptr;
 	yylhsminor.yy43->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1238 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1156 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,22,&yymsp[-1].minor);
   yymsp[-2].minor.yy43 = yylhsminor.yy43;
         break;
       case 9: /* expression ::= sum */
-#line 241 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 157 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy8;
 }
-#line 1247 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1165 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 10: /* sum ::= expression PLUS expression */
-#line 244 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 160 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy8 = new SumExpression();
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1257 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1175 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
       case 11: /* sum ::= expression MINUS expression */
-#line 249 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 165 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy8 = new SumExpression();
 	yylhsminor.yy8->PushBack(false,  std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy8->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1268 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1186 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
       case 12: /* sum ::= sum PLUS expression */
-#line 254 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 170 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy8 = yymsp[-2].minor.yy8;
 	yylhsminor.yy8->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1278 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1196 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
       case 13: /* sum ::= sum MINUS expression */
-#line 258 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 174 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy8 = yymsp[-2].minor.yy8;
 	yylhsminor.yy8->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1288 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1206 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy8 = yylhsminor.yy8;
         break;
       case 14: /* expression ::= product */
-#line 270 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 186 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy20;
 }
-#line 1297 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1215 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 15: /* product ::= expression MULTIPLY expression */
-#line 273 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 189 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy20 = new ProductExpression();
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1308 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1226 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
       case 16: /* product ::= expression DIVIDE expression */
-#line 279 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 195 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy20 = new ProductExpression();
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy20->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1320 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1238 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
       case 17: /* product ::= product MULTIPLY expression */
-#line 285 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 201 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy20 = yymsp[-2].minor.yy20;
 	yylhsminor.yy20->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1330 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1248 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
       case 18: /* product ::= product DIVIDE expression */
-#line 289 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 205 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy20 = yymsp[-2].minor.yy20;
 	yylhsminor.yy20->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1340 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1258 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy20 = yylhsminor.yy20;
         break;
       case 19: /* expression ::= conjunction */
-#line 300 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 216 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy13;
 }
-#line 1349 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1267 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 20: /* conjunction ::= expression AND expression */
-#line 303 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 219 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy13 = new ConjunctionExpression();
 	yylhsminor.yy13->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy13->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1360 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1278 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy13 = yylhsminor.yy13;
         break;
       case 21: /* conjunction ::= conjunction AND expression */
-#line 309 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 225 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy13 = yymsp[-2].minor.yy13;
 	yylhsminor.yy13->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1370 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1288 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy13 = yylhsminor.yy13;
         break;
       case 22: /* expression ::= disjunction */
-#line 320 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 236 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = yymsp[0].minor.yy14;
 }
-#line 1379 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1297 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yymsp[0].minor.yy16 = yylhsminor.yy16;
         break;
       case 23: /* disjunction ::= expression OR expression */
-#line 323 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 239 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy14 = new DisjunctionExpression();
 	yylhsminor.yy14->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy16));
 	yylhsminor.yy14->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 
 }
-#line 1390 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1308 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy14 = yylhsminor.yy14;
         break;
       case 24: /* disjunction ::= disjunction OR expression */
-#line 329 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 245 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy14 = yymsp[-2].minor.yy14;
 	yylhsminor.yy14->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1400 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1318 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy14 = yylhsminor.yy14;
         break;
       case 25: /* expression ::= NOT expression */
 {  yy_destructor(yypParser,16,&yymsp[-1].minor);
-#line 335 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 251 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yymsp[-1].minor.yy16 = new UnaryNotExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1410 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1328 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
         break;
       case 26: /* expression ::= MINUS expression */
 {  yy_destructor(yypParser,12,&yymsp[-1].minor);
-#line 340 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 256 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yymsp[-1].minor.yy16 = new UnaryMinusExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1419 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1337 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 }
         break;
       case 27: /* expression ::= expression EXP expression */
-#line 345 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 261 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ExponentiationExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 }
-#line 1427 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1345 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,15,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 28: /* expression ::= expression EQUAL expression */
-#line 351 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 267 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_equal);
 }
-#line 1436 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1354 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 29: /* expression ::= expression NOT_EQUAL expression */
-#line 354 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 270 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_not_equal);
 }
-#line 1445 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1363 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 30: /* expression ::= expression GREATER expression */
-#line 357 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 273 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_greater);
 }
-#line 1454 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1372 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 31: /* expression ::= expression GREATER_EQUAL expression */
-#line 360 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 276 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_greater_equal);
 }
-#line 1463 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1381 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 32: /* expression ::= expression LESS expression */
-#line 363 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 279 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_less);
 }
-#line 1472 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1390 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 33: /* expression ::= expression LESS_EQUAL expression */
-#line 366 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 282 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	yylhsminor.yy16 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy16), std::unique_ptr<IExpression>(yymsp[0].minor.yy16), ComparisonExpression::type_less_equal);
 }
-#line 1481 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1399 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy16 = yylhsminor.yy16;
         break;
       case 34: /* result ::= expression */
-#line 377 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 293 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	parseTree->SetResult(std::unique_ptr<IExpression>(yymsp[0].minor.yy16));
 	yymsp[0].minor.yy16 = nullptr;
 }
-#line 1491 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1409 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
         break;
       case 35: /* expression ::= error */
-#line 382 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
+#line 298 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 {
 	throw std::exception("Syntax error.");
 }
-#line 1498 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1416 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
         break;
       default:
         break;
@@ -1543,7 +1461,7 @@ static void yy_parse_failed(
 /************ Begin %parse_failure code ***************************************/
 #line 4 "C:\\stochsim\\lib\\expression\\expression_grammar.y"
 throw std::exception("Syntax error while parsing expression.");
-#line 1547 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
+#line 1465 "C:\\stochsim\\lib\\expression\\expression_grammar.c"
 /************ End %parse_failure code *****************************************/
   expression_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
