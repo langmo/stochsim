@@ -645,7 +645,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 	{
 		params.Set(0, choice->GetName());
 	}
-	else if (methodName == "AddProductIfTrue")
+	else if (methodName == "AddElementIfTrue")
 	{
 		std::string stateName = params.Get<std::string>(0);
 		std::shared_ptr<stochsim::IState> state = GetState(stateName);
@@ -661,9 +661,9 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		else
 			stochiometry = 1;
 
-		choice->AddProductIfTrue(state, stochiometry);
+		choice->AddElementIfTrue(state, stochiometry);
 	}
-	else if (methodName == "AddProductIfFalse")
+	else if (methodName == "AddElementIfFalse")
 	{
 		std::string stateName = params.Get<std::string>(0);
 		std::shared_ptr<stochsim::IState> state = GetState(stateName);
@@ -679,30 +679,30 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		else
 			stochiometry = 1;
 
-		choice->AddProductIfFalse(state, stochiometry);
+		choice->AddElementIfFalse(state, stochiometry);
 	}
-	else if (methodName == "GetProductsIfTrue")
+	else if (methodName == "GetElementsIfTrue")
 	{
-		auto elements = choice->GetProductsIfTrue();
+		auto elements = choice->GetElementsIfTrue();
 		auto pair = toMatlab(elements);
 		params.Set(0, pair.first.release());
 		params.Set(1, pair.second.release());
 	}
-	else if (methodName == "GetProductsIfFalse")
+	else if (methodName == "GetElementsIfFalse")
 	{
-		auto elements = choice->GetProductsIfFalse();
+		auto elements = choice->GetElementsIfFalse();
 		auto pair = toMatlab(elements);
 		params.Set(0, pair.first.release());
 		params.Set(1, pair.second.release());
 	}
-	else if (methodName == "SetChoiceEquation")
+	else if (methodName == "SetCondition") 
 	{
 		auto choiceEquation = params.Get<std::string>(0);
-		choice->SetChoiceEquation(choiceEquation);
+		choice->SetCondition(choiceEquation);
 	}
-	else if (methodName == "GetChoiceEquation")
+	else if (methodName == "GetCondition")
 	{
-		auto choiceEquation = choice->GetChoiceEquation();
+		auto choiceEquation = choice->GetCondition();
 		params.Set(0, choiceEquation->ToCmdl());
 	}
 	else

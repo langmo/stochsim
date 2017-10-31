@@ -195,11 +195,11 @@ namespace cmdlparser
 			auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
 			for (auto& elem : *choice.second->GetComponentsIfTrue())
 			{
-				choiceState->AddProductIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry());
+				choiceState->AddElementIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry());
 			}
 			for (auto& elem : *choice.second->GetComponentsIfFalse())
 			{
-				choiceState->AddProductIfFalse(sim.GetState(elem.first), elem.second->GetStochiometry());
+				choiceState->AddElementIfFalse(sim.GetState(elem.first), elem.second->GetStochiometry());
 			}
 		}
 

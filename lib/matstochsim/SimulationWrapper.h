@@ -19,7 +19,7 @@
 #include "MatlabProgressLogger.h"
 #include "MatlabStateLogger.h"
 
-class SimulationWrapper :
+class SimulationWrapper : 
 	public stochsim::Simulation
 {
 public:

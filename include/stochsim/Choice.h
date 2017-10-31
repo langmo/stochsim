@@ -9,10 +9,9 @@
 namespace stochsim
 {
 	/// <summary>
-	/// A choice is a special kind of state. Different to most or all other states, its concentration is always zero. The concentration of a choice can thus not be decreased, and an
-	/// error is thrown if trying to call Remove. In contrary, Add can (and should) be called, but a call to Add does not increase the concentration of the choice. Instead, the boolean formula
-	/// associated with this choice is evaluated. Depending on the outcome of this evaluation, either the concentrations of one or the other set of product states is increased according to their
-	/// stochiometry.
+	/// A choice is a special kind of state. A call to Add does not increase the concentration of the choice. Instead, the boolean formula
+	/// associated with this choice is evaluated. Depending on the outcome of this evaluation, either the concentrations of one or the other set of element states is increased according to their
+	/// stochiometry. The same holds for Remove and Transform. 
 	/// The typical use case is to use a Choice to implement conditionals for reactions. For example, a reaction might result in a product B with a certain probability, and in a product C with another, i.e.
 	///      { B     if rand()>0.2
 	/// A -> {
@@ -21,6 +20,9 @@ namespace stochsim
 	/// products of the choice would contain only B with stochiometry 1, and the second set only C with stochiometry 1.
 	/// The usage of a choice becomes specifically interesting when combined with reactions providing additional information (variables) which can be used in the boolean expression. For example, a delay
 	/// reaction passes the number of how often its (sole) reactant was transformed.
+	/// To be compatible with mass action kinetics, the concentration of a choice (Num()) is calculated as follows: First, the boolean expression is evaluated. Then,
+	/// either only the elementsIfTrue, or the elementsIfFalse are considered based on the outcome of the evaluation of the condition. The return value is then the product
+	/// of these elements, according to their stochiometry. That is, if the choice is between 2*A+C and 3*D, we return A*(A-1)*C if the choice condition evaluates to true, and D*(D-1)*(D-2) if not.
 	/// </summary>
 	class Choice :
 		public IState
@@ -46,10 +48,10 @@ namespace stochsim
 		/// </summary>
 		/// <param name="name">Name of this choice. Since a choice is conveniently treated as a normal state to be able to make a choice whenever being able to make no choice (i.e. just increase the
 		/// concentration of a given product), a choice also has to have a name which is not clashing with other state names.</param>
-		/// <param name="choiceEquation">The boolean equation for this choice. The expression
+		/// <param name="condition">The boolean equation for this choice. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
-		Choice(std::string name, std::unique_ptr<expression::IExpression> choiceEquation) : name_(std::move(name)), choiceEquation_(std::move(choiceEquation)), variables_(10)
+		Choice(std::string name, std::unique_ptr<expression::IExpression> condition) : name_(std::move(name)), choiceEquation_(std::move(condition)), variables_(10)
 		{
 		}
 		/// <summary>
@@ -57,12 +59,12 @@ namespace stochsim
 		/// </summary>
 		/// <param name="name">Name of this choice. Since a choice is conveniently treated as a normal state to be able to make a choice whenever being able to make no choice (i.e. just increase the
 		/// concentration of a given product), a choice also has to have a name which is not clashing with other state names.</param>
-		/// <param name="choiceEquation">The boolean equation for this choice as a string. The string is parsed immediately. If parsing fails e.g. due to a syntax error, an std::exception is thrown. The expression
+		/// <param name="condition">The boolean equation for this choice as a string. The string is parsed immediately. If parsing fails e.g. due to a syntax error, an std::exception is thrown. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
-		Choice(std::string name, std::string choiceEquation) : name_(std::move(name)), variables_(10)
+		Choice(std::string name, std::string condition) : name_(std::move(name)), variables_(10)
 		{
-			SetChoiceEquation(choiceEquation);
+			SetCondition(condition);
 		}
 		/// <summary>
 		/// A choice is not really a state, but only implements the state interface such that it can be added as a reactant or product of any reaction.
@@ -90,7 +92,7 @@ namespace stochsim
 			if (choice != 0)
 			{
 				size_t rate = 1;
-				for (const auto& state : productsIfTrue_)
+				for (const auto& state : elementsIfTrue_)
 				{
 					const size_t stoch = state.stochiometry_;
 					const size_t num = state.state_->Num(simInfo);
@@ -105,7 +107,7 @@ namespace stochsim
 			else
 			{
 				size_t rate = 1;
-				for (const auto& state : productsIfFalse_)
+				for (const auto& state : elementsIfFalse_)
 				{
 					const size_t stoch = state.stochiometry_;
 					const size_t num = state.state_->Num(simInfo);
@@ -156,14 +158,14 @@ namespace stochsim
 				// Depending of the choice, either increase one or the other sets of products.
 				if (choice != 0)
 				{
-					for (const auto& product : productsIfTrue_)
+					for (const auto& product : elementsIfTrue_)
 					{
 						product.state_->Add(simInfo, product.stochiometry_, variables);
 					}
 				}
 				else
 				{
-					for (const auto& product : productsIfFalse_)
+					for (const auto& product : elementsIfFalse_)
 					{
 						product.state_->Add(simInfo, product.stochiometry_, variables);
 					}
@@ -208,14 +210,14 @@ namespace stochsim
 				// Depending of the choice, either increase one or the other sets of products.
 				if (choice != 0)
 				{
-					for (const auto& product : productsIfTrue_)
+					for (const auto& product : elementsIfTrue_)
 					{
 						product.state_->Remove(simInfo, product.stochiometry_, variables);
 					}
 				}
 				else
 				{
-					for (const auto& product : productsIfFalse_)
+					for (const auto& product : elementsIfFalse_)
 					{
 						product.state_->Remove(simInfo, product.stochiometry_, variables);
 					}
@@ -260,14 +262,14 @@ namespace stochsim
 				// Depending of the choice, either increase one or the other sets of products.
 				if (choice != 0)
 				{
-					for (const auto& product : productsIfTrue_)
+					for (const auto& product : elementsIfTrue_)
 					{
 						product.state_->Transform(simInfo, product.stochiometry_, variables);
 					}
 				}
 				else
 				{
-					for (const auto& product : productsIfFalse_)
+					for (const auto& product : elementsIfFalse_)
 					{
 						product.state_->Transform(simInfo, product.stochiometry_, variables);
 					}
@@ -296,9 +298,9 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to true.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to true.</param>
-		void AddProductIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
+		void AddElementIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
 		{
-			for (auto& product : productsIfTrue_)
+			for (auto& product : elementsIfTrue_)
 			{
 				if (state == product.state_)
 				{
@@ -306,7 +308,7 @@ namespace stochsim
 					return;
 				}
 			}
-			productsIfTrue_.emplace_back(state, stochiometry);
+			elementsIfTrue_.emplace_back(state, stochiometry);
 		}
 
 		/// <summary>
@@ -314,9 +316,9 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to false.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to false.</param>
-		void AddProductIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
+		void AddElementIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
 		{
-			for (auto& product : productsIfFalse_)
+			for (auto& product : elementsIfFalse_)
 			{
 				if (state == product.state_)
 				{
@@ -324,7 +326,7 @@ namespace stochsim
 					return;
 				}
 			}
-			productsIfFalse_.emplace_back(state, stochiometry);
+			elementsIfFalse_.emplace_back(state, stochiometry);
 		}
 
 		/// <summary>
@@ -347,10 +349,10 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to true.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to true.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfTrue() const noexcept
+		stochsim::Collection<stochsim::ReactionElement> GetElementsIfTrue() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
-			for (auto& product : productsIfTrue_)
+			for (auto& product : elementsIfTrue_)
 			{
 				returnVal.emplace_back(product.state_, product.stochiometry_);
 			}
@@ -375,10 +377,10 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to false.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to false.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfFalse() const noexcept
+		stochsim::Collection<stochsim::ReactionElement> GetElementsIfFalse() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
-			for (auto& product : productsIfFalse_)
+			for (auto& product : elementsIfFalse_)
 			{
 				returnVal.emplace_back(product.state_, product.stochiometry_);
 			}
@@ -389,7 +391,7 @@ namespace stochsim
 		/// Returns the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
 		/// <returns>Choice equation.</returns>
-		const expression::IExpression* GetChoiceEquation() const noexcept
+		const expression::IExpression* GetCondition() const noexcept
 		{
 			return choiceEquation_.get();
 		}
@@ -397,7 +399,7 @@ namespace stochsim
 		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
 		/// </summary>
 		/// <param name="choiceEquation">Choice equation.</param>
-		void SetChoiceEquation(std::unique_ptr<expression::IExpression> choiceEquation) noexcept
+		void SetCondition(std::unique_ptr<expression::IExpression> choiceEquation) noexcept
 		{
 			choiceEquation_ = std::move(choiceEquation);
 		}
@@ -407,10 +409,10 @@ namespace stochsim
 		/// a syntax error in the equation, an std::exception is thrown.
 		/// </summary>
 		/// <param name="choiceEquation">Choice equation as a string.</param>
-		void SetChoiceEquation(std::string choiceEquation) noexcept
+		void SetCondition(std::string choiceEquation) noexcept
 		{
 			expression::ExpressionParser parser;
-			SetChoiceEquation(parser.Parse(choiceEquation, false, false));
+			SetCondition(parser.Parse(choiceEquation, false, false));
 		}
 
 	private:
@@ -451,7 +453,7 @@ namespace stochsim
 							return expression::makeFunctionHolder(holder, true);
 						}
 
-						for (auto& component : productsIfTrue_)
+						for (auto& component : elementsIfTrue_)
 						{
 							auto& state = component.state_;
 							if (state->GetName() == name)
@@ -463,9 +465,20 @@ namespace stochsim
 								return expression::makeFunctionHolder(holder, true);
 							}
 						}
-						for (auto& component : productsIfFalse_)
+						for (auto& component : elementsIfFalse_)
 						{
 							auto& state = component.state_;
+							if (state->GetName() == name)
+							{
+								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
+								{
+									return static_cast<expression::number>(state->Num(simInfo));
+								};
+								return expression::makeFunctionHolder(holder, true);
+							}
+						}
+						for (auto& state : modifiers_)
+						{
 							if (state->GetName() == name)
 							{
 								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
@@ -519,8 +532,8 @@ namespace stochsim
 		const std::string name_;
 		std::unique_ptr<expression::IExpression> choiceEquation_;
 		std::unique_ptr<expression::IExpression> boundChoiceEquation_;
-		std::vector<ReactionElementWithModifiers> productsIfTrue_;
-		std::vector<ReactionElementWithModifiers> productsIfFalse_;
+		std::vector<ReactionElementWithModifiers> elementsIfTrue_;
+		std::vector<ReactionElementWithModifiers> elementsIfFalse_;
 		std::vector<std::shared_ptr<IState>> modifiers_;
 		VariablesMap variables_;
 	};
