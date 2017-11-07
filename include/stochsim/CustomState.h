@@ -60,7 +60,7 @@ namespace stochsim
 		{
 			return buffer_.Size();
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
@@ -68,7 +68,7 @@ namespace stochsim
 			}
 		}
 		
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
@@ -84,7 +84,7 @@ namespace stochsim
 				buffer_.PopTop();
 			}
 		}
-		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{

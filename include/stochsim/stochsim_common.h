@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <array>
 #include <initializer_list>
 #include <tuple>			
 namespace stochsim
@@ -29,6 +30,41 @@ namespace stochsim
 	/// Creates a variable with the given name.
 	/// </summary>
 	constexpr auto make_variable = std::make_pair<std::string, double>;
+
+	/// <summary>
+	/// Number of different properties a molecule can have.
+	/// </summary>
+	constexpr size_t numMoleculeProperties = 5;
+	/// <summary>
+	/// Properties of a molecule.
+	/// </summary>
+	typedef std::array<double, numMoleculeProperties> MoleculeProperties;
+	/// <summary>
+	/// Default property vector for molecules, with all entries equal to zero.
+	/// </summary>
+	constexpr MoleculeProperties defaultMoleculeProperties = { {0.,0.,0.,0.,0.} };
+	/// <summary>
+	/// Default property vector for molecules which gets added to the property vector of a molecule when transform is called on this molecule.
+	/// </summary>
+	constexpr MoleculeProperties defaultMoleculeTransformation = { { 1.,0.,0.,0.,0. } };
+	/// <summary>
+	/// A molecule is one element of certain kinds of states, e.g. ComposedState, which allow each element they represent
+	/// to have a certain degree of individuality. Specifically, a molecule has a given creation time, and a few properties represented by double values
+	/// with an interpretation which depends on the specific simulation/model.
+	/// </summary>
+	struct Molecule
+	{
+		/// <summary>
+		/// The simulation time when the molecule was created.
+		/// </summary>
+		double creationTime;
+
+		/// <summary>
+		/// Properties of a molecule with varying interpretation.
+		/// </summary>
+		MoleculeProperties properties;
+	};
+
 	/// <summary>
 	/// Provides information about the current global state of the simulation, e.g. the current simulation time.
 	/// Also provides some helper functions to e.g. calculate random numbers. Random numbers should only be calculated given these numbers,
@@ -93,13 +129,13 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Object providing context under which situation (e.g. when) the value of the state is increased.</param>
 		/// <param name="num">Number by which the value of the state is increased. Must be &gt;0. </param>
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) = 0;
 		/// <summary>
 		/// Decreases the value of the state by the given number. Typically called by the simulation as a result of a reaction firing, with this state being a reactant of the reaction.
 		/// </summary>
 		/// <param name="simInfo">Object providing context under which situation (e.g. when) the value of the state is decreased.</param>
 		/// <param name="num">Number by which the value of the state is decreased. Must be &gt;0. </param>
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) = 0;
 		/// <summary>
 		/// Called when, as the result of a reaction, the number of molecules represented by this state should not increase or decrease, but instead some molecule should be transformed in some way.
 		/// It is assumed that each molecule represented by the state is equally likely to get transformed, i.e. the molecule which is actually transformed should be chosen randomly.
@@ -107,7 +143,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="simInfo">Simulation context.</param>
 		/// <param name="num">Number of molecules which should be modified. Must be &gt;0. </param>
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) = 0;
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) = 0;
 		/// <summary>
 		/// Called by the simulation before the simulation starts. Should ensure that e.g. the current value of the state equals the initial condition.
 		/// </summary>

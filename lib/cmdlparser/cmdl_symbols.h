@@ -70,7 +70,7 @@ namespace cmdlparser
 	class ReactionComponent
 	{
 	public:
-		ReactionComponent(expression::identifier state, expression::number stochiometry, bool modifier) : state_(std::move(state)), modifier_(modifier)
+		ReactionComponent(expression::identifier state, expression::number stochiometry, bool modifier, std::unique_ptr<std::vector<expression::number>> moleculeProperties = nullptr) : state_(std::move(state)), modifier_(modifier)
 		{
 			if (stochiometry + 0.5 < 0)
 			{
@@ -79,6 +79,21 @@ namespace cmdlparser
 				throw std::exception(errorMessage.str().c_str());
 			}
 			stochiometry_ = static_cast<stochsim::Stochiometry>(stochiometry + 0.5);
+			if (moleculeProperties)
+			{
+				if (moleculeProperties->size() > stochsim::numMoleculeProperties)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Number of properties for State " << state_ << " too high (found "<< moleculeProperties->size()<<", maximally allowed "<<stochsim::numMoleculeProperties<<").";
+					throw std::exception(errorMessage.str().c_str());
+				}
+				moleculeProperties_ = std::make_unique<stochsim::MoleculeProperties>();
+				moleculeProperties_->fill(0);
+				for (int i = 0; i < moleculeProperties->size(); i++)
+				{
+					(*moleculeProperties_)[i] = (*moleculeProperties)[i];
+				}
+			}
 		}
 		stochsim::Stochiometry GetStochiometry() const noexcept
 		{
@@ -96,10 +111,15 @@ namespace cmdlparser
 		{
 			return state_;
 		}
+		const stochsim::MoleculeProperties* GetMoleculeProperties()
+		{
+			return moleculeProperties_.get();
+		}
 	private:
 		expression::identifier state_;
 		stochsim::Stochiometry stochiometry_;
 		bool modifier_;
+		std::unique_ptr<stochsim::MoleculeProperties> moleculeProperties_;
 	};
 
 	class ReactionSide

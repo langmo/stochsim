@@ -3,6 +3,7 @@
 #include <memory>
 #include <fstream>
 #include <vector>
+#include <functional>
 #include "DelayReaction.h"
 namespace stochsim
 {
@@ -10,8 +11,8 @@ namespace stochsim
 		public ILogger
 	{
 	public:
-
-		ComposedStateLogger(std::string fileName, size_t initialMaxModified) : modificationCounter_(initialMaxModified), fileName_(fileName)
+		typedef std::function<size_t(const MoleculeProperties&)> LoggerFunction;
+		ComposedStateLogger(std::string fileName, LoggerFunction loggerFunction = [](const MoleculeProperties& properties)->size_t {return static_cast<size_t>(properties[0]+0.5); }, size_t initialMaxModified = 10) : modificationCounter_(initialMaxModified), fileName_(fileName), loggerFunction_(loggerFunction)
 		{
 		}
 
@@ -27,13 +28,14 @@ namespace stochsim
 		{
 			return true;
 		}
-		void RemoveListener(ComposedState::Molecule& molecule, double time)
+		void RemoveListener(const Molecule& molecule, double time)
 		{
-			while (molecule.numModified > modificationCounter_.size())
+			auto id = loggerFunction_(molecule.properties);
+			while (id > modificationCounter_.size())
 			{
 				modificationCounter_.resize(2 * modificationCounter_.size());
 			}
-			modificationCounter_[molecule.numModified]++;
+			modificationCounter_[id]++;
 		}
 		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
@@ -86,5 +88,6 @@ namespace stochsim
 		std::unique_ptr<std::ofstream> file_;
 		std::string fileName_;
 		std::vector<unsigned long> modificationCounter_;
+		LoggerFunction loggerFunction_;
 	};
 }

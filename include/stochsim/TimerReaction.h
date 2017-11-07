@@ -20,7 +20,8 @@ namespace stochsim
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
+			const MoleculeProperties properties_;
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, MoleculeProperties properties) : stochiometry_(stochiometry), state_(std::move(state)), properties_(std::move(properties))
 			{
 			}
 		};
@@ -49,7 +50,7 @@ namespace stochsim
 		{
 			for (const auto& product : products_)
 			{
-				product.state_->Add(simInfo, product.stochiometry_);
+				product.state_->Add(simInfo, product.stochiometry_, product.properties_);
 			}
 			hasFired_ = true;
 		}
@@ -88,17 +89,23 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties)
 		{
 			for (auto& product : products_)
 			{
 				if (state == product.state_)
 				{
+					if (product.properties_ != moleculeProperties)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a product with different properties being initialized.";
+						throw std::exception(errorMessage.str().c_str());
+					}
 					product.stochiometry_ += stochiometry;
 					return;
 				}
 			}
-			products_.emplace_back(state, stochiometry);
+			products_.emplace_back(state, stochiometry, moleculeProperties);
 		}
 	private:
 		bool hasFired_;

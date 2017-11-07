@@ -69,7 +69,7 @@ classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisp
             name = this.call('GetName');
         end
         %% Methods
-        function saveFinalNumModificationsToFile(this, fileName, maxTransformed)
+        function saveFinalPropertyValueToFile(this, fileName, propertyIdx, maxTransformed)
             % Specifies the name of a file where the number of
             % transformations of each molecule represented by this state
             % are saved whenever the corresponding molecule is consumed.
@@ -77,11 +77,14 @@ classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisp
             % information. The file name has typically the ending CSV.
             % Usage:
             %   saveFinalNumModificationsToFile(this, fileName)
-            %   saveFinalNumModificationsToFile(this, fileName, maxTransformed)
+			%   saveFinalNumModificationsToFile(this, fileName, propertyIdx)
+            %   saveFinalNumModificationsToFile(this, fileName, propertyIdx, maxTransformed)
             % Parameters:
             %   fileName      - Name of the file to save number of
             %                   transformations, or empty string to not save
             %                   this information.
+			%   propertyIdx   - ID of the molecule property (zero based). 
+			%                   Default = 0.
             %   maxTransformed- Estimate of the maximal number of times a
             %                   molecule of this state can be transformed
             %                   before being consumed. The maximal number
@@ -93,10 +96,13 @@ classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisp
             if isempty(fileName)
                 fileName = '';
             end
-            if nargin < 3 || isempty(maxTransformed)
+			 if nargin < 3 || isempty(propertyIdx)
+                propertyIdx = 0;
+            end
+            if nargin < 4 || isempty(maxTransformed)
                 maxTransformed = 20;
             end
-            this.call('SaveFinalNumModificationsToFile', fileName, maxTransformed);
+            this.call('SaveFinalNumModificationsToFile', fileName, propertyIdx, maxTransformed);
         end
         
         function cmdl = getCmdl(this)

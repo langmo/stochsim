@@ -36,7 +36,8 @@ namespace stochsim
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
+			const MoleculeProperties properties_;
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, MoleculeProperties properties) : stochiometry_(stochiometry), state_(std::move(state)), properties_(std::move(properties))
 			{
 			}
 		};
@@ -74,53 +75,9 @@ namespace stochsim
 		/// <returns>Returns value compatible to mass action kinetics.</returns>
 		virtual size_t Num(ISimInfo& simInfo) const override
 		{
-			// Find out which choice was made by evaluating the formula with the current variable values.
-			expression::number choice;
-			try
-			{
-				choice = boundChoiceEquation_->Eval();
-			}
-			catch (const std::exception& e)
-			{
-				std::stringstream errorMessage;
-				errorMessage << "Could not evaluate expression \"";
-				choiceEquation_->PrintCmdl(errorMessage, false);
-				errorMessage << "\" for choice " << name_ << ": " << e.what();
-				throw std::exception(errorMessage.str().c_str());
-			}
-			// Depending of the choice, either increase one or the other sets of products.
-			if (choice != 0)
-			{
-				size_t rate = 1;
-				for (const auto& state : elementsIfTrue_)
-				{
-					const size_t stoch = state.stochiometry_;
-					const size_t num = state.state_->Num(simInfo);
-					for (size_t s = 0; s < stoch; s++)
-					{
-						rate *= num - s;
-					}
-
-				}
-				return rate;
-			}
-			else
-			{
-				size_t rate = 1;
-				for (const auto& state : elementsIfFalse_)
-				{
-					const size_t stoch = state.stochiometry_;
-					const size_t num = state.state_->Num(simInfo);
-					for (size_t s = 0; s < stoch; s++)
-					{
-						rate *= num - s;
-					}
-
-				}
-				return rate;
-			}
+			return 0;
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) override
 		{
 			// Set parser variables
 			bool rebind = false;
@@ -160,121 +117,25 @@ namespace stochsim
 				{
 					for (const auto& product : elementsIfTrue_)
 					{
-						product.state_->Add(simInfo, product.stochiometry_, variables);
+						product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables);
 					}
 				}
 				else
 				{
 					for (const auto& product : elementsIfFalse_)
 					{
-						product.state_->Add(simInfo, product.stochiometry_, variables);
+						product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables);
 					}
 				}
 			}
 		}
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) override
 		{
-			// Set parser variables
-			bool rebind = false;
-			for (auto& variable : variables)
-			{
-				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
-				if (!valuePtr)
-				{
-					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
-					rebind = true;
-				}
-				else
-				{
-					*valuePtr = static_cast<expression::number>(variable.second);
-				}
-			}
-			if (rebind)
-				rebind_variables(simInfo, false);
-			for (size_t i = 0; i < num; i++)
-			{
-				// Find out which choice was made by evaluating the formula with the current variable values.
-				expression::number choice;
-				try
-				{
-					choice = boundChoiceEquation_->Eval();
-				}
-				catch (const std::exception& e)
-				{
-					std::stringstream errorMessage;
-					errorMessage << "Could not evaluate expression \"";
-					choiceEquation_->PrintCmdl(errorMessage, false);
-					errorMessage << "\" for choice " << name_ << ": " << e.what();
-					throw std::exception(errorMessage.str().c_str());
-				}
-				// Depending of the choice, either increase one or the other sets of products.
-				if (choice != 0)
-				{
-					for (const auto& product : elementsIfTrue_)
-					{
-						product.state_->Remove(simInfo, product.stochiometry_, variables);
-					}
-				}
-				else
-				{
-					for (const auto& product : elementsIfFalse_)
-					{
-						product.state_->Remove(simInfo, product.stochiometry_, variables);
-					}
-				}
-			}
+			throw std::exception("Choices must only be used as products of a reaction, not as reactants (i.e. Remove must not be called).");
 		}
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) override
 		{
-			// Set parser variables
-			bool rebind = false;
-			for (auto& variable : variables)
-			{
-				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
-				if (!valuePtr)
-				{
-					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
-					rebind = true;
-				}
-				else
-				{
-					*valuePtr = static_cast<expression::number>(variable.second);
-				}
-			}
-			if (rebind)
-				rebind_variables(simInfo, false);
-			for (size_t i = 0; i < num; i++)
-			{
-				// Find out which choice was made by evaluating the formula with the current variable values.
-				expression::number choice;
-				try
-				{
-					choice = boundChoiceEquation_->Eval();
-				}
-				catch (const std::exception& e)
-				{
-					std::stringstream errorMessage;
-					errorMessage << "Could not evaluate expression \"";
-					choiceEquation_->PrintCmdl(errorMessage, false);
-					errorMessage << "\" for choice " << name_ << ": " << e.what();
-					throw std::exception(errorMessage.str().c_str());
-				}
-				// Depending of the choice, either increase one or the other sets of products.
-				if (choice != 0)
-				{
-					for (const auto& product : elementsIfTrue_)
-					{
-						product.state_->Transform(simInfo, product.stochiometry_, variables);
-					}
-				}
-				else
-				{
-					for (const auto& product : elementsIfFalse_)
-					{
-						product.state_->Transform(simInfo, product.stochiometry_, variables);
-					}
-				}
-			}
+			throw std::exception("Choices must only be used as products of a reaction, not as transformees (i.e. Transform must not be called).");
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
@@ -298,7 +159,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to true.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to true.</param>
-		void AddElementIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
+		void AddElementIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties) noexcept
 		{
 			for (auto& product : elementsIfTrue_)
 			{
@@ -308,7 +169,7 @@ namespace stochsim
 					return;
 				}
 			}
-			elementsIfTrue_.emplace_back(state, stochiometry);
+			elementsIfTrue_.emplace_back(state, stochiometry, moleculeProperties);
 		}
 
 		/// <summary>
@@ -316,7 +177,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to false.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to false.</param>
-		void AddElementIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1) noexcept
+		void AddElementIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties) noexcept
 		{
 			for (auto& product : elementsIfFalse_)
 			{
@@ -326,7 +187,7 @@ namespace stochsim
 					return;
 				}
 			}
-			elementsIfFalse_.emplace_back(state, stochiometry);
+			elementsIfFalse_.emplace_back(state, stochiometry, moleculeProperties);
 		}
 
 		/// <summary>

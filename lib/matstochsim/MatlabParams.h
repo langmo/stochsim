@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <functional>
 #include <unordered_map>
+#include <vector>
 class MatlabParams
 {
 public:
@@ -111,6 +112,26 @@ public:
 			throw std::exception(errorMessage.str().c_str()); 
 		}
 		return mxGetScalar(elem);
+	}
+	template<> std::vector<double> Get<std::vector<double>>(size_t index)
+	{
+		std::vector<double> result;
+		index += shift_;
+		AssertParamIndex(index);
+		const mxArray* elem = prhs_[index];
+		if ((mxGetM(elem) != 1 && mxGetN(elem) != 1) || !(mxIsDouble(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar double row or column vector.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		auto elements = mxGetNumberOfElements(elem);
+		auto pr = mxGetPr(elem);
+		for (size_t j = 0; j < elements; j++) 
+		{
+			result.push_back(pr[j]);
+		}
+		return std::move(result);
 	}
 	template<> MatlabStruct Get<MatlabStruct>(size_t index)
 	{

@@ -388,12 +388,31 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 			throw std::exception(errorMessage.str().c_str());
 		}
 		std::string fileName = params.Get<std::string>(0);
-		size_t initialMaxModified;
+		std::vector<size_t> property_idx;
 		if (params.NumParams() > 1)
-			initialMaxModified = params.Get<size_t>(1);
+		{
+			auto temp = params.Get<std::vector<double>>(1);
+			for (auto val : temp)
+			{
+				property_idx.push_back(static_cast<size_t>(val + 0.5));
+			}
+		}
+		else
+			property_idx.push_back(static_cast<size_t>(0));
+		size_t initialMaxModified;
+		if (params.NumParams() > 2)
+			initialMaxModified = params.Get<size_t>(2);
 		else
 			initialMaxModified = 20;
-		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, initialMaxModified);
+		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, [property_idx](const stochsim::MoleculeProperties& properties)->size_t
+			{
+				double sum = 0;
+				for (auto i : property_idx)
+				{
+					sum += properties[i];
+				}
+				return static_cast<size_t>(sum + 0.5);
+			}, initialMaxModified);
 		composedState->AddRemoveListener(std::bind(&stochsim::ComposedStateLogger::RemoveListener, logger, std::placeholders::_1, std::placeholders::_2));
 	}
 	else

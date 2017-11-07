@@ -3,6 +3,7 @@
 #include <memory>
 #include "stochsim_common.h"
 #include <vector>
+#include <sstream>
 namespace stochsim
 {
 	/// <summary>
@@ -20,13 +21,20 @@ namespace stochsim
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry) : stochiometry_(stochiometry), state_(std::move(state))
+			const MoleculeProperties properties_;
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, MoleculeProperties properties) : stochiometry_(stochiometry), state_(std::move(state)), properties_(std::move(properties))
 			{
 			}
 		};
 	public:
 		DelayReaction(std::string name, std::shared_ptr<ComposedState> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
 		{
+			for (int i = 0; i < numMoleculeProperties; i++)
+			{
+				std::stringstream name;
+				name << "N"<<i;
+				variables_.emplace_back(name.str(), 0);
+			}
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
@@ -34,10 +42,15 @@ namespace stochsim
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
+			auto& molecule = state_->PeakFirst();
+			for (int i = 0; i < numMoleculeProperties; i++)
+			{
+				variables_[i].second=molecule.properties[i];
+			}
 			state_->RemoveFirst(simInfo);
 			for (const auto& product : products_)
 			{
-				product.state_->Add(simInfo, product.stochiometry_, { stochsim::make_variable("numModified", static_cast<double>(state_->PeakFirst().numModified)) });
+				product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables_);
 			}
 		}
 		virtual std::string GetName() const override
@@ -76,17 +89,23 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties)
 		{
 			for (auto& product : products_)
 			{
 				if (state == product.state_)
 				{
+					if (product.properties_ != moleculeProperties)
+					{
+						std::stringstream errorMessage;
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a product with different properties being initialized.";
+						throw std::exception(errorMessage.str().c_str());
+					}
 					product.stochiometry_ += stochiometry;
 					return;
 				}
 			}
-			products_.emplace_back(state, stochiometry);
+			products_.emplace_back(state, stochiometry, moleculeProperties);
 		}
 		/// <summary>
 		/// Returns all products of the reaction.
@@ -110,6 +129,7 @@ namespace stochsim
 			return state_;
 		}
 	private:
+		std::vector<Variable> variables_;
 		double delay_;
 		std::shared_ptr<ComposedState> state_;
 		const std::string name_;

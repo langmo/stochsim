@@ -11,7 +11,7 @@
 #include "PropensityReaction.h"
 #include "DelayReaction.h"
 #include "NumberExpression.h"
-#include "CmdlCodecs.h"
+#include "CmdlCodecs.h" 
 
 
 // Forward declaration parser functions.
@@ -104,11 +104,24 @@ namespace cmdlparser
 			{
 				// define state if yet not existent.
 				states[elem.first];
+				if (elem.second->GetMoleculeProperties() && !states[elem.first].require_type(state_definition::type_composed))
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
+					throw std::exception(errorMessage.str().c_str());
+				}
+				
 			}
 			for (auto& elem : *choice.second->GetComponentsIfFalse())
 			{
 				// define state if yet not existent.
 				states[elem.first];
+				if (elem.second->GetMoleculeProperties() && !states[elem.first].require_type(state_definition::type_composed))
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
+					throw std::exception(errorMessage.str().c_str());
+				}
 			}
 		}
 		for (auto& reaction : parseTree.GetReactions())
@@ -133,10 +146,10 @@ namespace cmdlparser
 				auto name = elem.first;
 				state_definition& state = states[name];
 				// if a state on the RHS has the modifier flag, this means it is a transformee. Transformees must be composed states. Switch flag to composed, which only fails if state is already defined as a choice.
-				if (elem.second->IsModifier() && !state.require_type(state_definition::type_composed))
+				if ((elem.second->IsModifier() || elem.second->GetMoleculeProperties()) && !state.require_type(state_definition::type_composed))
 				{
 					std::stringstream errorMessage;
-					errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as a transformee and in another as a choice, which is invalid.";
+					errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as a species with properties and in another as a choice, which is invalid.";
 					throw std::exception(errorMessage.str().c_str());
 				}
 			}
@@ -195,11 +208,17 @@ namespace cmdlparser
 			auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
 			for (auto& elem : *choice.second->GetComponentsIfTrue())
 			{
-				choiceState->AddElementIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry());
+				if(elem.second->GetMoleculeProperties())
+					choiceState->AddElementIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry(), *elem.second->GetMoleculeProperties());
+				else
+					choiceState->AddElementIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry());
 			}
 			for (auto& elem : *choice.second->GetComponentsIfFalse())
 			{
-				choiceState->AddElementIfFalse(sim.GetState(elem.first), elem.second->GetStochiometry());
+				if (elem.second->GetMoleculeProperties())
+					choiceState->AddElementIfFalse(sim.GetState(elem.first), elem.second->GetStochiometry(), *elem.second->GetMoleculeProperties());
+				else
+					choiceState->AddElementIfFalse(sim.GetState(elem.first), elem.second->GetStochiometry());
 			}
 		}
 
@@ -246,9 +265,19 @@ namespace cmdlparser
 				for (auto& component : *reactionDefinition.second->GetProducts())
 				{
 					if (component.second->IsModifier())
-						reaction->AddTransformee(sim.GetState(component.first), component.second->GetStochiometry());
+					{
+						if (component.second->GetMoleculeProperties())
+							reaction->AddTransformee(sim.GetState(component.first), component.second->GetStochiometry(), *component.second->GetMoleculeProperties());
+						else
+							reaction->AddTransformee(sim.GetState(component.first), component.second->GetStochiometry());
+					}
 					else
-						reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry());
+					{
+						if (component.second->GetMoleculeProperties())
+							reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry(), *component.second->GetMoleculeProperties());
+						else
+							reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry());
+					}
 				}
 			}
 			else if (delayDef)
@@ -292,7 +321,12 @@ namespace cmdlparser
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
-						reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry());
+					{
+						if (component.second->GetMoleculeProperties())
+							reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry(), *component.second->GetMoleculeProperties());
+						else
+							reaction->AddProduct(sim.GetState(component.first), component.second->GetStochiometry());
+					}
 				}
 			}
 		}

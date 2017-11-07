@@ -30,7 +30,8 @@ namespace stochsim
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
 			const bool modifier_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier) noexcept : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier)
+			const MoleculeProperties properties_;
+			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier, MoleculeProperties properties) noexcept : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier), properties_(std::move(properties))
 			{
 			}
 		};
@@ -117,7 +118,7 @@ namespace stochsim
 							stoch -= product.stochiometry_;
 						}
 					}
-					if(stoch > 0)
+					if (stoch > 0)
 						returnVal.emplace_back(reactant.state_, stoch);
 				}
 			}
@@ -138,7 +139,7 @@ namespace stochsim
 					if (reactant.modifier_)
 					{
 						std::stringstream errorMessage;
-						errorMessage << "State "<<state->GetName()<<" cannot take part in reaction "<< GetName()<<" both as a modifier/transformee and as a normal reactant.";
+						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
 						throw std::exception(errorMessage.str().c_str());
 					}
 					else
@@ -148,7 +149,7 @@ namespace stochsim
 					}
 				}
 			}
-			reactants_.emplace_back(state, stochiometry, false);
+			reactants_.emplace_back(state, stochiometry, false, defaultMoleculeProperties);
 		}
 		/// <summary>
 		/// Adds a species as a modifier of the reaction. Different to a reactant, when the reaction fires, its concentration does not decreased. However, a modifier still changes the rate at which a reaction takes place (e.g. enzymes catalyzing the reaction).
@@ -174,7 +175,7 @@ namespace stochsim
 					}
 				}
 			}
-			reactants_.emplace_back(state, stochiometry, true);
+			reactants_.emplace_back(state, stochiometry, true, defaultMoleculeProperties);
 		}
 		/// <summary>
 		/// Adds a species as a transformee of the reaction. Similar to a modifier, the concentration of a transformee is not changed when the reaction fires, but it still changes the propensity of the reaction.
@@ -182,7 +183,7 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a transformee.</param>
 		/// <param name="stochiometry">Number of molecules of the transformee taking part in a reaction.</param>
-		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeTransformation = defaultMoleculeTransformation)
 		{
 			bool addedReactant = false;
 			for (auto& reactant : reactants_)
@@ -205,7 +206,7 @@ namespace stochsim
 			}
 			if (!addedReactant)
 			{
-				reactants_.emplace_back(state, stochiometry, true);
+				reactants_.emplace_back(state, stochiometry, true, defaultMoleculeProperties);
 			}
 
 			bool addedProduct = false;
@@ -221,20 +222,26 @@ namespace stochsim
 					}
 					else
 					{
+						if (product.properties_ != moleculeTransformation)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a transformee with different properties being modified.";
+							throw std::exception(errorMessage.str().c_str());
+						}
 						product.stochiometry_ += stochiometry;
 						addedProduct = true;
 					}
 				}
 			}
 			if(!addedProduct)
-				products_.emplace_back(state, stochiometry, true);
+				products_.emplace_back(state, stochiometry, true, moleculeTransformation);
 		}
 		/// <summary>
 		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties)
 		{
 			for (auto& product : products_)
 			{
@@ -248,12 +255,18 @@ namespace stochsim
 					}
 					else
 					{
+						if (product.properties_ != moleculeProperties)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a product with different properties being initialized.";
+							throw std::exception(errorMessage.str().c_str());
+						}
 						product.stochiometry_ += stochiometry;
 						return;
 					}
 				}
 			}
-			products_.emplace_back(state, stochiometry, false);
+			products_.emplace_back(state, stochiometry, false, moleculeProperties);
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
@@ -268,11 +281,11 @@ namespace stochsim
 			{
 				if (product.modifier_)
 				{
-					product.state_->Transform(simInfo, product.stochiometry_);
+					product.state_->Transform(simInfo, product.stochiometry_, product.properties_);
 				}
 				else
 				{
-					product.state_->Add(simInfo, product.stochiometry_);
+					product.state_->Add(simInfo, product.stochiometry_, product.properties_);
 				}
 			}
 		}

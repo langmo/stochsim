@@ -441,6 +441,30 @@ reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
 	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
+%type moleculeProperties {std::vector<number>*}
+%destructor moleculeProperties { 
+	delete $$;
+	$$ = nullptr;
+}
+moleculeProperties(as) ::= . [SEMICOLON] {
+	as = new std::vector<number>();
+}
+moleculeProperties(as) ::= VALUE(V). [COMMA]{
+	as = new std::vector<number>();
+	as->push_back(*V);
+	delete V;
+	V = nullptr;
+}
+moleculeProperties(as_new) ::= moleculeProperties(as_old) COMMA VALUE(V). [COMMA]{
+	as_new = as_old;
+	as_old = nullptr;
+	as_new->push_back(*V);
+	delete V;
+	V = nullptr;
+}
+
+
+
 %type reactionComponent {ReactionComponent*}
 %destructor reactionComponent { 
 	delete $$;
@@ -454,6 +478,16 @@ reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
 
 	rc = new ReactionComponent(state, 1, false);
 }
+reactionComponent(rc) ::= IDENTIFIER(I) LEFT_SQUARE moleculeProperties(as) RIGHT_SQUARE. [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+	auto as_temp = std::unique_ptr<std::vector<number> >(as);
+	as = nullptr;
+
+	rc = new ReactionComponent(state, 1, false, std::move(as_temp));
+}
 
 reactionComponent(rc) ::= DOLLAR IDENTIFIER(I). [EXP]{
 	identifier state = *I;
@@ -464,28 +498,29 @@ reactionComponent(rc) ::= DOLLAR IDENTIFIER(I). [EXP]{
 	rc = new ReactionComponent(state, 1, true);
 }
 
-reactionComponent(rc) ::= expression(e) MULTIPLY IDENTIFIER(I). [EXP]{
+reactionComponent(rc) ::= DOLLAR IDENTIFIER(I) LEFT_SQUARE moleculeProperties(as) RIGHT_SQUARE. [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
-	auto e_temp = std::unique_ptr<IExpression>(e);
-	e = nullptr;
 	rc = nullptr;
+	auto as_temp = std::unique_ptr<std::vector<number> >(as);
+	as = nullptr;
 
-	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
-	rc = new ReactionComponent(state, stochiometry, false);
+	rc = new ReactionComponent(state, 1, true, std::move(as_temp));
 }
 
-reactionComponent(rc) ::= expression(e) MULTIPLY DOLLAR IDENTIFIER(I). [EXP]{
-	identifier state = *I;
-	delete I;
-	I = nullptr;
+reactionComponent(rc_new) ::= expression(e) MULTIPLY reactionComponent(rc_old). [EXP]{
+	auto rc_temp = std::unique_ptr<ReactionComponent>(rc_old);
+	rc_old = nullptr;
+	rc_new = nullptr;
 	auto e_temp = std::unique_ptr<IExpression>(e);
 	e = nullptr;
-	rc = nullptr;
 
 	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
-	rc = new ReactionComponent(state, stochiometry, true);
+	if(stochiometry<=0)
+		throw std::exception("Stochiometry must be positive.");
+	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
+	rc_new = rc_temp.release();
 }
 
 reactionComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionSide(s1) COLON reactionSide(s2) RIGHT_SQUARE . [EXP]{

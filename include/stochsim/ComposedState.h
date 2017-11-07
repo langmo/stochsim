@@ -16,20 +16,10 @@ namespace stochsim
 	class ComposedState:
 		public IState
 	{
-	public:
-		/// <summary>
-		/// A molecule is one element of a ComposedState, having a creation time and a number stating how often it was modified.
-		/// </summary>
-		struct Molecule
+	private:
+		struct MoleculeHolder
 		{
-			/// <summary>
-			/// How often the molecule was modified/transformed.
-			/// </summary>
-			unsigned int numModified;
-			/// <summary>
-			/// The simulation time when the molecule was created.
-			/// </summary>
-			double creationTime;
+			Molecule molecule;
 			/// <summary>
 			/// True if the molecule is already deleted. Keeping this variable is necessary due to implementation details.
 			/// Molecules which are returned must always have invalidated=false.
@@ -61,9 +51,9 @@ namespace stochsim
 			size_ = GetInitialCondition();
 			for (size_t i = 0; i < size_; i++)
 			{
-				Molecule& molecule = buffer_.PushTail();
-				molecule.numModified = 0;
-				molecule.creationTime = simInfo.GetSimTime();
+				MoleculeHolder& molecule = buffer_.PushTail();
+				molecule.molecule.properties = defaultMoleculeProperties;
+				molecule.molecule.creationTime = simInfo.GetSimTime();
 				molecule.invalidated = false;
 			}
 		}
@@ -80,19 +70,19 @@ namespace stochsim
 		{
 			removeListeners_.push_back(std::move(fireListener));
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				Molecule& molecule = buffer_.PushTail();
-				molecule.numModified = 0;
-				molecule.creationTime = simInfo.GetSimTime();
+				MoleculeHolder& molecule = buffer_.PushTail();
+				molecule.molecule.properties = moleculeProperties;
+				molecule.molecule.creationTime = simInfo.GetSimTime();
 				molecule.invalidated = false;
 			}
 			size_ += num;
 		}
 
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
@@ -105,11 +95,11 @@ namespace stochsim
 				{
 					if (!removeListeners_.empty())
 					{
-						Molecule& molecule = buffer_[idx];
+						MoleculeHolder& molecule = buffer_[idx];
 						double time = simInfo.GetSimTime();
 						for (auto& removeListener : removeListeners_)
 						{
-							removeListener(molecule, time);
+							removeListener(molecule.molecule, time);
 						}
 					}
 					buffer_[idx].invalidated = true;
@@ -118,24 +108,24 @@ namespace stochsim
 			}
 		}
 
-		void RemoveFirst(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {})
+		void RemoveFirst(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {})
 		{
 			for (size_t i = 0; i < num; i++)
 			{
 				if (!removeListeners_.empty())
 				{
-					Molecule& molecule = buffer_[0];
+					MoleculeHolder& molecule = buffer_[0];
 					double time = simInfo.GetSimTime();
 					for (auto& removeListener : removeListeners_)
 					{
-						removeListener(molecule, time);
+						removeListener(molecule.molecule, time);
 					}
 				}
 				// First element guaranteed to be valid.
 				buffer_.PopTop();
 				size_--;
 				// Remove new first element if it happens to be invalid to guarantee that first element is always valid.
-				while (size_ > 0 && buffer_[0].invalidated)
+				while (buffer_.Size() > 0 && buffer_[0].invalidated)
 				{
 					buffer_.PopTop();
 				}
@@ -147,13 +137,17 @@ namespace stochsim
 		/// <returns>Oldest element</returns>
 		inline const Molecule& PeakFirst()
 		{
-			return buffer_[0];
+			return buffer_[0].molecule;
 		}
-		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1, std::initializer_list<Variable> variables = {}) override
+		virtual inline void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) override
 		{
 			for (size_t i = 0; i < num; i++)
 			{
-				buffer_[randomBufferIndex(simInfo)].numModified++;
+				auto& molecule = buffer_[randomBufferIndex(simInfo)].molecule;
+				for (int j = 0; j < numMoleculeProperties; j++)
+				{
+					molecule.properties[j] += moleculeProperties[j];
+				}
 			}
 		}
 
@@ -195,9 +189,9 @@ namespace stochsim
 			}
 			// Remove all invalidated molecules.
 			// first, sort buffer by creation time, however, with all invalidated molecules coming first.
-			buffer_.Sort([](const Molecule& a, const Molecule& b) -> bool
+			buffer_.Sort([](const MoleculeHolder& a, const MoleculeHolder& b) -> bool
 			{
-				return !b.invalidated && (a.invalidated || a.creationTime < b.creationTime);
+				return !b.invalidated && (a.invalidated || a.molecule.creationTime < b.molecule.creationTime);
 			});
 			// remove all invalidated elements, which are now at the front.
 			buffer_.PopTop(buffer_.Size() - size_);
@@ -205,7 +199,7 @@ namespace stochsim
 			return simInfo.Rand(0, buffer_.Size() - 1);
 		}
 
-		CircularBuffer<Molecule> buffer_;
+		CircularBuffer<MoleculeHolder> buffer_;
 		std::list<RemoveListener> removeListeners_;
 		const std::string name_;
 		size_t initialCondition_;
