@@ -33,8 +33,9 @@ public:
 		return MatlabVariable(::mxCreateDoubleMatrix(rows, columns, ::mxREAL), 
 			[](mxArray* content) 
 			{
-				if(content)
-					::mxDestroyArray(content); 
+				//TODO: I think this should be destroyed, however, it induces Matlab to crash...
+				//if(content)
+				//	::mxDestroyArray(content); 
 				content = nullptr;
 			});
 	}
@@ -46,8 +47,9 @@ public:
 		return MatlabVariable(::mxCreateCellArray(2, dims),
 			[](mxArray* content)
 		{
-			if (content)
-				::mxDestroyArray(content);
+			//TODO: I think this should be destroyed, however, it induces Matlab to crash...
+			//if (content)
+			//	::mxDestroyArray(content);
 			content = nullptr;
 		});
 	}

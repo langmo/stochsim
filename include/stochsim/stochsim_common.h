@@ -30,7 +30,7 @@ namespace stochsim
 	/// Creates a variable with the given name.
 	/// </summary>
 	constexpr auto make_variable = std::make_pair<std::string, double>;
-
+	/* TODO: decide on number of properties
 	/// <summary>
 	/// Number of different properties a molecule can have.
 	/// </summary>
@@ -47,6 +47,25 @@ namespace stochsim
 	/// Default property vector for molecules which gets added to the property vector of a molecule when transform is called on this molecule.
 	/// </summary>
 	constexpr MoleculeProperties defaultMoleculeTransformation = { { 1.,0.,0.,0.,0. } };
+	*/
+	/// <summary>
+	/// Number of different properties a molecule can have.
+	/// </summary>
+	constexpr size_t numMoleculeProperties = 2;
+	/// <summary>
+	/// Properties of a molecule.
+	/// </summary>
+	typedef std::array<double, numMoleculeProperties> MoleculeProperties;
+	/// <summary>
+	/// Default property vector for molecules, with all entries equal to zero.
+	/// </summary>
+	constexpr MoleculeProperties defaultMoleculeProperties = { { 0.,0.} };
+	/// <summary>
+	/// Default property vector for molecules which gets added to the property vector of a molecule when transform is called on this molecule.
+	/// </summary>
+	constexpr MoleculeProperties defaultMoleculeTransformation = { { 1.,0.} };
+
+
 	/// <summary>
 	/// A molecule is one element of certain kinds of states, e.g. ComposedState, which allow each element they represent
 	/// to have a certain degree of individuality. Specifically, a molecule has a given creation time, and a few properties represented by double values

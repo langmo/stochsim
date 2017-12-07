@@ -1,5 +1,6 @@
 #pragma once
 #include "stochsim_common.h"
+#include <chrono>
 class MatlabProgressLogger :
 	public stochsim::ILogger
 {
@@ -15,6 +16,9 @@ public:
 private:
 	double runtime_;
 	bool shouldLog_;
-	int lastProgressPermille;
+	int lastProgressPermille_;
+	std::chrono::time_point<std::chrono::steady_clock> lastProgressTime_;
+	std::chrono::time_point<std::chrono::steady_clock> firstProgressTime_;
+	std::string::size_type lastMessageLength_;
 };
 

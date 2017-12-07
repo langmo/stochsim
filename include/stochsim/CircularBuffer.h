@@ -12,6 +12,7 @@ namespace stochsim
 	/// </summary>
 	template<class T> class CircularBuffer
 	{
+		constexpr static double sizeChangeFactor = 1.5;
 	public:
 		typedef CircularBufferIterator<T> iterator;
 		typedef CircularBufferIterator<const T> const_iterator;
@@ -148,7 +149,8 @@ namespace stochsim
 		void doupleCapacity()
 		{
 			assert(start_ == end_);
-			std::vector<T> temp(capacity_ * 2);
+			size_t newCapacity = static_cast<size_t>(capacity_ * sizeChangeFactor);
+			std::vector<T> temp(newCapacity);
 			for (size_type i = 0; i < capacity_; i++)
 			{
 				temp[i] = std::move(elements_[(start_ + i) % capacity_]);
@@ -156,7 +158,7 @@ namespace stochsim
 			elements_ = std::move(temp);
 			start_ = 0;
 			end_ = capacity_;
-			capacity_ *= 2;
+			capacity_ = newCapacity;
 		}
 	};
 
