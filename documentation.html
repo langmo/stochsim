@@ -2,26 +2,56 @@
 layout : layout
 title : Tutorials and Documentation
 ---
-<h2>Tutorials</h2>
 <p>
-	The easiest way to get started with YouScope is to read the tutorial:
+Stochsim is organized into five sub-projects:
+<ul>
+<li>stochsim: The main project. Provides the implementation of the simulator as well as the C++ interfaces to configure and run a simulation.</li>
+<li>cmdstochsim: A small wrapper in form of an executable which can be called via the command line to configure and run a simulation.</li>
+<li>matstochsim: A wrapper to provide a Matlab interface for stochsim.</li>
+<li>expression: A simple parser for mathematical expressions, providing the functionality to e.g. define custom rates/propensities for reactions not following mass action kinetics.</li>
+<li>cmdlparser: A parser for cmdl model files, allowing to define a complete stochsim model via an intuitive mini-language.</li>
+</ul>
 </p>
 <p>
-	Lang, M., Rudolf, F., & Stelling, J. (2012).<br />
-	<a href="http://onlinelibrary.wiley.com/doi/10.1002/0471142727.mb1421s98/full" target="_blank">Use of YouScope to Implement Systematic Microscopy Protocols</a><br />
-	<i>Current Protocols in Molecular Biology, 14-21.</i>
+Additionally, the repository also includes the project "lemon". Lemon is a LALR(1) parser generator completely independent from stochsim.
+It is, nevertheless, included in the repository since the parsers for the projects "expression" and "cmdlparser" are generated using
+this parser generator. It is normally not required to include lemon when one wants to use stochsim. However, if one wants to change
+the syntax of the two parsers, one has to regenerate the parsers using lemon, and we conveniently included lemon into the stochsim
+repository to simplify this task. Both the source code to lemon itself and the code that lemon generates are in the public domain.
+The source code of lemon was not modified by the authors of stochsim.
+Please visit <a href="http://www.hwaci.com/sw/lemon/" target="_blank">http://www.hwaci.com/sw/lemon/</a> for more information.
 </p>
 <p>
-	In this tutorial, we describe how to configure the microscope settings, how to use the YouScope LiveStream and similar tools, and how to set up a microplate measurement to perform a given imaging protocols in all wells of a microplate.
+Stochsim can be easily compiled either directly via Visual C++ (the authors used Microsoft Visual Studio Community 2017, v15.2 (26430.16)), or by calling
+MSBuild with the solution as an argument. Compilation should also work with other compilers supporting C++11 and/or on other OSs (stochsim only uses the C++ standard libraries), even though this might require the generation of a makefile compatible with the respective setup.
+The Matlab interface depends on proprietary components from MathWorks which are included in Matlab distributions.
+In order for the compiler to find these components, an environmental variable with name "MATLAB_DIR" (all capitalized) has to be set, pointing to the main folder of Matlab (e.g. C:\Program Files\MATLAB\R2015a). The main
+folder of Matlab can be recognized by containing a directory with name "extern". Compilation was tested with Matlab R2015a.
 </p>
-<h2>Wiki</h2>
 <p>
-	Another source for information is the YouScope wiki, which is hosted at GitHub:<br />
-	<a href="https://github.com/langmo/youscope/wiki" target="_blank">https://github.com/langmo/youscope/wiki</a><br />
-	Currently, the wiki describes how to download the source files of YouScope and how to create custom plugins for YouScope. However, we plan to extend the wiki in the future to also provide information on how to perform measurements, and similar.
+The Matlab interface can also be compiled directly from Matlab. Specifically, this can be done by calling the script "install.m". Note, that
+for this script to correctly operate, the folder structure has to match the one which is automatically generated in the "deploy" folder when compiling
+stochsim via the traditional way (which is also the same folder structure as in the releases).
+For this to work, mex has to be configured to use a C++ compiler supporting C++11. In Matlab, the compiler can be chosen using the "mex -setup" command.
+The authors tested compilation in Matlab R2015a using msvc2017 as the mex compiler, but compilation should also work with other C++11 compilers and/or on other OSs
+it should also work with other compilers and/or on other OSs (stochsim only uses the C++ standard libraries).; this compiler is part of Microsoft Visual Studio Community 2017. Only relatively new versions of Matlab seem to automatically support this compiler.
+See <a href="https://www.mathworks.com/support/bugreports/1487958" target="_blank">https://www.mathworks.com/support/bugreports/1487958</a> on how support can be added to R2017a and R2016b. Support can also be added to R2015a by changing 
+LINKEXPORTVER="/EXPORT:mexFunction /EXPORT:mexfilerequiredapiversion" to LINKEXPORTVER="/EXPORT:mexFunction" in both XMLs. It seems that the additional export
+"mexfilerequiredapiversion" was added after R2015a, but is not really necessary.
 </p>
-<h2>API Documentation</h2>
 <p>
-	The API of YouScope (i.e. the &quot;code&quot;) is documented by using JavaDoc. The current JavaDoc documentation about the API can be found underline
-	<a href="{{ site.github.url }}/javadoc/index.html" target="_blank">{{ site.github.url }}/javadoc/index.html</a>.
+The CMDL mini language was originally developed for Dizzy, a Java based stochastic simulator with different goals than stochsim. Currently,
+stochsim supports nearly all syntax originally defined in the Dizzy manual which can be found at <a href="http://magnet.systemsbiology.net/software/Dizzy/" target="_blank">http://magnet.systemsbiology.net/software/Dizzy/</a>.
+Notable exceptions are currently lacking support for loops and macros, and a different implementation of boundary species (<i>$A</i>) than in Dizzy, which
+was replaced by the more intuitive concept of modifiers (=catalysts) in stochsim (that is, species can be boundary species in one reaction, but normal species in other). Additionally, stochsim supports C++/Java type conditional statements (<i>A&lt;5 ? 7+B : sin(pi)</i>), 
+which can also be used in reaction specifications to e.g. describe stochastic outcomes of reactions (<i>A->B+[rand()&lt;0.1 ? C : 2D], 1;</i>), so called
+choices in stochsim. When adding a boundary species both on the left and the right hand side of a reaction, with the stochiometry of the RHS smaller or equal to the one on the RHS, a species becomes a
+transformee. The concentration of a transformee neither increases nor decreases when a reaction fires. Instead, it is counted how often a species was a transformee during the course of its existence, which can
+be either exported to a csv file or used in Choices (automatically defined variable <i>numModified</i>).
+Since for most CMDL models the differences between the CMDL implementations of stochsim and Dizzy are not relevant, we expect that most
+existing CMDL models from Dizzy can be immediately, without changes, be used in stochsim. We are currently working on a separate documentation for
+CMDL in stochsim, until then we refer to the very nice part of the Dizzy documentation concerning CMDL which can be found at <a href="http://magnet.systemsbiology.net/software/Dizzy/" target=_blank">http://magnet.systemsbiology.net/software/Dizzy/</a>.
+</p>
+<p>
+This software is licensed under the GNU General Public License, Version 3 (see LICENSE). It uses 3rd party components that are distributed under their own terms (see LICENSE-3RD-PARTY).
 </p>
