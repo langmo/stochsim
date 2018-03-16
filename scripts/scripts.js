@@ -1,4 +1,4 @@
-var requestURL = "https://api.github.com/repos/langmo/youscope/releases";
+var requestURL = "https://api.github.com/repos/langmo/stochsim/releases";
 var releases = null;
 function queryReleases(callback)
 {
