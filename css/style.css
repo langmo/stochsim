@@ -153,13 +153,13 @@ div.rightBoxMain hr
 	div#header
 	{
 		border-bottom: 1px solid #777777;
-		height:100px;
+		height:95px;
 	}
 	div#headerLeft
 	{
 		background-image: url("http://langmo.github.io/stochsim/img/header.jpg");
-		width:221px;
-		height:100px;
+		width:303px;
+		height:95px;
 		margin: 0;
 		padding: 0;
 		float: left;
