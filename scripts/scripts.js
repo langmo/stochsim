@@ -57,12 +57,12 @@ function displayReleaseLinks(release)
 	for(var lID =0; lID < assets.length; lID++)
 	{
 		var name = assets[lID].name.toLowerCase();
-		if(name.indexOf("_64bit_installer.exe")>=0)
+		if(name.indexOf("cmdstochsim.zip")>=0)
 		{
 			var assetURL = document.createElement("a");
 			assetURL.href = assets[lID].browser_download_url;
 			assetURL.target = "_blank";
-			assetURL.innerHTML = "Windows XP, Vista, 7, 8, 10 (64bit)";			
+			assetURL.innerHTML = "Matlab interface: ";			
 			assetElem.appendChild(assetURL);
 			break;
 		}
@@ -76,7 +76,7 @@ function displayReleaseLinks(release)
 			var assetURL = document.createElement("a");
 			assetURL.href = assets[lID].browser_download_url;
 			assetURL.target = "_blank";
-			assetURL.innerHTML = "Windows XP, Vista, 7, 8, 10 (32bit)";			
+			assetURL.innerHTML = "Command line: ";			
 			assetElem.appendChild(assetURL);
 			break;
 		}

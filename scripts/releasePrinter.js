@@ -155,11 +155,11 @@ function createReleaseElement(release, show)
 		for(var lID =0; lID < assets.length; lID++)
 		{
 			var name = assets[lID].name.toLowerCase();
-			if(name.indexOf("cmdstochsim.zip")>=0)
+			if(name.indexOf("matstochsim.zip")>=0)
 			{
 				var assetElem = document.createElement("p");
 				var assetElemText = document.createElement("span");
-				assetElemText.appendChild(document.createTextNode("Command line: "));
+				assetElemText.appendChild(document.createTextNode("Matlab interface: "));
 				assetElemText.style.fontWeight="bold";
 				assetElem.appendChild(assetElemText);
 				assetElem.appendChild(addAsset(assets[lID]));
@@ -171,11 +171,11 @@ function createReleaseElement(release, show)
 		for(var lID =0; lID < assets.length; lID++)
 		{
 			var name = assets[lID].name.toLowerCase();
-			if(name.indexOf("matstochsim.zip")>=0)
+			if(name.indexOf("cmdstochsim.zip")>=0)
 			{
 				var assetElem = document.createElement("p");
 				var assetElemText = document.createElement("span");
-				assetElemText.appendChild(document.createTextNode("Matlab interface: "));
+				assetElemText.appendChild(document.createTextNode("Command line: "));
 				assetElemText.style.fontWeight="bold";
 				assetElem.appendChild(assetElemText);
 				assetElem.appendChild(addAsset(assets[lID]));
