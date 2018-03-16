@@ -65,13 +65,7 @@ div#header
 	margin: 0;
 	padding: 0px;
 }
-div#headerLeft
-{
-	display:none;
-	padding: 0px;
-	margin: 0px;
-}
-div#headerRight
+div#headerLogo
 {
 	margin: 0;
 	padding: 0px 0px 0px 13px;
@@ -154,21 +148,11 @@ div.rightBoxMain hr
 	{
 		border-bottom: 1px solid #777777;
 	}
-	div#headerLeft
-	{
-		background-image: url("http://langmo.github.io/stochsim/img/header.jpg");
-		width:303px;
-		height:95px;
-		margin: 0;
-		padding: 0;
-		float: left;
-		display:block;
-	}
-	div#headerRight
+	div#headerLogo
 	{
 		margin: 0;
-		padding: 48px 0 0 0;
-		text-align:right;
+		padding: 10px 0 0 0;
+		text-align:left;
 		vertical-align:bottom;
 	}
 	div.plusMinusSign
