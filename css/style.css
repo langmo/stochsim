@@ -153,6 +153,7 @@ div.rightBoxMain hr
 	div#header
 	{
 		border-bottom: 1px solid #777777;
+		height:100px;
 	}
 	div#headerLeft
 	{
