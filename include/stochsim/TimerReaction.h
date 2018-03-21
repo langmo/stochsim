@@ -61,12 +61,17 @@ namespace stochsim
 		/// Returns all products of the reaction.
 		/// </summary>
 		/// <returns>Products of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		stochsim::Collection<stochsim::ReactionRightElement> GetProducts() const
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionRightElement> returnVal;
 			for (auto& product : products_)
 			{
-				returnVal.emplace_back(product.state_, product.stochiometry_);
+				Molecule::PropertyExpressions expressions;
+				for (size_t i = 0; i < product.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = product.propertyExpressions_[i] ? product.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(product.state_, product.stochiometry_, std::move(expressions));
 			}
 			return std::move(returnVal);
 		}

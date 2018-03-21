@@ -18,6 +18,23 @@ classdef (Abstract) stochSimulationComponent < handle
             [varargout{1:nargout}] = matstochsim([this.getClassName(), stochSimulation.getSeparator(), functionName], this.simulationHandle.objectHandle, this.componentHandle, varargin{:});
         end
     end
+	methods (Static, Access = protected, Hidden = true)
+        function formattedProperties = formatProperties(properties)
+            last = 0;
+            for i=length(properties):-1:1
+                if ~isempty(properties{i})
+                    last = i;
+                    break;
+                end
+            end
+            if last==0
+                formattedProperties = '';
+            else
+                formattedProperties = ['{', strjoin(properties(1:last),', '), '}'];
+            end
+            
+        end
+    end
     properties(SetAccess = private, GetAccess=public,Abstract)
         % Unique name of the component.
         name;

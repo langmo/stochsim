@@ -27,6 +27,8 @@ classdef stochTimerReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         products;
         % Stochiometries of products.
         productStochiometries;
+        % Property expressions of product molecules.
+        productPropertyExpressions;
     end
     properties(Dependent)
         % Time, in sumulation time units, when the timer reaction should
@@ -86,6 +88,10 @@ classdef stochTimerReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         function productStochiometries = get.productStochiometries(this)
             [~, productStochiometries] = this.call('GetProducts');
         end
+        function productPropertyExpressions = get.productPropertyExpressions(this)
+            [~, ~, productPropertyExpressions] = this.call('GetProducts');
+        end
+        
         function formula = formatFormula(this, format, numberFormat)
             % Displays the chemical formula of this reaction according to
             % the provided format string. In this format string, '%1$s'
@@ -120,12 +126,12 @@ classdef stochTimerReaction < stochSimulationComponent & matlab.mixin.CustomDisp
                 numberFormat = '%g';
             end
             iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
-            toString = @(state, stoch) ...
-                iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
-                    true   , @()this.simulationHandle.getState(state{1}).name);
+            toString = @(state, stoch, properties) ...
+                iff(stoch>1, @() sprintf('%g*%s%s', stoch, this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})),...
+                    true   , @()[this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})]);
             
-            [productRefs, productStochiometries] = this.call('GetProducts');
-            products = arrayfun(toString, productRefs, productStochiometries, 'UniformOutput', false);
+            [productRefs, productStochiometries, productPropertyExpressions] = this.call('GetProducts');
+            products = arrayfun(toString, productRefs, productStochiometries, productPropertyExpressions, 'UniformOutput', false);
             
             timeStr = sprintf(numberFormat, this.fireTime);
             

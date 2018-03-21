@@ -94,6 +94,25 @@ public:
 		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
 		::mxSetCell(&cell, index, ::mxCreateString(value.c_str()));
 	}
+	static void AssignCellElement(mxArray& cell, mwIndex row, mwIndex column, MatlabVariable value)
+	{
+		if (!::mxIsCell(&cell))
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Matlab array is not a cell array, it's a " << mxGetClassName(&cell) << " array.";
+			throw std::exception(errorMessage.str().c_str());
+		}
+		if (::mxGetNumberOfDimensions(&cell) != 2)
+			throw std::exception("Only 2D cell arrays can be assigned to.");
+		const mwSize* size = ::mxGetDimensions(&cell);
+		if (row < 0 || row >= size[0])
+			throw std::exception("Invalid row index.");
+		if (column < 0 || column >= size[1])
+			throw std::exception("Invalid column index.");
+		mwIndex dim[] = { row,  column };
+		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
+		::mxSetCell(&cell, index, value.release());
+	}
 	template<typename T> inline T Get(size_t index)
 	{
 		static_assert(std::is_floating_point<T>::value || std::is_integral<T>::value, "Function template T MatlabParams::Get<T>(size_t) not defined for type T.");

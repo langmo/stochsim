@@ -178,22 +178,44 @@ namespace stochsim
 		/// Returns all products of the reaction.
 		/// </summary>
 		/// <returns>Products of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProducts() const
+		stochsim::Collection<stochsim::ReactionRightElement> GetProducts() const
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionRightElement> returnVal;
 			for (auto& product : products_)
 			{
-				returnVal.emplace_back(product.state_, product.stochiometry_);
+				Molecule::PropertyExpressions expressions;
+				for (size_t i = 0; i < product.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = product.propertyExpressions_[i] ? product.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(product.state_, product.stochiometry_, std::move(expressions));
 			}
 			return std::move(returnVal);
 		}
 		/// <summary>
 		/// Returns the reactant of the reaction. A delayed reaction always has exactly one reactant with stochiometry one.
 		/// </summary>
-		/// <returns>Reactant of the reaction.</returns>
-		std::shared_ptr<ComposedState> GetReactant() const
+		/// <returns>Reactants of the reaction.</returns>
+		stochsim::ReactionLeftElement GetReactant() const
 		{
-			return reactant_.state_;
+			Molecule::PropertyNames names;
+			for (size_t i = 0; i < reactant_.propertyNames_.size(); i++)
+			{
+				names[i] = reactant_.propertyNames_[i];
+			}
+			return ReactionLeftElement(reactant_.state_, 1, std::move(names));
+		}
+		/// <summary>
+		/// Returns all reactants of the reaction.  A delayed reaction always has exactly one reactant with stochiometry one.
+		/// The return collection thus contains only one element, namely the one returned by GetReactant().
+		/// This method is mainly intended to provide a common interface as compared to other reaction types.
+		/// </summary>
+		/// <returns>Reactants of reaction.</returns>
+		stochsim::Collection<stochsim::ReactionLeftElement> GetReactants() const noexcept
+		{
+			stochsim::Collection<stochsim::ReactionLeftElement> returnVal;
+			returnVal.push_back(GetReactant());
+			return std::move(returnVal);
 		}
 	private:
 		double delay_;

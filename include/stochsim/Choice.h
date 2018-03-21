@@ -248,12 +248,17 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to true.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to true.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfTrue() const noexcept
+		stochsim::Collection<stochsim::ReactionRightElement> GetProductsIfTrue() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionRightElement> returnVal;
 			for (auto& product : elementsIfTrue_)
 			{
-				returnVal.emplace_back(product.state_, product.stochiometry_);
+				Molecule::PropertyExpressions expressions;
+				for (size_t i=0; i < product.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = product.propertyExpressions_[i]? product.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(product.state_, product.stochiometry_, std::move(expressions));
 			}
 			return std::move(returnVal);
 		}
@@ -262,12 +267,17 @@ namespace stochsim
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to false.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to false.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProductsIfFalse() const noexcept
+		stochsim::Collection<stochsim::ReactionRightElement> GetProductsIfFalse() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionRightElement> returnVal;
 			for (auto& product : elementsIfFalse_)
 			{
-				returnVal.emplace_back(product.state_, product.stochiometry_);
+				Molecule::PropertyExpressions expressions;
+				for (size_t i = 0; i < product.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = product.propertyExpressions_[i] ? product.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(product.state_, product.stochiometry_, std::move(expressions));
 			}
 			return std::move(returnVal);
 		}

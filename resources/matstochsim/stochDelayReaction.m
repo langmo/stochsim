@@ -30,10 +30,14 @@ classdef stochDelayReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         reactants;
         % Stochiometries of reactants.
         reactantStochiometries;
+        % Property names of reactant molecules.
+        reactantPropertyNames;
         % Products, that is, species which get produced by the reaction.
         products;
         % Stochiometries of products.
         productStochiometries;
+        % Property expressions of product molecules.
+        productPropertyExpressions;
     end
     properties(Dependent)
         % The delay after the creation of a molecule of the composed state
@@ -80,6 +84,9 @@ classdef stochDelayReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         function reactantStochiometries = get.reactantStochiometries(this)
             [~, reactantStochiometries] = this.call('GetReactants');
         end
+        function reactantPropertyNames = get.reactantPropertyNames(this)
+            [~, ~, reactantPropertyNames] = this.call('GetReactants');
+        end
         
         function products = get.products(this)
             [productRefs, ~] = this.call('GetProducts');
@@ -91,6 +98,10 @@ classdef stochDelayReaction < stochSimulationComponent & matlab.mixin.CustomDisp
         function productStochiometries = get.productStochiometries(this)
             [~, productStochiometries] = this.call('GetProducts');
         end
+        function productPropertyExpressions = get.productPropertyExpressions(this)
+            [~, ~, productPropertyExpressions] = this.call('GetProducts');
+        end
+        
         function delay = get.delay(this)
             delay = this.call('GetDelay');
         end
@@ -129,15 +140,15 @@ classdef stochDelayReaction < stochSimulationComponent & matlab.mixin.CustomDisp
                 numberFormat = '%g';
             end
             iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
-            toString = @(state, stoch) ...
-                iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
-                    true   , @()this.simulationHandle.getState(state{1}).name);
+            toString = @(state, stoch, properties) ...
+                iff(stoch>1, @() sprintf('%g*%s%s', stoch, this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})),...
+                    true   , @()[this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})]);
             
-            [reactantRefs, reactantStochiometries] = this.call('GetReactants');
-            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, 'UniformOutput', false);
+            [reactantRefs, reactantStochiometries, reactantPropertyNames] = this.call('GetReactants');
+            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, reactantPropertyNames, 'UniformOutput', false);
             
-            [productRefs, productStochiometries] = this.call('GetProducts');
-            products = arrayfun(toString, productRefs, productStochiometries, 'UniformOutput', false);
+            [productRefs, productStochiometries, productPropertyExpressions] = this.call('GetProducts');
+            products = arrayfun(toString, productRefs, productStochiometries, productPropertyExpressions, 'UniformOutput', false);
             
             delayStr = sprintf(numberFormat, this.delay);
             

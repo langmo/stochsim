@@ -91,7 +91,7 @@ variable(v) ::= IDENTIFIER(I) LEFT_SQUARE expression(e) RIGHT_SQUARE. {
 	e = nullptr;
 
 	auto value = static_cast<size_t>(parseTree->GetExpressionValue(e_temp.get())+0.5);
-	v = new identifier(name+std::to_string(value));
+	v = new identifier(name+"["+std::to_string(value)+"]");
 }
 variable(v) ::= IDENTIFIER(I). {
 	v = new identifier(*I);

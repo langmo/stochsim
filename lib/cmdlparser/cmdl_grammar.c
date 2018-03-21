@@ -1395,7 +1395,7 @@ static void yy_reduce(
 	yymsp[-1].minor.yy64 = nullptr;
 
 	auto value = static_cast<size_t>(parseTree->GetExpressionValue(e_temp.get())+0.5);
-	yylhsminor.yy100 = new identifier(name+std::to_string(value));
+	yylhsminor.yy100 = new identifier(name+"["+std::to_string(value)+"]");
 }
 #line 1401 "C:\\stochsim\\lib\\cmdlparser\\cmdl_grammar.c"
   yy_destructor(yypParser,19,&yymsp[-2].minor);

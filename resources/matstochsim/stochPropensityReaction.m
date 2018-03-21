@@ -28,10 +28,14 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         reactants;
         % Stochiometries of reactants.
         reactantStochiometries;
+        % Property names of reactant molecules.
+        reactantPropertyNames;
         % Products, that is, species which get produced by the reaction.
         products;
         % Stochiometries of products.
         productStochiometries;
+        % Property expressions of product molecules.
+        productPropertyExpressions;
         % Modifiers, that is, species which get neither produced nor
         % consumed by the reaction, but which modify the reaction rate
         % according to their stochiometry following mass action kinetics.
@@ -39,6 +43,8 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         modifiers;
         % Stochiometries of modifiers.
         modifierStochiometries;
+        % Property names of modifier molecules.
+        modifierPropertyNames;
         % Transformees, that is, species which get neither produced nor
         % consumed by the reaction, but which modify the reaction rate
         % according to their stochiometry following mass action kinetics.
@@ -50,6 +56,10 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         transformees;
         % Stochiometries of transformees.
         transformeeStochiometries;
+        % Property names of transformee molecules.
+        transformeePropertyNames;
+         % Property expressions of product molecules.
+        transformeePropertyExpressions;
     end
     properties(Dependent)
         % The rate constant of the reaction used to calculate the
@@ -127,6 +137,9 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         function reactantStochiometries = get.reactantStochiometries(this)
             [~, reactantStochiometries] = this.call('GetReactants');
         end
+        function reactantPropertyNames = get.reactantPropertyNames(this)
+            [~, ~, reactantPropertyNames] = this.call('GetReactants');
+        end
         
         function products = get.products(this)
             [productRefs, ~] = this.call('GetProducts');
@@ -137,6 +150,9 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         end
         function productStochiometries = get.productStochiometries(this)
             [~, productStochiometries] = this.call('GetProducts');
+        end
+        function productPropertyExpressions = get.productPropertyExpressions(this)
+            [~, ~, productPropertyExpressions] = this.call('GetProducts');
         end
         
         function modifiers = get.modifiers(this)
@@ -149,6 +165,9 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         function modifierStochiometries = get.modifierStochiometries(this)
             [~, modifierStochiometries] = this.call('GetModifiers');
         end
+        function modifierPropertyNames = get.modifierPropertyNames(this)
+            [~, ~, modifierPropertyNames] = this.call('GetModifiers');
+        end
         
         function transformees = get.transformees(this)
             [transformeeRefs, ~] = this.call('GetTransformees');
@@ -160,6 +179,13 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
         function transformeeStochiometries = get.transformeeStochiometries(this)
             [~, transformeeStochiometries] = this.call('GetTransformees');
         end
+        function transformeePropertyNames = get.transformeePropertyNames(this)
+            [~, ~,~,transformeePropertyNames] = this.call('GetTransformees');
+        end
+        function transformeePropertyExpressions = get.transformeePropertyExpressions(this)
+            [~, ~,transformeePropertyExpressions] = this.call('GetTransformees');
+        end
+        
         function formula = formatFormula(this, format, numberFormat)
             % Displays the chemical formula of this reaction according to
             % the provided format string. In this format string, '%1$s'
@@ -194,23 +220,25 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
                 numberFormat = '%g';
             end
             iff = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
-            toString = @(state, stoch) ...
-                iff(stoch>1, @() sprintf('%g*%s', stoch, this.simulationHandle.getState(state{1}).name),...
-                    true   , @()this.simulationHandle.getState(state{1}).name);
+            toString = @(state, stoch, properties) ...
+                iff(stoch>1, @() sprintf('%g*%s%s', stoch, this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})),...
+                    true   , @()[this.simulationHandle.getState(state{1}).name, stochSimulationComponent.formatProperties(properties{1})]);
             
-            [reactantRefs, reactantStochiometries] = this.call('GetReactants');
-            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, 'UniformOutput', false);
+            [reactantRefs, reactantStochiometries, reactantPropertyNames] = this.call('GetReactants');
+            reactants = arrayfun(toString, reactantRefs, reactantStochiometries, reactantPropertyNames, 'UniformOutput', false);
             
-            [productRefs, productStochiometries] = this.call('GetProducts');
-            products = arrayfun(toString, productRefs, productStochiometries, 'UniformOutput', false);
+            [productRefs, productStochiometries, productPropertyExpressions] = this.call('GetProducts');
+            products = arrayfun(toString, productRefs, productStochiometries, productPropertyExpressions, 'UniformOutput', false);
             
-            [modifierRefs, modifierStochiometries] = this.call('GetModifiers');
-            modifiers = arrayfun(toString, modifierRefs, modifierStochiometries, 'UniformOutput', false);
+            [modifierRefs, modifierStochiometries, modifierPropertyNames] = this.call('GetModifiers');
+            modifiers = arrayfun(toString, modifierRefs, modifierStochiometries, modifierPropertyNames, 'UniformOutput', false);
             modifiers = cellfun(@(string)['$',string], modifiers, 'UniformOutput', false);
             
-            [transformeeRefs, transformeeStochiometries] = this.call('GetTransformees');
-            transformees = arrayfun(toString, transformeeRefs, transformeeStochiometries, 'UniformOutput', false);
-            transformees = cellfun(@(string)['$',string], transformees, 'UniformOutput', false);
+            [transformeeRefs, transformeeStochiometries, transformeePropertyExpressions, transformeePropertyNames] = this.call('GetTransformees');
+            transformeesLeft = arrayfun(toString, transformeeRefs, transformeeStochiometries, transformeePropertyNames, 'UniformOutput', false);
+            transformeesLeft = cellfun(@(string)['$',string], transformeesLeft, 'UniformOutput', false);
+            transformeesRight = arrayfun(toString, transformeeRefs, transformeeStochiometries, transformeePropertyExpressions, 'UniformOutput', false);
+            transformeesRight = cellfun(@(string)['$',string], transformeesRight, 'UniformOutput', false);
             
             rateConstant = this.rateConstant;
             if rateConstant ~=-1
@@ -221,8 +249,8 @@ classdef stochPropensityReaction < stochSimulationComponent & matlab.mixin.Custo
             
             formula = sprintf(format, ...
                 this.name, ...
-                strjoin([reactants, modifiers, transformees], ' + '), ...
-                strjoin([products, transformees], ' + '), ...
+                strjoin([reactants, modifiers, transformeesLeft], ' + '), ...
+                strjoin([products, transformeesRight], ' + '), ...
                 rateStr);
         end
         function formula = getFormula(this)

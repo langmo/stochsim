@@ -11,7 +11,7 @@ namespace cmdlparser
 	/// A parser which parses CMDL files to initialize a given simulation.
 	/// </summary>
 	class CmdlParser
-	{
+	{ 
 	private:
 		struct Variable
 		{

@@ -153,12 +153,17 @@ namespace stochsim
 		/// Returns all reactants of the reaction. Modifiers and Transformees are not considered to be reactants.
 		/// </summary>
 		/// <returns>Reactants of reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetReactants() const noexcept
+		stochsim::Collection<stochsim::ReactionLeftElement> GetReactants() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionLeftElement> returnVal;
 			for (auto& reactant : reactants_)
 			{
-				returnVal.emplace_back(reactant.state_, reactant.stochiometry_);
+				Molecule::PropertyNames names;
+				for (size_t i = 0; i < reactant.propertyNames_.size(); i++)
+				{
+					names[i] = reactant.propertyNames_[i];
+				}
+				returnVal.emplace_back(reactant.state_, reactant.stochiometry_, std::move(names));
 			}
 			return std::move(returnVal);
 		}
@@ -166,12 +171,17 @@ namespace stochsim
 		/// Returns all products of the reaction. Modifiers and Transformees are not considered to be products.
 		/// </summary>
 		/// <returns>Products of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetProducts() const noexcept
+		stochsim::Collection<stochsim::ReactionRightElement> GetProducts() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionRightElement> returnVal;
 			for (auto& product : products_)
 			{
-				returnVal.emplace_back(product.state_, product.stochiometry_);
+				Molecule::PropertyExpressions expressions;
+				for (size_t i = 0; i < product.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = product.propertyExpressions_[i] ? product.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(product.state_, product.stochiometry_, std::move(expressions));
 			}
 			return std::move(returnVal);
 		}
@@ -182,12 +192,22 @@ namespace stochsim
 		/// dependent.
 		/// </summary>
 		/// <returns>Transformees of the reaction.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetTransformees() const noexcept
+		stochsim::Collection<stochsim::ReactionLeftRightElement> GetTransformees() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionLeftRightElement> returnVal;
 			for (auto& transformee : transformees_)
 			{
-				returnVal.emplace_back(transformee.state_, transformee.stochiometry_);
+				Molecule::PropertyNames names;
+				for (size_t i = 0; i < transformee.propertyNames_.size(); i++)
+				{
+					names[i] = transformee.propertyNames_[i];
+				}
+				Molecule::PropertyExpressions expressions;
+				for (size_t i = 0; i < transformee.propertyExpressions_.size(); i++)
+				{
+					expressions[i] = transformee.propertyExpressions_[i] ? transformee.propertyExpressions_[i].GetExpression()->Clone() : nullptr;
+				}
+				returnVal.emplace_back(transformee.state_, transformee.stochiometry_, std::move(expressions), std::move(names));
 			}
 			return std::move(returnVal);
 		}
@@ -196,12 +216,17 @@ namespace stochsim
 		/// neither increased or decreased when the reaction fires.
 		/// </summary>
 		/// <returns>Modifiers of the reaction</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetModifiers() const noexcept
+		stochsim::Collection<stochsim::ReactionLeftElement> GetModifiers() const noexcept
 		{
-			stochsim::Collection<stochsim::ReactionElement> returnVal;
+			stochsim::Collection<stochsim::ReactionLeftElement> returnVal;
 			for (auto& modifier : modifiers_)
 			{
-				returnVal.emplace_back(modifier.state_, modifier.stochiometry_);
+				Molecule::PropertyNames names;
+				for (size_t i = 0; i < modifier.propertyNames_.size(); i++)
+				{
+					names[i] = modifier.propertyNames_[i];
+				}
+				returnVal.emplace_back(modifier.state_, modifier.stochiometry_, std::move(names));
 			}
 			return std::move(returnVal);
 		}

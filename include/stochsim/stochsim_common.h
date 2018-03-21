@@ -313,13 +313,13 @@ namespace stochsim
 	};
 
 	/// <summary>
-	/// A reaction element is a reactant, product or similar of a reaction, together with its stochiometry.
+	/// A reaction left element is either a reactant or a modifier of a reaction, i.e. an element standing on the left of the reaction arrow.
 	/// </summary>
-	struct ReactionElement
+	struct ReactionLeftElement
 	{
 	public:
 		/// <summary>
-		/// State representing the reactant, product or similar of the reaction element.
+		/// State representing the reactant or modifier.
 		/// </summary>
 		const std::shared_ptr<IState> state_;
 		/// <summary>
@@ -327,12 +327,125 @@ namespace stochsim
 		/// </summary>
 		const Stochiometry stochiometry_;
 		/// <summary>
+		/// Names of the reactant/modifier molecule properties.
+		/// </summary>
+		const Molecule::PropertyNames propertyNames_;
+		/// <summary>
 		/// Constructor.
 		/// </summary>
-		/// <param name="state">State representing the reactant, product or similar of the reaction element.</param>
+		/// <param name="state">State representing the reactant or modifier.</param>
 		/// <param name="stochiometry">Stochiometry of the reaction element.</param>
-		ReactionElement(std::shared_ptr<IState> state, Stochiometry stochiometry) : state_(std::move(state)), stochiometry_(stochiometry)
+		ReactionLeftElement(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyNames propertyNames) : state_(std::move(state)), stochiometry_(stochiometry), propertyNames_(std::move(propertyNames))
 		{
+		}
+	};
+
+	/// <summary>
+	/// A reaction right element is a product of a reaction, i.e. an element standing on the right of the reaction arrow.
+	/// </summary>
+	struct ReactionRightElement
+	{
+	public:
+		/// <summary>
+		/// State representing the product.
+		/// </summary>
+		const std::shared_ptr<IState> state_;
+		/// <summary>
+		/// Stochiometry of the reaction element.
+		/// </summary>
+		const Stochiometry stochiometry_;
+		/// <summary>
+		/// Expressions of the product molecule properties.
+		/// </summary>
+		const Molecule::PropertyExpressions propertyExpressions_;
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="state">State representing the product.</param>
+		/// <param name="stochiometry">Stochiometry of the reaction element.</param>
+		ReactionRightElement(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions) : state_(std::move(state)), stochiometry_(stochiometry), propertyExpressions_(std::move(propertyExpressions))
+		{
+		}
+
+		/// <summary>
+		/// Copy constructor.
+		/// </summary>
+		/// <param name="other">Object to copy.</param>
+		ReactionRightElement(const ReactionRightElement& other) : state_(other.state_), stochiometry_(other.stochiometry_), propertyExpressions_(cloneArray(other.propertyExpressions_))
+		{
+		}
+	private:
+		/// <summary>
+		/// Helper function to deep-copy property expressions.
+		/// Since we want to initialize in the copy constructor a constant array, we have to do that in the initialization list. This helper function is a workaround since the initialization list
+		/// does not support complicated operations.
+		/// </summary>
+		/// <param name="other">property expressions to deep-copy.</param>
+		/// <returns>A deep copy.</returns>
+		static inline Molecule::PropertyExpressions cloneArray(const Molecule::PropertyExpressions& other)
+		{
+			Molecule::PropertyExpressions clone;
+			for (size_t i = 0; i < other.size(); i++)
+			{
+				clone[i] = other[i] ? other[i]->Clone() : nullptr;
+			}
+			return std::move(clone);
+		}
+	};
+
+	/// <summary>
+	/// A reaction left/right element is a transformee of a reaction, i.e. an element standing on the left and right of the reaction arrow.
+	/// </summary>
+	struct ReactionLeftRightElement
+	{
+	public:
+		/// <summary>
+		/// State representing the transformee.
+		/// </summary>
+		const std::shared_ptr<IState> state_;
+		/// <summary>
+		/// Stochiometry of the reaction element.
+		/// </summary>
+		const Stochiometry stochiometry_;
+		/// <summary>
+		/// Names of the transformee molecule properties.
+		/// </summary>
+		const Molecule::PropertyNames propertyNames_;
+		/// <summary>
+		/// Expressions of the transformee molecule properties.
+		/// </summary>
+		const Molecule::PropertyExpressions propertyExpressions_;
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="state">State representing the transformee.</param>
+		/// <param name="stochiometry">Stochiometry of the reaction element.</param>
+		ReactionLeftRightElement(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions, Molecule::PropertyNames propertyNames) : state_(std::move(state)), stochiometry_(stochiometry), propertyExpressions_(std::move(propertyExpressions)), propertyNames_(std::move(propertyNames))
+		{
+		}
+		/// <summary>
+		/// Copy constructor.
+		/// </summary>
+		/// <param name="other">Object to copy.</param>
+		ReactionLeftRightElement(const ReactionLeftRightElement& other) : state_(other.state_), stochiometry_(other.stochiometry_), propertyNames_(other.propertyNames_), propertyExpressions_(cloneArray(other.propertyExpressions_))
+		{
+		}
+	private:
+		/// <summary>
+		/// Helper function to deep-copy property expressions.
+		/// Since we want to initialize in the copy constructor a constant array, we have to do that in the initialization list. This helper function is a workaround since the initialization list
+		/// does not support complicated operations.
+		/// </summary>
+		/// <param name="other">property expressions to deep-copy.</param>
+		/// <returns>A deep copy.</returns>
+		static inline Molecule::PropertyExpressions cloneArray(const Molecule::PropertyExpressions& other)
+		{
+			Molecule::PropertyExpressions clone;
+			for (size_t i = 0; i < other.size(); i++)
+			{
+				clone[i] = other[i] ? other[i]->Clone() : nullptr;
+			}
+			return std::move(clone);
 		}
 	};
 }

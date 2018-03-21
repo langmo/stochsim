@@ -64,24 +64,103 @@ std::string GetReactionReference(const std::shared_ptr<stochsim::IEventReaction>
 	return reactionRef;
 }
 
-std::pair<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable> toMatlab(const stochsim::Collection<stochsim::ReactionElement>& reactionElements)
+std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable> toMatlab(const stochsim::Collection<stochsim::ReactionLeftElement>& reactionElements)
 {
 	size_t numElements = reactionElements.size();
 	auto stateRefs = MatlabParams::CreateCell(1, numElements);
+	auto propertyNamesRefs = MatlabParams::CreateCell(1, numElements);
 	auto stochs = MatlabParams::CreateDoubleMatrix(1, numElements);
 	size_t i = 0;
-	for (auto element : reactionElements)
+	for (auto& element : reactionElements)
 	{
 		if (i >= numElements)
 			break;
 		MatlabParams::AssignCellElement(*stateRefs, 0, i, GetStateReference(element.state_));
 		MatlabParams::AssignArrayElement(*stochs, 0, i, element.stochiometry_);
+		auto propertyNamesRef = MatlabParams::CreateCell(1, element.propertyNames_.size());
+		size_t j = 0;
+		for (auto& name : element.propertyNames_)
+		{
+			if (j >= element.propertyNames_.size())
+				break;
+			MatlabParams::AssignCellElement(*propertyNamesRef, 0, j, name);
+			j++;
+		}
+		MatlabParams::AssignCellElement(*propertyNamesRefs, 0, i, std::move(propertyNamesRef));
 		i++;
 	}
-	return std::pair<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable>(std::move(stateRefs), std::move(stochs));
+	return std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable>(std::move(stateRefs), std::move(stochs), std::move(propertyNamesRefs));
 }
 
+std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable> toMatlab(const stochsim::Collection<stochsim::ReactionLeftRightElement>& reactionElements)
+{
+	size_t numElements = reactionElements.size();
+	auto stateRefs = MatlabParams::CreateCell(1, numElements);
+	auto propertyNamesRefs = MatlabParams::CreateCell(1, numElements);
+	auto propertyExpressionsRefs = MatlabParams::CreateCell(1, numElements);
+	auto stochs = MatlabParams::CreateDoubleMatrix(1, numElements);
+	size_t i = 0;
+	for (auto& element : reactionElements)
+	{
+		if (i >= numElements)
+			break;
+		MatlabParams::AssignCellElement(*stateRefs, 0, i, GetStateReference(element.state_));
+		MatlabParams::AssignArrayElement(*stochs, 0, i, element.stochiometry_);
 
+		auto propertyExpressionRef = MatlabParams::CreateCell(1, element.propertyExpressions_.size());
+		size_t j = 0;
+		for (auto& expression : element.propertyExpressions_)
+		{
+			if (j >= element.propertyExpressions_.size())
+				break;
+			MatlabParams::AssignCellElement(*propertyExpressionRef, 0, j, std::string(expression ? expression->ToCmdl() : ""));
+			j++;
+		}
+		MatlabParams::AssignCellElement(*propertyExpressionsRefs, 0, i, std::move(propertyExpressionRef));
+
+		auto propertyNamesRef = MatlabParams::CreateCell(1, element.propertyNames_.size());
+		j = 0;
+		for (auto& name : element.propertyNames_)
+		{
+			if (j >= element.propertyNames_.size())
+				break;
+			MatlabParams::AssignCellElement(*propertyNamesRef, 0, j, name);
+			j++;
+		}
+		MatlabParams::AssignCellElement(*propertyNamesRefs, 0, i, std::move(propertyNamesRef));
+		i++;
+	}
+	return std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable>(std::move(stateRefs), std::move(stochs), std::move(propertyExpressionsRefs), std::move(propertyNamesRefs));
+}
+
+std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable> toMatlab(const stochsim::Collection<stochsim::ReactionRightElement>& reactionElements)
+{
+	size_t numElements = reactionElements.size();
+	auto stateRefs = MatlabParams::CreateCell(1, numElements);
+	auto propertyExpressionsRefs = MatlabParams::CreateCell(1, numElements);
+	auto stochs = MatlabParams::CreateDoubleMatrix(1, numElements);
+	size_t i = 0;
+	for (auto& element : reactionElements)
+	{
+		if (i >= numElements)
+			break;
+		MatlabParams::AssignCellElement(*stateRefs, 0, i, GetStateReference(element.state_));
+		MatlabParams::AssignArrayElement(*stochs, 0, i, element.stochiometry_);
+
+		auto propertyExpressionRef = MatlabParams::CreateCell(1, element.propertyExpressions_.size());
+		size_t j = 0;
+		for (auto& expression : element.propertyExpressions_)
+		{
+			if (j >= element.propertyExpressions_.size())
+				break;
+			MatlabParams::AssignCellElement(*propertyExpressionRef, 0, j, std::string(expression ? expression->ToCmdl() : ""));
+			j++;
+		}
+		MatlabParams::AssignCellElement(*propertyExpressionsRefs, 0, i, std::move(propertyExpressionRef));
+		i++;
+	}
+	return std::tuple<MatlabParams::MatlabVariable, MatlabParams::MatlabVariable, MatlabParams::MatlabVariable>(std::move(stateRefs), std::move(stochs), std::move(propertyExpressionsRefs));
+}
 
 void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, MatlabParams& params)
 {
@@ -450,8 +529,10 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	{
 		auto elements = reaction->GetReactants();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if(params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "AddModifier")
 	{
@@ -474,8 +555,10 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	{
 		auto elements = reaction->GetModifiers();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "AddTransformee")
 	{
@@ -498,8 +581,12 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	{
 		auto elements = reaction->GetTransformees();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
+		if (params.NumReturns() > 3)
+			params.Set(3, std::get<3>(pair).release());
 	}
 	else if (methodName == "AddProduct")
 	{
@@ -522,8 +609,10 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	{
 		auto elements = reaction->GetProducts();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "SetRateConstant")
 	{
@@ -541,9 +630,9 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		reaction->SetRateEquation(rateEquation);
 	}
 	else if (methodName == "GetRateEquation")
-	{
+	{ 
 		auto rateEquation = reaction->GetRateEquation();
-		params.Set(0, rateEquation->ToCmdl());
+		params.Set(0, rateEquation ? rateEquation->ToCmdl() : "");
 	}
 	else
 	{
@@ -580,17 +669,19 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 	{
 		auto elements = reaction->GetProducts();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "GetReactants")
 	{
-		auto reactant = reaction->GetReactant();
-		// create collection to offer a common interface to Matlab.
-		stochsim::Collection<stochsim::ReactionElement> elements = { stochsim::ReactionElement (reactant, 1)};
+		auto elements = reaction->GetReactants();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "SetDelay")
 	{
@@ -638,8 +729,10 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 	{
 		auto elements = reaction->GetProducts();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "SetFireTime")
 	{
@@ -664,7 +757,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 	{
 		params.Set(0, choice->GetName());
 	}
-	else if (methodName == "AddElementIfTrue")
+	else if (methodName == "AddProductIfTrue")
 	{
 		std::string stateName = params.Get<std::string>(0);
 		std::shared_ptr<stochsim::IState> state = GetState(stateName);
@@ -681,8 +774,8 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 			stochiometry = 1;
 
 		choice->AddProductIfTrue(state, stochiometry);
-	}
-	else if (methodName == "AddElementIfFalse")
+	} 
+	else if (methodName == "AddProductIfFalse")
 	{
 		std::string stateName = params.Get<std::string>(0);
 		std::shared_ptr<stochsim::IState> state = GetState(stateName);
@@ -700,19 +793,23 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 
 		choice->AddProductIfFalse(state, stochiometry);
 	}
-	else if (methodName == "GetElementsIfTrue")
+	else if (methodName == "GetProductsIfTrue")
 	{
 		auto elements = choice->GetProductsIfTrue();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
-	else if (methodName == "GetElementsIfFalse")
+	else if (methodName == "GetProductsIfFalse")
 	{
 		auto elements = choice->GetProductsIfFalse();
 		auto pair = toMatlab(elements);
-		params.Set(0, pair.first.release());
-		params.Set(1, pair.second.release());
+		params.Set(0, std::get<0>(pair).release());
+		params.Set(1, std::get<1>(pair).release());
+		if (params.NumReturns() > 2)
+			params.Set(2, std::get<2>(pair).release());
 	}
 	else if (methodName == "SetCondition") 
 	{
