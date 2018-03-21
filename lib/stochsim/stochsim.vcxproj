@@ -176,7 +176,7 @@
     <ClInclude Include="..\..\include\stochsim\Choice.h" />
     <ClInclude Include="..\..\include\stochsim\CircularBuffer.h" />
     <ClInclude Include="..\..\include\stochsim\ComposedState.h" />
-    <ClInclude Include="..\..\include\stochsim\ComposedStateLogger.h" />
+    <ClInclude Include="..\..\include\stochsim\StatePropertyLogger.h" />
     <ClInclude Include="..\..\include\stochsim\CustomDelayReaction.h" />
     <ClInclude Include="..\..\include\stochsim\CustomLogger.h" />
     <ClInclude Include="..\..\include\stochsim\DelayReaction.h" />

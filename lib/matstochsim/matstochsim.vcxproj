@@ -113,7 +113,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>matstochsim.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(MATLAB_DIR)\extern\lib\win32\microsoft</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;libut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -139,7 +139,7 @@
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>matstochsim.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(MATLAB_DIR)\extern\lib\win32\microsoft</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;libut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -165,7 +165,7 @@
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>matstochsim.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(MATLAB_DIR)\extern\lib\win64\microsoft</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;libut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -194,7 +194,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>matstochsim.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(MATLAB_DIR)\extern\lib\win64\microsoft</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmx.lib;libmex.lib;libmat.lib;libut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>

@@ -19,10 +19,26 @@ namespace stochsim
 		}
 		virtual void Add(ISimInfo& simInfo, const Molecule& molecule = defaultMolecule, const Variables& variables = {}) override
 		{
+			if (!addListeners_.empty())
+			{
+				double time = simInfo.GetSimTime();
+				for (auto& addListener : addListeners_)
+				{
+					addListener(molecule, time);
+				}
+			}
 			num_ ++;
 		}
 		virtual Molecule Remove(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
+			if (!removeListeners_.empty())
+			{
+				double time = simInfo.GetSimTime();
+				for (auto& removeListener : removeListeners_)
+				{
+					removeListener(defaultMolecule, time);
+				}
+			}
 			num_ --;
 			return defaultMolecule;
 		}
@@ -64,9 +80,19 @@ namespace stochsim
 		{
 			initialCondition_ = initialCondition;
 		}
+		virtual inline void AddDecreaseListener(StateListener stateListener) override
+		{
+			removeListeners_.push_back(std::move(stateListener));
+		}
+		virtual inline void AddIncreaseListener(StateListener stateListener) override
+		{
+			addListeners_.push_back(std::move(stateListener));
+		}
 	private:
 		size_t num_;
 		const std::string name_;
 		size_t initialCondition_;
+		std::list<StateListener> removeListeners_;
+		std::list<StateListener> addListeners_;
 	};
 }

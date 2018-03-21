@@ -32,11 +32,6 @@ namespace stochsim
 		};
 	public:
 		/// <summary>
-		/// Typedef for listener which gets called when a molecule is removed from this state.
-		/// </summary>
-		typedef std::function<void(const Molecule& molecule, double time)> RemoveListener;
-
-		/// <summary>
 		/// Constructor.
 		/// </summary>
 		/// <param name="name">Name of the state.</param>
@@ -70,12 +65,25 @@ namespace stochsim
 		{
 			return size_;
 		}
-		inline void AddRemoveListener(RemoveListener fireListener)
+		virtual inline void AddDecreaseListener(StateListener stateListener) override
 		{
-			removeListeners_.push_back(std::move(fireListener));
+			removeListeners_.push_back(std::move(stateListener));
+		}
+		virtual inline void AddIncreaseListener(StateListener stateListener) override
+		{
+			addListeners_.push_back(std::move(stateListener));
 		}
 		virtual void Add(ISimInfo& simInfo, const Molecule& molecule = defaultMolecule, const Variables& variables = {}) override
 		{
+			if (!addListeners_.empty())
+			{
+				double time = simInfo.GetSimTime();
+				for (auto& addListener : addListeners_)
+				{
+					addListener(molecule, time);
+				}
+			}
+
 			MoleculeHolder& holder = buffer_.PushTail();
 			holder.molecule = molecule;
 			holder.creationTime = simInfo.GetSimTime();
@@ -194,7 +202,8 @@ namespace stochsim
 		}
 
 		mutable CircularBuffer<MoleculeHolder> buffer_;
-		std::list<RemoveListener> removeListeners_;
+		std::list<StateListener> removeListeners_;
+		std::list<StateListener> addListeners_;
 		const std::string name_;
 		size_t initialCondition_;
 		size_t size_;

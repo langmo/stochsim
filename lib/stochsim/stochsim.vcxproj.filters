@@ -20,9 +20,6 @@
     <ClInclude Include="..\..\include\stochsim\ComposedState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\stochsim\ComposedStateLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\stochsim\CustomLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\stochsim\ExpressionHolder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\stochsim\StatePropertyLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,0 +1,102 @@
+//********************//
+//     Parameters     //
+//********************//
+// Volume
+V = 1; // [ml]
+// bacterial growth rate constant
+vcc = 0.55; // [h^-1]
+// phage adsorption rate constant
+delta = 4.1*10^-8 / V; // [1/(h*molec)]
+// latent period (time between infection and lysis, including fate decision period)
+latentPeriod = 1.; // [h]
+// fate decision period (period during which additional infections influence the fate decision)
+fatePeriod = 10./60.; // [h]
+// burst size (#phages per lysing cell)
+beta = 63; // [phages]
+// induction rate constant
+xi = 2.4*10^-5; // [1 / h]
+// dilution rate (medium out-flow)
+k_dil = 0;  // [1 / h]
+
+// Probabilities of lysogeny
+PlysConst = 0.02; // constant probability   (EPI-insensitive phage)
+Plys1 = 0.0038;   // probability for MOI=1  (EPI-sensitive phage)
+Plys2 = 0.6960;   // probability for MOI=2  (EPI-sensitive phage)
+Plys3 = 0.9886;   // probability for MOI>=3 (EPI-sensitive phage)
+
+//*******************//
+// Initial conditions//
+//*******************//
+// uninfected bacteria
+Bm = 10^6*V;        // [molec]
+// infected bacteria, fate not yet determined
+Bf = 0*V;           // [molec]
+// lysing bacteria
+Bl_i = 0*V;         // [molec]
+Bl_s = 0*V;         // [molec]
+// lysogens 
+Bp_i  = 0*V;        // [molec]
+Bp_s = 0*V;         // [molec]
+// EPI-insensitive phages
+P_i  = 1*10^4*V;    // [molec]
+// EPI-sensitive phages
+P_s = 0*V;          // [molec]
+
+//****************************//
+// Probabilities of lysogeny  //
+//****************************//
+Plys_i = PlysConst;
+Plys_s = [p_i+p_s==1 ? Plys1 : (p_i+p_s==2 ? Plys2 : Plys3)];
+
+//****************************//
+// Reactions                  //
+//****************************//
+
+// cell doubling (only lysogens and uninfected cells are assumed to double)
+$Bm    -> Bm,    vcc;
+$Bp_i  -> Bp_i,  vcc;
+$Bp_s  -> Bp_s,  vcc;
+
+// First infection of yet uninfected bacteria
+Bm        + P_i  -> Bf{1,0},     delta;
+Bm        + P_s  -> Bf{0,1},     delta;
+
+// Subsequent infections during fate decision period
+$Bf{p_i,} + P_i  -> $Bf{p_i+1,}, delta;
+$Bf{,p_s} + P_s  -> $Bf{,p_s+1}, delta;
+
+// Infection of lysogens (no effect because of superinfection immunity)
+$Bp_i + P_i  ->, delta;
+$Bp_i + P_s  ->, delta;
+$Bp_s + P_i  ->, delta;
+$Bp_s + P_s  ->, delta;
+
+// Infection of lysing bacteria (no effect because too late)
+$Bl_i + P_i  ->, delta;
+$Bl_i + P_s  ->, delta;
+$Bl_s + P_i  ->, delta;
+$Bl_s + P_s  ->, delta;
+
+// Fate decision
+Bf{p_i,p_s} -> [rand()<(p_i/(p_i+p_s)*Plys_i + p_s/(p_i+p_s)*(Plys_s)) ? 
+                [rand()<p_i/(p_i+p_s) ? Bp_i : Bp_s] : 
+                [rand()<p_i/(p_i+p_s) ? Bl_i : Bl_s]
+          ], delay:fatePeriod;
+
+// Lysis
+Bl_i -> beta *P_i, delay:latentPeriod-fatePeriod;
+Bl_s -> beta *P_s, delay:latentPeriod-fatePeriod;
+
+// Induction of lysogens
+Bp_i -> Bl_i,  xi;
+Bp_s -> Bl_s, xi;
+
+// Dilution due to medium out-flow
+Bm->,k_dil; 
+Bf->,k_dil;
+Bl_i->,k_dil;
+Bl_s->,k_dil;
+Bp_i->,k_dil;
+Bp_s->,k_dil;
+P_i->,k_dil;
+P_s->,k_dil;

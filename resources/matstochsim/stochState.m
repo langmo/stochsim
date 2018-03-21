@@ -66,6 +66,71 @@ classdef stochState < stochSimulationComponent & matlab.mixin.CustomDisplay
             name = this.call('GetName');
         end
         
+		function logDecreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Specifies the name of a file where the value of
+            % a given property of each molecule represented by this state
+            % is saved whenever the corresponding state is decreased.
+            % Set the file name to an empty string to not save this
+            % information. The file name has typically the ending CSV.
+            % Usage:
+            %   logDecreaseToFile(this, fileName)
+			%   logDecreaseToFile(this, fileName, propertyIdx)
+            %   logDecreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Parameters:
+            %   fileName      - Name of the file to save number of
+            %                   transformations, or empty string to not save
+            %                   this information.
+			%   propertyIdx   - ID of the molecule property (zero based). 
+			%                   Default = 0.
+            %   maxValue      - Estimate of the maximal value of the property. 
+			%                   The maximal value is automatically increased
+            %                   if a molecule has a higher property value.
+            %                   Default=0.
+            
+            if isempty(fileName)
+                fileName = '';
+            end
+			 if nargin < 3 || isempty(propertyIdx)
+                propertyIdx = 0;
+            end
+            if nargin < 4 || isempty(maxValue)
+                maxValue = 0;
+            end
+            this.call('LogDecreaseToFile', fileName, propertyIdx, maxValue);
+        end
+		function logIncreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Specifies the name of a file where the value of
+            % a given property of each molecule represented by this state
+            % is saved whenever the corresponding state is increased.
+            % Set the file name to an empty string to not save this
+            % information. The file name has typically the ending CSV.
+            % Usage:
+            %   logIncreaseToFile(this, fileName)
+			%   logIncreaseToFile(this, fileName, propertyIdx)
+            %   logIncreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Parameters:
+            %   fileName      - Name of the file to save number of
+            %                   transformations, or empty string to not save
+            %                   this information.
+			%   propertyIdx   - ID of the molecule property (zero based). 
+			%                   Default = 0.
+            %   maxValue      - Estimate of the maximal value of the property. 
+			%                   The maximal value is automatically increased
+            %                   if a molecule has a higher property value.
+            %                   Default=0.
+            
+            if isempty(fileName)
+                fileName = '';
+            end
+			 if nargin < 3 || isempty(propertyIdx)
+                propertyIdx = 0;
+            end
+            if nargin < 4 || isempty(maxValue)
+                maxValue = 0;
+            end
+            this.call('LogIncreaseToFile', fileName, propertyIdx, maxValue);
+        end
+		
         function cmdl = getCmdl(this)
             % Returns a string representing the cmdl command to
             % instantiate this state, e.g. 'A = 10;'. 

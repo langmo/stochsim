@@ -108,6 +108,15 @@ namespace stochsim
 		}
 		virtual void Add(ISimInfo& simInfo, const Molecule& molecule = defaultMolecule, const Variables& variables = {}) override
 		{
+			if (!addListeners_.empty())
+			{
+				double time = simInfo.GetSimTime();
+				for (auto& addListener : addListeners_)
+				{
+					addListener(molecule, time);
+				}
+			}
+
 			// Find out which choice was made by evaluating the formula with the current variable values.
 			expression::number choice = choiceEquation_(simInfo, variables);
 			
@@ -309,11 +318,21 @@ namespace stochsim
 			expression::ExpressionParser parser;
 			SetCondition(parser.Parse(choiceEquation, false, false));
 		}
+		
+		virtual inline void AddIncreaseListener(StateListener stateListener) override
+		{
+			addListeners_.push_back(std::move(stateListener));
+		}
+		virtual inline void AddDecreaseListener(StateListener stateListener) override
+		{
+			// do nothing. The molecular number of choices is always zero, and thus the state cannot be decreased.
+		}
 
 	private:
 		const std::string name_;
 		ExpressionHolder choiceEquation_;
 		std::vector<Product> elementsIfTrue_;
 		std::vector<Product> elementsIfFalse_;
+		std::list<StateListener> addListeners_;
 	};
 }

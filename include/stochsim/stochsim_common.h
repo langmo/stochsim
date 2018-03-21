@@ -156,6 +156,13 @@ namespace stochsim
 	class IState
 	{
 	public:
+		/// <summary>
+		/// Typedef for listener with which modifications of the state can be detected..
+		/// </summary>
+		typedef std::function<void(const Molecule& molecule, double time)> StateListener;
+		/// <summary>
+		/// Virtual destructor.
+		/// </summary>
 		virtual ~IState() {};
 		/// <summary>
 		/// Returns the current value of the state, i.e. the concentration times the volume.
@@ -207,6 +214,16 @@ namespace stochsim
 		/// </summary>
 		/// <returns>Name of the species/state.</returns>
 		virtual std::string GetName() const noexcept= 0;
+		/// <summary>
+		/// Adds a listener which gets invoked every time the concentration of this state decreases.
+		/// </summary>
+		/// <param name="fireListener">Listener to add.</param>
+		virtual void AddDecreaseListener(StateListener stateListener) = 0;
+		/// <summary>
+		/// Adds a listener which gets invoked every time the concentration of this state increases.
+		/// </summary>
+		/// <param name="fireListener">Listener to add.</param>
+		virtual void AddIncreaseListener(StateListener stateListener) = 0;
 	};
 
 	/// <summary>

@@ -4,7 +4,7 @@
 #include <functional>
 #include <utility>
 
-#include "ComposedStateLogger.h"
+#include "StatePropertyLogger.h"
 
 std::string GetStateReference(const std::shared_ptr<stochsim::IState>& state)
 {
@@ -421,6 +421,66 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::State>& stat
 	{
 		params.Set(0, state->GetName());
 	}
+	else if (methodName == "LogDecreaseToFile")
+	{
+		std::string fileName = params.Get<std::string>(0);
+		std::vector<size_t> property_idx;
+		if (params.NumParams() > 1)
+		{
+			auto temp = params.Get<std::vector<double>>(1);
+			for (auto val : temp)
+			{
+				property_idx.push_back(static_cast<size_t>(val + 0.5));
+			}
+		}
+		else
+			property_idx.push_back(static_cast<size_t>(0));
+		size_t initialMaxModified;
+		if (params.NumParams() > 2)
+			initialMaxModified = params.Get<size_t>(2);
+		else
+			initialMaxModified = 1;
+		auto logger = CreateLogger<stochsim::StatePropertyLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
+		{
+			double sum = 0;
+			for (auto i : property_idx)
+			{
+				sum += molecule[i];
+			}
+			return static_cast<size_t>(sum + 0.5);
+		}, initialMaxModified);
+		state->AddDecreaseListener(std::bind(&stochsim::StatePropertyLogger::LogProperty, logger, std::placeholders::_1, std::placeholders::_2));
+	}
+	else if (methodName == "LogIncreaseToFile")
+	{
+		std::string fileName = params.Get<std::string>(0);
+		std::vector<size_t> property_idx;
+		if (params.NumParams() > 1)
+		{
+			auto temp = params.Get<std::vector<double>>(1);
+			for (auto val : temp)
+			{
+				property_idx.push_back(static_cast<size_t>(val + 0.5));
+			}
+		}
+		else
+			property_idx.push_back(static_cast<size_t>(0));
+		size_t initialMaxModified;
+		if (params.NumParams() > 2)
+			initialMaxModified = params.Get<size_t>(2);
+		else
+			initialMaxModified = 1;
+		auto logger = CreateLogger<stochsim::StatePropertyLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
+		{
+			double sum = 0;
+			for (auto i : property_idx)
+			{
+				sum += molecule[i];
+			}
+			return static_cast<size_t>(sum + 0.5);
+		}, initialMaxModified);
+		state->AddIncreaseListener(std::bind(&stochsim::StatePropertyLogger::LogProperty, logger, std::placeholders::_1, std::placeholders::_2));
+	}
 	else
 	{
 		std::stringstream errorMessage;
@@ -457,15 +517,8 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 	{
 		params.Set(0, state->GetName());
 	}
-	else if (methodName == "SaveFinalNumModificationsToFile")
+	else if (methodName == "LogDecreaseToFile")
 	{
-		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
-		if (!composedState)
-		{
-			std::stringstream errorMessage;
-			errorMessage << "State " << state->GetName() << " is not a ComposedState.";
-			throw std::exception(errorMessage.str().c_str());
-		}
 		std::string fileName = params.Get<std::string>(0);
 		std::vector<size_t> property_idx;
 		if (params.NumParams() > 1)
@@ -483,7 +536,7 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 			initialMaxModified = params.Get<size_t>(2);
 		else
 			initialMaxModified = 20;
-		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
+		auto logger = CreateLogger<stochsim::StatePropertyLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
 			{
 				double sum = 0;
 				for (auto i : property_idx)
@@ -492,7 +545,37 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 				}
 				return static_cast<size_t>(sum + 0.5);
 			}, initialMaxModified);
-		composedState->AddRemoveListener(std::bind(&stochsim::ComposedStateLogger::RemoveListener, logger, std::placeholders::_1, std::placeholders::_2));
+		state->AddDecreaseListener(std::bind(&stochsim::StatePropertyLogger::LogProperty, logger, std::placeholders::_1, std::placeholders::_2));
+	}
+	else if (methodName == "LogIncreaseToFile")
+	{
+		std::string fileName = params.Get<std::string>(0);
+		std::vector<size_t> property_idx;
+		if (params.NumParams() > 1)
+		{
+			auto temp = params.Get<std::vector<double>>(1);
+			for (auto val : temp)
+			{
+				property_idx.push_back(static_cast<size_t>(val + 0.5));
+			}
+		}
+		else
+			property_idx.push_back(static_cast<size_t>(0));
+		size_t initialMaxModified;
+		if (params.NumParams() > 2)
+			initialMaxModified = params.Get<size_t>(2);
+		else
+			initialMaxModified = 1;
+		auto logger = CreateLogger<stochsim::StatePropertyLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
+		{
+			double sum = 0;
+			for (auto i : property_idx)
+			{
+				sum += molecule[i];
+			}
+			return static_cast<size_t>(sum + 0.5);
+		}, initialMaxModified);
+		state->AddIncreaseListener(std::bind(&stochsim::StatePropertyLogger::LogProperty, logger, std::placeholders::_1, std::placeholders::_2));
 	}
 	else
 	{
@@ -820,6 +903,36 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 	{
 		auto choiceEquation = choice->GetCondition();
 		params.Set(0, choiceEquation->ToCmdl());
+	}
+	else if (methodName == "LogIncreaseToFile")
+	{
+		std::string fileName = params.Get<std::string>(0);
+		std::vector<size_t> property_idx;
+		if (params.NumParams() > 1)
+		{
+			auto temp = params.Get<std::vector<double>>(1);
+			for (auto val : temp)
+			{
+				property_idx.push_back(static_cast<size_t>(val + 0.5));
+			}
+		}
+		else
+			property_idx.push_back(static_cast<size_t>(0));
+		size_t initialMaxModified;
+		if (params.NumParams() > 2)
+			initialMaxModified = params.Get<size_t>(2);
+		else
+			initialMaxModified = 1;
+		auto logger = CreateLogger<stochsim::StatePropertyLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
+		{
+			double sum = 0;
+			for (auto i : property_idx)
+			{
+				sum += molecule[i];
+			}
+			return static_cast<size_t>(sum + 0.5);
+		}, initialMaxModified);
+		choice->AddIncreaseListener(std::bind(&stochsim::StatePropertyLogger::LogProperty, logger, std::placeholders::_1, std::placeholders::_2));
 	}
 	else
 	{

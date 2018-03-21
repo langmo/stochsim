@@ -7,16 +7,16 @@
 #include "DelayReaction.h"
 namespace stochsim
 {
-	class ComposedStateLogger :
+	class StatePropertyLogger :
 		public ILogger
 	{
 	public:
 		typedef std::function<size_t(const Molecule&)> LoggerFunction;
-		ComposedStateLogger(std::string fileName, LoggerFunction loggerFunction = [](const Molecule& molecule)->size_t {return static_cast<size_t>(molecule[0]+0.5); }, size_t initialMaxModified = 10) : modificationCounter_(initialMaxModified), fileName_(fileName), loggerFunction_(loggerFunction)
+		StatePropertyLogger(std::string fileName, LoggerFunction loggerFunction = [](const Molecule& molecule)->size_t {return static_cast<size_t>(molecule[0]+0.5); }, size_t initialMaxValue = 10) : valueCounter_(initialMaxValue +1), fileName_(fileName), loggerFunction_(loggerFunction)
 		{
 		}
 
-		virtual ~ComposedStateLogger()
+		virtual ~StatePropertyLogger()
 		{
 			if (file_)
 			{
@@ -28,19 +28,19 @@ namespace stochsim
 		{
 			return true;
 		}
-		void RemoveListener(const Molecule& molecule, double time)
+		void LogProperty(const Molecule& molecule, double time)
 		{
 			auto id = loggerFunction_(molecule);
-			while (id > modificationCounter_.size())
+			while (id >= valueCounter_.size())
 			{
-				modificationCounter_.resize(2 * modificationCounter_.size());
+				valueCounter_.resize(2 * valueCounter_.size());
 			}
-			modificationCounter_[id]++;
+			valueCounter_[id]++;
 		}
 		virtual void WriteLog(ISimInfo& simInfo, double time) override
 		{
 			*file_ << time;
-			for (auto& numMolecules : modificationCounter_)
+			for (auto& numMolecules : valueCounter_)
 			{
 				*file_ << ", " << numMolecules;
 				numMolecules = 0;
@@ -68,10 +68,10 @@ namespace stochsim
 			}
 
 			*file_ << "Time";
-			for (std::vector<unsigned long>::size_type i = 0; i < modificationCounter_.size(); i++)
+			for (std::vector<unsigned long>::size_type i = 0; i < valueCounter_.size(); i++)
 			{
-				modificationCounter_[i] = 0;
-				*file_ << ", M" << i;
+				valueCounter_[i] = 0;
+				*file_ << ", value" << i;
 			}
 			*file_ << std::endl;
 		}
@@ -87,7 +87,7 @@ namespace stochsim
 	private:
 		std::unique_ptr<std::ofstream> file_;
 		std::string fileName_;
-		std::vector<unsigned long> modificationCounter_;
+		std::vector<unsigned long> valueCounter_;
 		LoggerFunction loggerFunction_;
 	};
 }

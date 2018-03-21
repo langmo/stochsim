@@ -69,29 +69,26 @@ classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisp
             name = this.call('GetName');
         end
         %% Methods
-        function saveFinalPropertyValueToFile(this, fileName, propertyIdx, maxTransformed)
-            % Specifies the name of a file where the number of
-            % transformations of each molecule represented by this state
-            % are saved whenever the corresponding molecule is consumed.
+        function logDecreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Specifies the name of a file where the value of
+            % a given property of each molecule represented by this state
+            % is saved whenever the corresponding state is decreased.
             % Set the file name to an empty string to not save this
             % information. The file name has typically the ending CSV.
             % Usage:
-            %   saveFinalNumModificationsToFile(this, fileName)
-			%   saveFinalNumModificationsToFile(this, fileName, propertyIdx)
-            %   saveFinalNumModificationsToFile(this, fileName, propertyIdx, maxTransformed)
+            %   logDecreaseToFile(this, fileName)
+			%   logDecreaseToFile(this, fileName, propertyIdx)
+            %   logDecreaseToFile(this, fileName, propertyIdx, maxValue)
             % Parameters:
             %   fileName      - Name of the file to save number of
             %                   transformations, or empty string to not save
             %                   this information.
 			%   propertyIdx   - ID of the molecule property (zero based). 
 			%                   Default = 0.
-            %   maxTransformed- Estimate of the maximal number of times a
-            %                   molecule of this state can be transformed
-            %                   before being consumed. The maximal number
-            %                   is automatically increased if a molecule is
-            %                   modified more often during a simulation,
-            %                   but determines the initial column number of
-            %                   the CSV file. Default=20.
+            %   maxValue      - Estimate of the maximal value of the property. 
+			%                   The maximal value is automatically increased
+            %                   if a molecule has a higher property value.
+            %                   Default=20.
             
             if isempty(fileName)
                 fileName = '';
@@ -99,12 +96,43 @@ classdef stochComposedState < stochSimulationComponent & matlab.mixin.CustomDisp
 			 if nargin < 3 || isempty(propertyIdx)
                 propertyIdx = 0;
             end
-            if nargin < 4 || isempty(maxTransformed)
-                maxTransformed = 20;
+            if nargin < 4 || isempty(maxValue)
+                maxValue = 20;
             end
-            this.call('SaveFinalNumModificationsToFile', fileName, propertyIdx, maxTransformed);
+            this.call('LogDecreaseToFile', fileName, propertyIdx, maxValue);
         end
-        
+        function logIncreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Specifies the name of a file where the value of
+            % a given property of each molecule represented by this state
+            % is saved whenever the corresponding state is increased.
+            % Set the file name to an empty string to not save this
+            % information. The file name has typically the ending CSV.
+            % Usage:
+            %   logIncreaseToFile(this, fileName)
+			%   logIncreaseToFile(this, fileName, propertyIdx)
+            %   logIncreaseToFile(this, fileName, propertyIdx, maxValue)
+            % Parameters:
+            %   fileName      - Name of the file to save number of
+            %                   transformations, or empty string to not save
+            %                   this information.
+			%   propertyIdx   - ID of the molecule property (zero based). 
+			%                   Default = 0.
+            %   maxValue      - Estimate of the maximal value of the property. 
+			%                   The maximal value is automatically increased
+            %                   if a molecule has a higher property value.
+            %                   Default=20.
+            
+            if isempty(fileName)
+                fileName = '';
+            end
+			 if nargin < 3 || isempty(propertyIdx)
+                propertyIdx = 0;
+            end
+            if nargin < 4 || isempty(maxValue)
+                maxValue = 20;
+            end
+            this.call('LogIncreaseToFile', fileName, propertyIdx, maxValue);
+        end
         function cmdl = getCmdl(this)
             % Returns a string representing the cmdl command to
             % instantiate this state, e.g. 'A = 10;'. 
