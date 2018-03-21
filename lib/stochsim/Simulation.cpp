@@ -333,7 +333,7 @@ namespace stochsim
 			}
 			return nullptr;
 		}
-		const Collection<std::shared_ptr<IState>>  GetStates() const
+		const Collection<std::shared_ptr<IState>>  GetStates() const override
 		{
 			return Collection<std::shared_ptr<IState>>(states_.begin(), states_.end());
 		}

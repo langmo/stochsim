@@ -57,7 +57,7 @@ namespace cmdlparser
 		{
 			finalVariables_[name] = std::make_unique<expression::NumberExpression>(value);
 		}
-		void CreateReaction(std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
+		void CreateReaction(std::unique_ptr<ReactionLeftSide> reactants, std::unique_ptr<ReactionRightSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
 		{ 
 			std::stringstream name;
 			name << "reaction_" << (reactions_.size() + 1); 
@@ -65,11 +65,11 @@ namespace cmdlparser
 			auto nameI = expression::identifier(nameC.begin(), nameC.end());
 			CreateReaction(nameI, std::move(reactants), std::move(products), std::move(specifiers));
 		}
-		void CreateReaction(expression::identifier name, std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
+		void CreateReaction(expression::identifier name, std::unique_ptr<ReactionLeftSide> reactants, std::unique_ptr<ReactionRightSide> products, std::unique_ptr<ReactionSpecifiers> specifiers)
 		{
 			reactions_[name] = std::make_unique<ReactionDefinition>(std::move(reactants), std::move(products), std::move(specifiers));
 		}
-		expression::identifier CreateChoice(std::unique_ptr<expression::IExpression> condition, std::unique_ptr<ReactionSide> componentsIfTrue, std::unique_ptr<ReactionSide> componentsIfFalse)
+		expression::identifier CreateChoice(std::unique_ptr<expression::IExpression> condition, std::unique_ptr<ReactionRightSide> componentsIfTrue, std::unique_ptr<ReactionRightSide> componentsIfFalse)
 		{
 			std::stringstream name;
 			name << "choice_" << (choices_.size() + 1);

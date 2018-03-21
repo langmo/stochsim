@@ -67,10 +67,13 @@ namespace cmdlparser
 		terminal_type type_;
 	};
 
-	class ReactionComponent
+	typedef std::vector<expression::identifier> MoleculePropertyNames;
+	typedef std::vector<std::unique_ptr<expression::IExpression>> MoleculePropertyExpressions;
+
+	class ReactionLeftComponent
 	{
 	public:
-		ReactionComponent(expression::identifier state, expression::number stochiometry, bool modifier, std::unique_ptr<std::vector<expression::number>> moleculeProperties = nullptr) : state_(std::move(state)), modifier_(modifier)
+		ReactionLeftComponent(expression::identifier state, expression::number stochiometry, bool modifier, std::unique_ptr<MoleculePropertyNames> propertyNames = nullptr) : state_(std::move(state)), modifier_(modifier)
 		{
 			if (stochiometry + 0.5 < 0)
 			{
@@ -79,19 +82,17 @@ namespace cmdlparser
 				throw std::exception(errorMessage.str().c_str());
 			}
 			stochiometry_ = static_cast<stochsim::Stochiometry>(stochiometry + 0.5);
-			if (moleculeProperties)
+			if (propertyNames)
 			{
-				if (moleculeProperties->size() > stochsim::numMoleculeProperties)
+				if (propertyNames->size() > stochsim::Molecule::size_)
 				{
 					std::stringstream errorMessage;
-					errorMessage << "Number of properties for State " << state_ << " too high (found "<< moleculeProperties->size()<<", maximally allowed "<<stochsim::numMoleculeProperties<<").";
+					errorMessage << "Number of properties for State " << state_ << " too high (found "<< propertyNames->size()<<", maximally allowed "<<stochsim::Molecule::size_ <<").";
 					throw std::exception(errorMessage.str().c_str());
 				}
-				moleculeProperties_ = std::make_unique<stochsim::MoleculeProperties>();
-				moleculeProperties_->fill(0);
-				for (int i = 0; i < moleculeProperties->size(); i++)
+				for (int i = 0; i < propertyNames->size(); i++)
 				{
-					(*moleculeProperties_)[i] = (*moleculeProperties)[i];
+					propertyNames_[i] = std::move((*propertyNames)[i]);
 				}
 			}
 		}
@@ -111,21 +112,82 @@ namespace cmdlparser
 		{
 			return state_;
 		}
-		const stochsim::MoleculeProperties* GetMoleculeProperties()
+		std::array<expression::identifier, stochsim::Molecule::size_>& GetPropertyNames()
 		{
-			return moleculeProperties_.get();
+			return propertyNames_;
 		}
 	private:
 		expression::identifier state_;
 		stochsim::Stochiometry stochiometry_;
 		bool modifier_;
-		std::unique_ptr<stochsim::MoleculeProperties> moleculeProperties_;
+		std::array<expression::identifier, stochsim::Molecule::size_> propertyNames_;
 	};
-
-	class ReactionSide
+	class ReactionRightComponent
 	{
 	public:
-		typedef std::unordered_map<expression::identifier, std::unique_ptr<ReactionComponent>> collection_type;
+		ReactionRightComponent(expression::identifier state, expression::number stochiometry, bool modifier, std::unique_ptr<MoleculePropertyExpressions> propertyExpressions = nullptr) : state_(std::move(state)), modifier_(modifier)
+		{
+			if (stochiometry + 0.5 < 0)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "State " << state_ << " has a negative stochiometry.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			stochiometry_ = static_cast<stochsim::Stochiometry>(stochiometry + 0.5);
+			if (propertyExpressions)
+			{
+				if (propertyExpressions->size() > stochsim::Molecule::size_)
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Number of properties for State " << state_ << " too high (found " << propertyExpressions->size() << ", maximally allowed " << stochsim::Molecule::size_ << ").";
+					throw std::exception(errorMessage.str().c_str());
+				}
+				for (int i = 0; i < propertyExpressions->size(); i++)
+				{
+					propertyExpressions_[i] = std::move((*propertyExpressions)[i]);
+				}
+			}
+		}
+		stochsim::Stochiometry GetStochiometry() const noexcept
+		{
+			return stochiometry_;
+		}
+		void SetStochiometry(stochsim::Stochiometry stochiometry) noexcept
+		{
+			stochiometry_ = stochiometry;
+		}
+		bool IsModifier() const noexcept
+		{
+			return modifier_;
+		}
+		expression::identifier GetState() const noexcept
+		{
+			return state_;
+		}
+		std::array<std::unique_ptr<expression::IExpression>, stochsim::Molecule::size_>& GetPropertyExpressions()
+		{
+			return propertyExpressions_;
+		}
+		std::array<expression::identifier, stochsim::Molecule::size_>& GetPropertyNames()
+		{
+			return propertyNames_;
+		}
+		void SetPropertyNames(const std::array<expression::identifier, stochsim::Molecule::size_>& propertyNames)
+		{
+			propertyNames_ = propertyNames;
+		}
+	private:
+		expression::identifier state_;
+		stochsim::Stochiometry stochiometry_;
+		bool modifier_;
+		std::array<std::unique_ptr<expression::IExpression>, stochsim::Molecule::size_> propertyExpressions_;
+		std::array<expression::identifier, stochsim::Molecule::size_> propertyNames_;
+	};
+
+	class ReactionLeftSide
+	{
+	public:
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<ReactionLeftComponent>> collection_type;
 		typedef collection_type::value_type value_type;
 		typedef collection_type::key_type key_type;
 		typedef collection_type::size_type size_type;
@@ -175,10 +237,10 @@ namespace cmdlparser
 			return components_.find(k);
 		}
 	public:
-		ReactionSide()
+		ReactionLeftSide()
 		{
 		}
-		void PushBack(std::unique_ptr<ReactionComponent> component)
+		void PushBack(std::unique_ptr<ReactionLeftComponent> component)
 		{
 			auto search = components_.find(component->GetState());
 			if (search == components_.end())
@@ -190,8 +252,118 @@ namespace cmdlparser
 			if (existingComponent->IsModifier() != component->IsModifier())
 			{
 				std::stringstream errorMessage;
-				errorMessage << "State " << component->GetState() << " cannot participate in a reaction both as a modifier and a reactant, or both as a product and a transformee.";
+				errorMessage << "State " << component->GetState() << " cannot participate in reaction both as a modifier and a reactant.";
 				throw std::exception(errorMessage.str().c_str());
+			}
+			if (existingComponent->GetPropertyNames() != component->GetPropertyNames())
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Property names of reactant/modifier " << component->GetState() << " cannot change.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+
+			existingComponent->SetStochiometry(existingComponent->GetStochiometry() + component->GetStochiometry());
+		}
+		void RemoveComponentsWithZeroStochiometry()
+		{
+			for (auto it = components_.begin(); it != components_.end(); /* no increment */)
+			{
+				if (it->second->GetStochiometry() == 0)
+				{
+					it = components_.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+	private:
+		collection_type components_;
+	};
+
+	class ReactionRightSide
+	{
+	public:
+		typedef std::unordered_map<expression::identifier, std::unique_ptr<ReactionRightComponent>> collection_type;
+		typedef collection_type::value_type value_type;
+		typedef collection_type::key_type key_type;
+		typedef collection_type::size_type size_type;
+		typedef value_type& reference;
+		typedef const value_type& const_reference;
+		typedef collection_type::iterator iterator;
+		typedef collection_type::const_iterator const_iterator;
+
+		bool IsEmpty() const noexcept
+		{
+			return components_.empty();
+		}
+		size_type GetNumComponents() const noexcept
+		{
+			return components_.size();
+		}
+		iterator begin() noexcept
+		{
+			return components_.begin();
+		}
+		const_iterator begin() const noexcept
+		{
+			return components_.begin();
+		}
+		const_iterator cbegin() const noexcept
+		{
+			return components_.cbegin();
+		}
+		iterator end() noexcept
+		{
+			return components_.end();
+		}
+		const_iterator end() const noexcept
+		{
+			return components_.end();
+		}
+		const_iterator cend() const noexcept
+		{
+			return components_.cend();
+		}
+		iterator FindComponent(const key_type& k)
+		{
+			return components_.find(k);
+		}
+		const_iterator FindComponent(const key_type& k) const
+		{
+			return components_.find(k);
+		}
+	public:
+		ReactionRightSide()
+		{
+		}
+		void PushBack(std::unique_ptr<ReactionRightComponent> component)
+		{
+			auto search = components_.find(component->GetState());
+			if (search == components_.end())
+			{
+				components_.emplace(component->GetState(), std::move(component));
+				return;
+			}
+			auto& existingComponent = search->second;
+			if (existingComponent->IsModifier() != component->IsModifier())
+			{
+				std::stringstream errorMessage;
+				errorMessage << "State " << component->GetState() << " cannot participate in reaction both as a product and a transformee.";
+				throw std::exception(errorMessage.str().c_str());
+			}
+			auto& existingExpressions = existingComponent->GetPropertyExpressions();
+			auto& expressions = component->GetPropertyExpressions();
+			for (size_t i = 0; i < expressions.size(); i++)
+			{
+				if(existingExpressions[i].operator bool() != expressions[i].operator bool()
+					|| (existingExpressions[i].operator bool() && existingExpressions[i]->ToCmdl() != expressions[i]->ToCmdl()))
+				{
+					std::stringstream errorMessage;
+					errorMessage << "Property " << std::to_string(i) << " of product/transformee " << component->GetState() << " cannot change.";
+					throw std::exception(errorMessage.str().c_str());
+				}
 			}
 			existingComponent->SetStochiometry(existingComponent->GetStochiometry() + component->GetStochiometry());
 		}
@@ -289,7 +461,7 @@ namespace cmdlparser
 	class ChoiceDefinition
 	{
 	public:
-		ChoiceDefinition(std::unique_ptr<expression::IExpression> condition, std::unique_ptr<ReactionSide> componentsIfTrue, std::unique_ptr<ReactionSide> componentsIfFalse) :
+		ChoiceDefinition(std::unique_ptr<expression::IExpression> condition, std::unique_ptr<ReactionRightSide> componentsIfTrue, std::unique_ptr<ReactionRightSide> componentsIfFalse) :
 			componentsIfTrue_(std::move(componentsIfTrue)),
 			componentsIfFalse_(std::move(componentsIfFalse)),
 			condition_(std::move(condition))
@@ -316,12 +488,12 @@ namespace cmdlparser
 				}
 			}
 		}
-		const ReactionSide* GetComponentsIfTrue() const noexcept
+		const ReactionRightSide* GetComponentsIfTrue() const noexcept
 		{
 			return componentsIfTrue_.get();
 		}
 
-		const ReactionSide* GetComponentsIfFalse() const noexcept
+		const ReactionRightSide* GetComponentsIfFalse() const noexcept
 		{
 			return componentsIfFalse_.get();
 		}
@@ -331,15 +503,15 @@ namespace cmdlparser
 			return condition_.get();
 		}
 	private:
-		std::unique_ptr<ReactionSide> componentsIfTrue_;
-		std::unique_ptr<ReactionSide> componentsIfFalse_;
+		std::unique_ptr<ReactionRightSide> componentsIfTrue_;
+		std::unique_ptr<ReactionRightSide> componentsIfFalse_;
 		std::unique_ptr<expression::IExpression> condition_;
 	};
 
 	class ReactionDefinition
 	{
 	public:
-		ReactionDefinition(std::unique_ptr<ReactionSide> reactants, std::unique_ptr<ReactionSide> products, std::unique_ptr<ReactionSpecifiers> specifiers) :
+		ReactionDefinition(std::unique_ptr<ReactionLeftSide> reactants, std::unique_ptr<ReactionRightSide> products, std::unique_ptr<ReactionSpecifiers> specifiers) :
 			reactants_(std::move(reactants)),
 			products_(std::move(products)),
 			specifiers_(std::move(specifiers))
@@ -357,17 +529,18 @@ namespace cmdlparser
 						throw std::exception(errorMessage.str().c_str());
 					}
 					search->second->SetStochiometry(search->second->GetStochiometry() - product.second->GetStochiometry());
+					product.second->SetPropertyNames(search->second->GetPropertyNames());
 				}
 			}
 			products_->RemoveComponentsWithZeroStochiometry();
 			reactants_->RemoveComponentsWithZeroStochiometry();
 		}
-		const ReactionSide* GetReactants() const noexcept
-		{
+		const ReactionLeftSide* GetReactants() const noexcept
+		{ 
 			return reactants_.get();
 		}
 
-		const ReactionSide* GetProducts() const noexcept
+		const ReactionRightSide* GetProducts() const noexcept
 		{
 			return products_.get();
 		}
@@ -377,8 +550,8 @@ namespace cmdlparser
 			return specifiers_.get();
 		}
 	private:
-		std::unique_ptr<ReactionSide> reactants_;
-		std::unique_ptr<ReactionSide> products_;
+		std::unique_ptr<ReactionLeftSide> reactants_;
+		std::unique_ptr<ReactionRightSide> products_;
 		std::unique_ptr<ReactionSpecifiers> specifiers_;
 	};
 

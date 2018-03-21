@@ -74,6 +74,31 @@
 %nonassoc IDENTIFIER VALUE. // always prefer longer rules
 
 
+////////////////////////////
+// Variables
+////////////////////////////
+%type variable {identifier*}
+%destructor variable { 
+	delete $$;
+	$$ = nullptr;
+}
+variable(v) ::= IDENTIFIER(I) LEFT_SQUARE expression(e) RIGHT_SQUARE. {
+	identifier name = *I;
+	delete I;
+	I = nullptr;
+	v = nullptr;
+	auto e_temp = std::unique_ptr<IExpression>(e);
+	e = nullptr;
+
+	auto value = static_cast<size_t>(parseTree->GetExpressionValue(e_temp.get())+0.5);
+	v = new identifier(name+std::to_string(value));
+}
+variable(v) ::= IDENTIFIER(I). {
+	v = new identifier(*I);
+	delete I;
+	I = nullptr;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Rules to parse mathematical expressions
 /////////////////////////////////////////////////////////////////////////////
@@ -84,12 +109,12 @@
 	delete $$;
 	$$ = nullptr;
 }
-expression(e) ::= IDENTIFIER(I). [SEMICOLON] {
+expression(e) ::= variable(I). [SEMICOLON] {
 	e = new VariableExpression(*I);
 	delete I;
 	I = nullptr;
 }
-expression(e) ::= IDENTIFIER(I) LEFT_ROUND arguments(as) RIGHT_ROUND . [SEMICOLON] {
+expression(e) ::= variable(I) LEFT_ROUND arguments(as) RIGHT_ROUND . [SEMICOLON] {
 	auto func = new FunctionExpression(*I);
 	delete I;
 	I = nullptr;
@@ -292,7 +317,7 @@ expression(e_new) ::= expression(e1) LESS_EQUAL expression(e2). {
 // Rules specific for CMDL files
 /////////////////////////////////////////////////////////////////////////////
 // assignments
-assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
+assignment ::= variable(I) ASSIGN expression(e) SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
 	identifier name = *I;
@@ -304,7 +329,7 @@ assignment ::= IDENTIFIER(I) ASSIGN expression(e) SEMICOLON. {
 	parseTree->CreateVariable(std::move(name), parseTree->GetExpressionValue(e_temp.get()));
 }
 
-assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
+assignment ::= variable(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMICOLON. {
 	// create_variable might throw an exception, which results in automatic destruction of I and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
 	identifier name = *I;
@@ -318,11 +343,11 @@ assignment ::= IDENTIFIER(I) ASSIGN LEFT_SQUARE expression(e) RIGHT_SQUARE SEMIC
 
 
 // reaction
-reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
+reaction ::= reactionLeftSide(reactants) ARROW reactionRightSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = std::unique_ptr<ReactionSide>(reactants);
-	auto products_temp = std::unique_ptr<ReactionSide>(products);
+	auto reactants_temp = std::unique_ptr<ReactionLeftSide>(reactants);
+	auto products_temp = std::unique_ptr<ReactionRightSide>(products);
 	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(rss);
 	rss = nullptr;
 	reactants = nullptr;
@@ -331,11 +356,11 @@ reaction ::= reactionSide(reactants) ARROW reactionSide(products) COMMA reaction
 	parseTree->CreateReaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
 }
 
-reaction ::= IDENTIFIER(I) COMMA reactionSide(reactants) ARROW reactionSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
+reaction ::= variable(I) COMMA reactionLeftSide(reactants) ARROW reactionRightSide(products) COMMA reactionSpecifiers(rss) SEMICOLON. {
 	// create_reaction might throw an exception, which results in automatic destruction of reactants, products and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
-	auto reactants_temp = std::unique_ptr<ReactionSide>(reactants);
-	auto products_temp = std::unique_ptr<ReactionSide>(products);
+	auto reactants_temp = std::unique_ptr<ReactionLeftSide>(reactants);
+	auto products_temp = std::unique_ptr<ReactionRightSide>(products);
 	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(rss);
 	identifier name = *I; 
 	rss = nullptr;
@@ -383,7 +408,7 @@ reactionSpecifier(rs) ::= expression(e). {
 	rs = new ReactionSpecifier(ReactionSpecifier::rate_type, std::make_unique<NumberExpression>(value));
 }
 
-reactionSpecifier(rs) ::= IDENTIFIER(I) COLON expression(e). {
+reactionSpecifier(rs) ::= variable(I) COLON expression(e). {
 	auto e_temp = std::unique_ptr<IExpression>(e);
 	e = nullptr;
 	rs = nullptr;
@@ -401,116 +426,130 @@ reactionSpecifier(rs) ::= LEFT_SQUARE expression(e) RIGHT_SQUARE. {
 	rs = new ReactionSpecifier(ReactionSpecifier::rate_type, std::move(e_temp));
 }
 
-%type reactionSide {ReactionSide*}
-%destructor reactionSide { 
+///////////////////////////
+// Left side of reaction
+///////////////////////////
+
+%type reactionLeftSide {ReactionLeftSide*}
+%destructor reactionLeftSide { 
 	delete $$;
 	$$ = nullptr;
 }
-reactionSide(rs) ::= . [SEMICOLON] {
-	rs = new ReactionSide();
+reactionLeftSide(rs) ::= . [SEMICOLON] {
+	rs = new ReactionLeftSide();
 }
-reactionSide(rs) ::= reactionComponent(rc). [MULTIPLY]{
-	auto rc_temp = std::unique_ptr<ReactionComponent>(rc);
+reactionLeftSide(rs) ::= reactionLeftComponent(rc). [MULTIPLY]{
+	auto rc_temp = std::unique_ptr<ReactionLeftComponent>(rc);
 	rc = nullptr;
+	rs = nullptr;
 
-	rs = new ReactionSide();
-	rs->PushBack(std::move(rc_temp));
+	auto rs_temp = std::make_unique<ReactionLeftSide>();
+	rs_temp->PushBack(std::move(rc_temp));
+	rs = rs_temp.release();
 }
-reactionSide(rs_new) ::= reactionSide(rs_old) PLUS reactionComponent(rc). [MULTIPLY]{
+reactionLeftSide(rs_new) ::= reactionLeftSide(rs_old) PLUS reactionLeftComponent(rc). [MULTIPLY]{
 	rs_new = rs_old;
 	rs_old = nullptr;
-	auto rc_temp = std::unique_ptr<ReactionComponent>(rc);
+	auto rc_temp = std::unique_ptr<ReactionLeftComponent>(rc);
 	rc = nullptr;
 
 	rs_new->PushBack(std::move(rc_temp));
 }
 
-reactionSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
+reactionLeftSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
 	delete(e1);
 	e1=nullptr;
 	delete(e2);
 	e2=nullptr;
-	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::exception("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
-reactionSide ::= reactionSide(rs_old) PLUS expression(e). [PLUS] {
+reactionLeftSide ::= reactionLeftSide(rs_old) PLUS expression(e). [PLUS] {
 	delete(e);
 	e=nullptr;
 	delete(rs_old);
 	rs_old=nullptr;
-	throw std::exception("Reactants or products of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::exception("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
-%type moleculeProperties {std::vector<number>*}
-%destructor moleculeProperties { 
+%type moleculePropertyNames {MoleculePropertyNames*}
+%destructor moleculePropertyNames { 
 	delete $$;
 	$$ = nullptr;
 }
-moleculeProperties(as) ::= . [SEMICOLON] {
-	as = new std::vector<number>();
+moleculePropertyNames(as) ::= . [SEMICOLON] {
+	as = new MoleculePropertyNames();
+	as->push_back("");
 }
-moleculeProperties(as) ::= VALUE(V). [COMMA]{
-	as = new std::vector<number>();
-	as->push_back(*V);
-	delete V;
-	V = nullptr;
+moleculePropertyNames(as) ::= variable(I). [COMMA]{
+	identifier name = *I;
+	delete I;
+	I = nullptr;
+
+	as = new MoleculePropertyNames();
+	as->push_back(name);
 }
-moleculeProperties(as_new) ::= moleculeProperties(as_old) COMMA VALUE(V). [COMMA]{
+moleculePropertyNames(as_new) ::= moleculePropertyNames(as_old) COMMA variable(I). [COMMA]{
 	as_new = as_old;
 	as_old = nullptr;
-	as_new->push_back(*V);
-	delete V;
-	V = nullptr;
+	identifier name = *I;
+	delete I;
+	I = nullptr;
+
+	as_new->push_back(name);
+}
+moleculePropertyNames(as_new) ::= moleculePropertyNames(as_old) COMMA . [COMMA]{
+	as_new = as_old;
+	as_old = nullptr;
+	as_new->push_back("");
 }
 
-
-
-%type reactionComponent {ReactionComponent*}
-%destructor reactionComponent { 
+%type reactionLeftComponent {ReactionLeftComponent*}
+%destructor reactionLeftComponent { 
 	delete $$;
 	$$ = nullptr;
 }
-reactionComponent(rc) ::= IDENTIFIER(I). [EXP]{
+reactionLeftComponent(rc) ::= variable(I). [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
 	rc = nullptr;
 
-	rc = new ReactionComponent(state, 1, false);
+	rc = new ReactionLeftComponent(state, 1, false);
 }
-reactionComponent(rc) ::= IDENTIFIER(I) LEFT_SQUARE moleculeProperties(as) RIGHT_SQUARE. [EXP]{
+reactionLeftComponent(rc) ::= variable(I) LEFT_CURLY moleculePropertyNames(as) RIGHT_CURLY. [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
 	rc = nullptr;
-	auto as_temp = std::unique_ptr<std::vector<number> >(as);
+	auto as_temp = std::unique_ptr<MoleculePropertyNames>(as);
 	as = nullptr;
 
-	rc = new ReactionComponent(state, 1, false, std::move(as_temp));
+	rc = new ReactionLeftComponent(state, 1, false, std::move(as_temp));
 }
 
-reactionComponent(rc) ::= DOLLAR IDENTIFIER(I). [EXP]{
+reactionLeftComponent(rc) ::= DOLLAR variable(I). [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
 	rc = nullptr;
 
-	rc = new ReactionComponent(state, 1, true);
+	rc = new ReactionLeftComponent(state, 1, true);
 }
 
-reactionComponent(rc) ::= DOLLAR IDENTIFIER(I) LEFT_SQUARE moleculeProperties(as) RIGHT_SQUARE. [EXP]{
+reactionLeftComponent(rc) ::= DOLLAR variable(I) LEFT_CURLY moleculePropertyNames(as) RIGHT_CURLY. [EXP]{
 	identifier state = *I;
 	delete I;
 	I = nullptr;
 	rc = nullptr;
-	auto as_temp = std::unique_ptr<std::vector<number> >(as);
+	auto as_temp = std::unique_ptr<MoleculePropertyNames>(as);
 	as = nullptr;
 
-	rc = new ReactionComponent(state, 1, true, std::move(as_temp));
+	rc = new ReactionLeftComponent(state, 1, true, std::move(as_temp));
 }
 
-reactionComponent(rc_new) ::= expression(e) MULTIPLY reactionComponent(rc_old). [EXP]{
-	auto rc_temp = std::unique_ptr<ReactionComponent>(rc_old);
+reactionLeftComponent(rc_new) ::= expression(e) MULTIPLY reactionLeftComponent(rc_old). [EXP]{
+	auto rc_temp = std::unique_ptr<ReactionLeftComponent>(rc_old);
 	rc_old = nullptr;
 	rc_new = nullptr;
 	auto e_temp = std::unique_ptr<IExpression>(e);
@@ -523,24 +562,162 @@ reactionComponent(rc_new) ::= expression(e) MULTIPLY reactionComponent(rc_old). 
 	rc_new = rc_temp.release();
 }
 
-reactionComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionSide(s1) COLON reactionSide(s2) RIGHT_SQUARE . [EXP]{
+///////////////////////////
+// Right side of reaction
+///////////////////////////
+
+%type reactionRightSide {ReactionRightSide*}
+%destructor reactionRightSide { 
+	delete $$;
+	$$ = nullptr;
+}
+reactionRightSide(rs) ::= . [SEMICOLON] {
+	rs = new ReactionRightSide();
+}
+reactionRightSide(rs) ::= reactionRightComponent(rc). [MULTIPLY]{
+	auto rc_temp = std::unique_ptr<ReactionRightComponent>(rc);
+	rc = nullptr;
+	rs = nullptr;
+
+	auto rs_temp = std::make_unique<ReactionRightSide>();
+	rs_temp->PushBack(std::move(rc_temp));
+	rs = rs_temp.release();
+}
+reactionRightSide(rs_new) ::= reactionRightSide(rs_old) PLUS reactionRightComponent(rc). [MULTIPLY]{
+	rs_new = rs_old;
+	rs_old = nullptr;
+	auto rc_temp = std::unique_ptr<ReactionRightComponent>(rc);
+	rc = nullptr;
+
+	rs_new->PushBack(std::move(rc_temp));
+}
+
+reactionRightSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
+	delete(e1);
+	e1=nullptr;
+	delete(e2);
+	e2=nullptr;
+	throw std::exception("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+
+reactionRightSide ::= reactionRightSide(rs_old) PLUS expression(e). [PLUS] {
+	delete(e);
+	e=nullptr;
+	delete(rs_old);
+	rs_old=nullptr;
+	throw std::exception("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+}
+
+%type moleculePropertyExpressions {MoleculePropertyExpressions*}
+%destructor moleculePropertyExpressions { 
+	delete $$;
+	$$ = nullptr;
+}
+moleculePropertyExpressions(as) ::= . [SEMICOLON] {
+	as = new MoleculePropertyExpressions();
+	as->push_back(std::unique_ptr<IExpression>(nullptr));
+}
+moleculePropertyExpressions(as) ::= expression(e). [COMMA]{
 	auto e_temp = std::unique_ptr<IExpression>(e);
 	e = nullptr;
-	auto s1_temp = std::unique_ptr<ReactionSide>(s1);
-	auto s2_temp = std::unique_ptr<ReactionSide>(s2);
+
+	as = new MoleculePropertyExpressions();
+	as->push_back(std::move(e_temp));
+}
+moleculePropertyExpressions(as_new) ::= moleculePropertyExpressions(as_old) COMMA expression(e). [COMMA]{
+	as_new = as_old;
+	as_old = nullptr;
+	auto e_temp = std::unique_ptr<IExpression>(e);
+	e = nullptr;
+
+	as_new->push_back(std::move(e_temp));
+}
+moleculePropertyExpressions(as_new) ::= moleculePropertyExpressions(as_old) COMMA . [COMMA]{
+	as_new = as_old;
+	as_old = nullptr;
+
+	as_new->push_back(std::unique_ptr<IExpression>(nullptr));
+}
+
+%type reactionRightComponent {ReactionRightComponent*}
+%destructor reactionRightComponent { 
+	delete $$;
+	$$ = nullptr;
+}
+reactionRightComponent(rc) ::= variable(I). [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+
+	rc = new ReactionRightComponent(state, 1, false);
+}
+reactionRightComponent(rc) ::= variable(I) LEFT_CURLY moleculePropertyExpressions(as) RIGHT_CURLY. [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+	auto as_temp = std::unique_ptr<MoleculePropertyExpressions>(as);
+	as = nullptr;
+
+	rc = new ReactionRightComponent(state, 1, false, std::move(as_temp));
+}
+
+reactionRightComponent(rc) ::= DOLLAR variable(I). [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+
+	rc = new ReactionRightComponent(state, 1, true);
+}
+
+reactionRightComponent(rc) ::= DOLLAR variable(I) LEFT_CURLY moleculePropertyExpressions(as) RIGHT_CURLY. [EXP]{
+	identifier state = *I;
+	delete I;
+	I = nullptr;
+	rc = nullptr;
+	auto as_temp = std::unique_ptr<MoleculePropertyExpressions>(as);
+	as = nullptr;
+
+	rc = new ReactionRightComponent(state, 1, true, std::move(as_temp));
+}
+
+reactionRightComponent(rc_new) ::= expression(e) MULTIPLY reactionRightComponent(rc_old). [EXP]{
+	auto rc_temp = std::unique_ptr<ReactionRightComponent>(rc_old);
+	rc_old = nullptr;
+	rc_new = nullptr;
+	auto e_temp = std::unique_ptr<IExpression>(e);
+	e = nullptr;
+
+	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
+	if(stochiometry<=0)
+		throw std::exception("Stochiometry must be positive.");
+	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
+	rc_new = rc_temp.release();
+}
+
+reactionRightComponent(rc) ::= LEFT_SQUARE expression(e) QUESTIONMARK reactionRightSide(s1) COLON reactionRightSide(s2) RIGHT_SQUARE . [EXP]{
+	auto e_temp = std::unique_ptr<IExpression>(e);
+	e = nullptr;
+	auto s1_temp = std::unique_ptr<ReactionRightSide>(s1);
+	auto s2_temp = std::unique_ptr<ReactionRightSide>(s2);
 	s1 = nullptr;
 	s2 = nullptr;
 	rc = nullptr;
 
 	identifier state = parseTree->CreateChoice(std::move(e_temp), std::move(s1_temp), std::move(s2_temp));
-	rc = new ReactionComponent(state, 1, false);
+	rc = new ReactionRightComponent(state, 1, false);
 }
+
+
+
 
 // We just ignore that a model has a name. Included only for compatibility with Dizzy files
 preprocessorDirective ::= MODEL_NAME IDENTIFIER SEMICOLON.
 
 // include a file
-preprocessorDirective ::= INCLUDE IDENTIFIER(I) SEMICOLON. {
+preprocessorDirective ::= INCLUDE variable(I) SEMICOLON. {
 	identifier fileName = *I;
 	delete I;
 	I = nullptr;

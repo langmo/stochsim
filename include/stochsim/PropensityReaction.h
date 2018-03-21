@@ -6,7 +6,7 @@
 #include <functional>
 #include <sstream>
 #include <algorithm>
-#include "ReactionRate.h"
+#include "ExpressionHolder.h"
 #include "expression_common.h"
 #include "ExpressionParser.h"
 namespace stochsim
@@ -21,18 +21,120 @@ namespace stochsim
 		public IPropensityReaction
 	{
 	private:
-		/// <summary>
-		/// Structure to store the information about the reactants and products of a SimpleReaction, as well as their stochiometries.
-		/// </summary>
-		struct ReactionElementWithModifiers
+		class Reactant
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			const bool modifier_;
-			const MoleculeProperties properties_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, bool modifier, MoleculeProperties properties) noexcept : stochiometry_(stochiometry), state_(std::move(state)), modifier_(modifier), properties_(std::move(properties))
+			const Molecule::PropertyNames propertyNames_;
+			Reactant(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyNames propertyNames) noexcept : stochiometry_(stochiometry), state_(std::move(state)), propertyNames_(std::move(propertyNames))
 			{
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+		};
+		class Modifier
+		{
+		public:
+			Stochiometry stochiometry_;
+			const std::shared_ptr<IState> state_;
+			const Molecule::PropertyNames propertyNames_;
+			Modifier(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyNames propertyNames) noexcept : stochiometry_(stochiometry), state_(std::move(state)), propertyNames_(std::move(propertyNames))
+			{
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+		};
+		class Product
+		{
+		public:
+			Stochiometry stochiometry_;
+			const std::shared_ptr<IState> state_;
+			std::array<ExpressionHolder, Molecule::size_> propertyExpressions_;
+			Product(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions) noexcept : stochiometry_(stochiometry), state_(std::move(state))
+			{
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					propertyExpressions_[i].SetExpression(std::move(propertyExpressions[i]));
+				}
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Initialize(simInfo);
+				}
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Uninitialize(simInfo);
+				}
+			}
+			inline Molecule operator() (ISimInfo& simInfo, const std::vector<Variable>& variables = {}) const
+			{
+				Molecule molecule;
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					if (propertyExpressions_[i])
+						molecule[i] = propertyExpressions_[i](simInfo, variables);
+				}
+				return molecule;
+			}
+		};
+		class Transformee
+		{
+		public:
+			Stochiometry stochiometry_;
+			const std::shared_ptr<IState> state_;
+			std::array<ExpressionHolder, Molecule::size_> propertyExpressions_;
+			const Molecule::PropertyNames propertyNames_;
+			Transformee(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions, Molecule::PropertyNames propertyNames) noexcept : stochiometry_(stochiometry), state_(std::move(state)), propertyNames_(std::move(propertyNames))
+			{
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					propertyExpressions_[i].SetExpression(std::move(propertyExpressions[i]));
+				}
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Initialize(simInfo);
+				}
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Uninitialize(simInfo);
+				}
+			}
+			inline Molecule& operator() (Molecule& molecule, ISimInfo& simInfo, const std::vector<Variable>& variables = {}) const
+			{
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					if (propertyExpressions_[i])
+						molecule[i] = propertyExpressions_[i](simInfo, variables);
+				}
+				return molecule;
 			}
 		};
 	public:
@@ -56,10 +158,7 @@ namespace stochsim
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& reactant : reactants_)
 			{
-				if (!reactant.modifier_)
-				{
-					returnVal.emplace_back(reactant.state_, reactant.stochiometry_);
-				}
+				returnVal.emplace_back(reactant.state_, reactant.stochiometry_);
 			}
 			return std::move(returnVal);
 		}
@@ -72,10 +171,7 @@ namespace stochsim
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : products_)
 			{
-				if (!product.modifier_)
-				{
-					returnVal.emplace_back(product.state_, product.stochiometry_);
-				}
+				returnVal.emplace_back(product.state_, product.stochiometry_);
 			}
 			return std::move(returnVal);
 		}
@@ -89,12 +185,9 @@ namespace stochsim
 		stochsim::Collection<stochsim::ReactionElement> GetTransformees() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
-			for (auto& product : products_)
+			for (auto& transformee : transformees_)
 			{
-				if (product.modifier_)
-				{
-					returnVal.emplace_back(product.state_, product.stochiometry_);
-				}
+				returnVal.emplace_back(transformee.state_, transformee.stochiometry_);
 			}
 			return std::move(returnVal);
 		}
@@ -106,21 +199,9 @@ namespace stochsim
 		stochsim::Collection<stochsim::ReactionElement> GetModifiers() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
-			for (auto& reactant : reactants_)
+			for (auto& modifier : modifiers_)
 			{
-				if (reactant.modifier_)
-				{
-					Stochiometry stoch = reactant.stochiometry_;
-					for (auto& product : products_)
-					{
-						if (product.modifier_ && product.state_ == reactant.state_)
-						{
-							stoch -= product.stochiometry_;
-						}
-					}
-					if (stoch > 0)
-						returnVal.emplace_back(reactant.state_, stoch);
-				}
+				returnVal.emplace_back(modifier.state_, modifier.stochiometry_);
 			}
 			return std::move(returnVal);
 		}
@@ -130,52 +211,52 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a reactant.</param>
 		/// <param name="stochiometry">Number of molecules of the reactant taking part in a reaction.</param>
-		void AddReactant(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddReactant(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyNames propertyNames = Molecule::PropertyNames())
 		{
 			for (auto& reactant : reactants_)
 			{
 				if (state == reactant.state_)
 				{
-					if (reactant.modifier_)
+					for (auto i = 0; i < propertyNames.size(); i++)
 					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
-						throw std::exception(errorMessage.str().c_str());
+						if (propertyNames[i] != reactant.propertyNames_[i])
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) <<" of reactant " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << reactant.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] <<".";
+							throw std::exception(errorMessage.str().c_str());
+						}
 					}
-					else
-					{
-						reactant.stochiometry_ += stochiometry;
-						return;
-					}
+					reactant.stochiometry_ += stochiometry;
+					return;
 				}
 			}
-			reactants_.emplace_back(state, stochiometry, false, defaultMoleculeProperties);
+			reactants_.emplace_back(state, stochiometry, std::move(propertyNames));
 		}
 		/// <summary>
 		/// Adds a species as a modifier of the reaction. Different to a reactant, when the reaction fires, its concentration does not decreased. However, a modifier still changes the rate at which a reaction takes place (e.g. enzymes catalyzing the reaction).
 		/// </summary>
 		/// <param name="state">Species to add as a modifier.</param>
 		/// <param name="stochiometry">Number of molecules of the modifier taking part in a reaction.</param>
-		void AddModifier(std::shared_ptr<IState> state, Stochiometry stochiometry = 1)
+		void AddModifier(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyNames propertyNames = Molecule::PropertyNames())
 		{
-			for (auto& reactant : reactants_)
+			for (auto& modifier : modifiers_)
 			{
-				if (state == reactant.state_)
+				if (state == modifier.state_)
 				{
-					if (!reactant.modifier_)
+					for (auto i = 0; i < propertyNames.size(); i++)
 					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
-						throw std::exception(errorMessage.str().c_str());
+						if (propertyNames[i] != modifier.propertyNames_[i])
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) << " of modifier " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << modifier.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] << ".";
+							throw std::exception(errorMessage.str().c_str());
+						}
 					}
-					else
-					{
-						reactant.stochiometry_ += stochiometry;
-						return;
-					}
+					modifier.stochiometry_ += stochiometry;
+					return;
 				}
 			}
-			reactants_.emplace_back(state, stochiometry, true, defaultMoleculeProperties);
+			modifiers_.emplace_back(state, stochiometry, std::move(propertyNames));
 		}
 		/// <summary>
 		/// Adds a species as a transformee of the reaction. Similar to a modifier, the concentration of a transformee is not changed when the reaction fires, but it still changes the propensity of the reaction.
@@ -183,109 +264,165 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a transformee.</param>
 		/// <param name="stochiometry">Number of molecules of the transformee taking part in a reaction.</param>
-		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeTransformation = defaultMoleculeTransformation)
+		void AddTransformee(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyExpressions propertyExpressions = Molecule::PropertyExpressions(), Molecule::PropertyNames propertyNames = Molecule::PropertyNames())
 		{
-			bool addedReactant = false;
-			for (auto& reactant : reactants_)
+			for (auto& transformee : transformees_)
 			{
-				if (state == reactant.state_)
+				if (state == transformee.state_)
 				{
-					if (!reactant.modifier_)
+					for (auto i = 0; i < propertyNames.size(); i++)
 					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a modifier/transformee and as a normal reactant.";
-						throw std::exception(errorMessage.str().c_str());
-					}
-					else
-					{
-						reactant.stochiometry_ += stochiometry;
-						addedReactant = true;
-						break;
-					}
-				}
-			}
-			if (!addedReactant)
-			{
-				reactants_.emplace_back(state, stochiometry, true, defaultMoleculeProperties);
-			}
-
-			bool addedProduct = false;
-			for (auto& product : products_)
-			{
-				if (state == product.state_)
-				{
-					if (!product.modifier_)
-					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a transformee and as a normal product.";
-						throw std::exception(errorMessage.str().c_str());
-					}
-					else
-					{
-						if (product.properties_ != moleculeTransformation)
+						if (propertyNames[i] != transformee.propertyNames_[i])
 						{
 							std::stringstream errorMessage;
-							errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a transformee with different properties being modified.";
+							errorMessage << "Property " << std::to_string(i) << " of transformee " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << transformee.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] << ".";
 							throw std::exception(errorMessage.str().c_str());
 						}
-						product.stochiometry_ += stochiometry;
-						addedProduct = true;
 					}
+					for (auto i = 0; i < propertyExpressions.size(); i++)
+					{
+						std::string expressionOld("<none>");
+						if (transformee.propertyExpressions_[i])
+							expressionOld = transformee.propertyExpressions_[i].GetExpression()->ToCmdl();
+						std::string expressionNew("<none>");
+						if (propertyExpressions[i])
+							expressionNew = propertyExpressions[i]->ToCmdl();
+						if (expressionOld != expressionNew)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) << " of transformee " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
+							throw std::exception(errorMessage.str().c_str());
+						}
+					}
+					transformee.stochiometry_ += stochiometry;
+					return;
 				}
 			}
-			if(!addedProduct)
-				products_.emplace_back(state, stochiometry, true, moleculeTransformation);
+			transformees_.emplace_back(state, stochiometry, std::move(propertyExpressions), std::move(propertyNames));
 		}
 		/// <summary>
 		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties)
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyExpressions propertyExpressions = Molecule::PropertyExpressions())
 		{
 			for (auto& product : products_)
 			{
 				if (state == product.state_)
 				{
-					if (product.modifier_)
+					for (auto i = 0; i < propertyExpressions.size(); i++)
 					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " both as a transformee and as a normal product.";
-						throw std::exception(errorMessage.str().c_str());
-					}
-					else
-					{
-						if (product.properties_ != moleculeProperties)
+						std::string expressionOld("<none>");
+						if (product.propertyExpressions_[i])
+							expressionOld = product.propertyExpressions_[i].GetExpression()->ToCmdl();
+						std::string expressionNew("<none>");
+						if (propertyExpressions[i])
+							expressionNew = propertyExpressions[i]->ToCmdl();
+						if (expressionOld != expressionNew)
 						{
 							std::stringstream errorMessage;
-							errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a product with different properties being initialized.";
+							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
 							throw std::exception(errorMessage.str().c_str());
 						}
-						product.stochiometry_ += stochiometry;
-						return;
 					}
+					product.stochiometry_ += stochiometry;
+					return;
 				}
 			}
-			products_.emplace_back(state, stochiometry, false, moleculeProperties);
+			products_.emplace_back(state, stochiometry, std::move(propertyExpressions));
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
+			Variables variables;
 			for (const auto& reactant : reactants_)
 			{
-				if (!reactant.modifier_)
+				for (size_t i = 0; i < reactant.stochiometry_; i++)
 				{
-					reactant.state_->Remove(simInfo, reactant.stochiometry_);
+					Molecule molecule = reactant.state_->Remove(simInfo);
+					for (size_t p = 0; p < molecule.Size(); p++)
+					{
+						if (!reactant.propertyNames_[p].empty())
+						{
+							if(reactant.stochiometry_ > 1)
+								variables.push_back(Variable(reactant.propertyNames_[p] + "[" + std::to_string(i) + "]", molecule[p]));
+							else
+								variables.push_back(Variable(reactant.propertyNames_[p], molecule[p]));
+							
+						}
+					}
 				}
 			}
-			for (const auto& product : products_)
+			for (const auto& modifier : modifiers_)
 			{
-				if (product.modifier_)
+				for (size_t i = 0; i < modifier.stochiometry_; i++)
 				{
-					product.state_->Transform(simInfo, product.stochiometry_, product.properties_);
+					const Molecule& molecule = modifier.state_->Peak(simInfo);
+					for (size_t p = 0; p < molecule.Size(); p++)
+					{
+						if (!modifier.propertyNames_[p].empty())
+						{
+							if(modifier.stochiometry_ > 1)
+								variables.push_back(Variable(modifier.propertyNames_[p] + "[" + std::to_string(i) + "]", molecule[p]));
+							else
+								variables.push_back(Variable(modifier.propertyNames_[p], molecule[p]));
+						}
+					}
 				}
-				else
+			}
+			for (auto& transformee : transformees_)
+			{
+				std::vector<Molecule*> molecules;
+				for (size_t i = 0; i < transformee.stochiometry_; i++)
 				{
-					product.state_->Add(simInfo, product.stochiometry_, product.properties_);
+					molecules.push_back(&transformee.state_->Transform(simInfo));
+					for (size_t p = 0; p < molecules[i]->Size(); p++)
+					{
+						if (!transformee.propertyNames_[p].empty())
+						{
+							if (transformee.stochiometry_ > 1)
+								variables.push_back(Variable(transformee.propertyNames_[p] + "[" + std::to_string(i) + "]", (*molecules[i])[p]));
+							else
+								variables.push_back(Variable(transformee.propertyNames_[p], (*molecules[i])[p]));
+						}
+					}
+				}
+
+				for (auto molecule : molecules)
+				{
+					if (transformee.stochiometry_ > 1)
+					{
+						// For simplicity, if the stochiometry is bigger than one, the property name without array notation temporarily denotes the respective property of the
+						// current molecule.
+						for (size_t p = 0; p < molecule->Size(); p++)
+						{
+							if (!transformee.propertyNames_[p].empty())
+							{
+								variables.push_back(Variable(transformee.propertyNames_[p], (*molecule)[p]));
+							}
+						}
+					}
+					transformee(*molecule, simInfo, variables);
+
+					if (transformee.stochiometry_ > 1)
+					{
+						// remove all temporarily added variables
+						for (size_t p = 0; p < molecule->Size(); p++)
+						{
+							if (!transformee.propertyNames_[p].empty())
+							{
+								variables.pop_back();
+							}
+						}
+					}
+				}
+			}
+			for (auto& product : products_)
+			{
+				Molecule molecule = product(simInfo, variables);
+				for (size_t i = 0; i < product.stochiometry_; i++)
+				{
+					product.state_->Add(simInfo, molecule, variables);
 				}
 			}
 		}
@@ -295,7 +432,7 @@ namespace stochsim
 			{
 				try
 				{
-					return customRate_(simInfo);
+					return customRate_.operator()(simInfo);
 				}
 				catch (const std::exception& ex)
 				{
@@ -321,7 +458,24 @@ namespace stochsim
 					{
 						rate *= num - s;
 					}
-
+				}
+				for (const auto& modifier : modifiers_)
+				{
+					const long stoch = modifier.stochiometry_;
+					const size_t num = modifier.state_->Num(simInfo);
+					for (size_t s = 0; s < stoch; s++)
+					{
+						rate *= num - s;
+					}
+				}
+				for (const auto& transformee : transformees_)
+				{
+					const long stoch = transformee.stochiometry_;
+					const size_t num = transformee.state_->Num(simInfo);
+					for (size_t s = 0; s < stoch; s++)
+					{
+						rate *= num - s;
+					}
 				}
 				return rate;
 			}
@@ -334,15 +488,45 @@ namespace stochsim
 		{
 			if (customRate_)
 			{
-				std::vector<std::shared_ptr<IState>> reactantsPtrs;
-				std::transform(reactants_.begin(), reactants_.end(), std::back_inserter(reactantsPtrs),
-					[](const ReactionElementWithModifiers& reactant) -> std::shared_ptr<IState> {return reactant.state_; });
+				customRate_.Initialize(simInfo);
+			}
 
-				customRate_.Initialize(simInfo, reactantsPtrs);
+			for (auto& reactant : reactants_)
+			{
+				reactant.Initialize(simInfo);
+			}
+			for (auto& product : products_)
+			{
+				product.Initialize(simInfo);
+			}
+			for (auto& modifier : modifiers_)
+			{
+				modifier.Initialize(simInfo);
+			}
+			for (auto& transformee : transformees_)
+			{
+				transformee.Initialize(simInfo);
 			}
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
+			for (auto& reactant : reactants_)
+			{
+				reactant.Uninitialize(simInfo);
+			}
+			for (auto& product : products_)
+			{
+				product.Uninitialize(simInfo);
+			}
+			for (auto& modifier : modifiers_)
+			{
+				modifier.Uninitialize(simInfo);
+			}
+			for (auto& transformee : transformees_)
+			{
+				transformee.Uninitialize(simInfo);
+			}
+
 			customRate_.Uninitialize(simInfo);
 		}
 		/// <summary>
@@ -363,7 +547,7 @@ namespace stochsim
 		void SetRateConstant(double rateConstant) noexcept
 		{
 			rateConstant_ = rateConstant;
-			customRate_.SetRateExpression(nullptr);
+			customRate_.SetExpression(nullptr);
 		}
 
 		/// <summary>
@@ -372,7 +556,7 @@ namespace stochsim
 		/// <returns>Custom rate equation of reaction.</returns>
 		const expression::IExpression* GetRateEquation() const noexcept
 		{
-			return customRate_.GetRateExpression();
+			return customRate_.GetExpression();
 		}
 		/// <summary>
 		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
@@ -384,7 +568,7 @@ namespace stochsim
 		void SetRateEquation(std::unique_ptr<expression::IExpression> rateEquation) noexcept
 		{
 			rateConstant_ = 0;
-			customRate_.SetRateExpression(std::move(rateEquation));
+			customRate_.SetExpression(std::move(rateEquation));
 		}
 		/// <summary>
 		/// Sets a custom rate equation for this reaction. If a custom rate equation is defined, the rate of the equation is not determined by standard mass action kinetics.
@@ -399,10 +583,12 @@ namespace stochsim
 			SetRateEquation(parser.Parse(rateEquation, false, false));
 		}
 	private:
-		ReactionRate customRate_;
+		ExpressionHolder customRate_;
 		double rateConstant_;
 		const std::string name_;
-		std::vector<ReactionElementWithModifiers> reactants_;
-		std::vector<ReactionElementWithModifiers> products_;
+		std::vector<Reactant> reactants_;
+		std::vector<Modifier> modifiers_;
+		std::vector<Product> products_;
+		std::vector<Transformee> transformees_;
 	};
 }

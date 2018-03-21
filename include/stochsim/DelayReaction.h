@@ -4,6 +4,7 @@
 #include "stochsim_common.h"
 #include <vector>
 #include <sstream>
+#include "ExpressionHolder.h"
 namespace stochsim
 {
 	/// <summary>
@@ -13,44 +14,90 @@ namespace stochsim
 	class DelayReaction : public IEventReaction
 	{
 	private:
-		/// <summary>
-		/// Structure to store the information about the products of a DelayedReaction, as well as their stochiometries.
-		/// </summary>
-		struct ReactionElementWithModifiers
+		class Reactant
+		{
+		public:
+			const std::shared_ptr<ComposedState> state_;
+			const Molecule::PropertyNames propertyNames_;
+			Reactant(std::shared_ptr<ComposedState> state, Molecule::PropertyNames propertyNames) noexcept : state_(std::move(state)), propertyNames_(std::move(propertyNames))
+			{
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				// do nothing.
+			}
+		};
+		class Product
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			const MoleculeProperties properties_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, MoleculeProperties properties) : stochiometry_(stochiometry), state_(std::move(state)), properties_(std::move(properties))
+			std::array<ExpressionHolder, Molecule::size_> propertyExpressions_;
+			Product(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions) noexcept : stochiometry_(stochiometry), state_(std::move(state))
 			{
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					propertyExpressions_[i].SetExpression(std::move(propertyExpressions[i]));
+				}
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Initialize(simInfo);
+				}
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Uninitialize(simInfo);
+				}
+			}
+			inline Molecule operator() (ISimInfo& simInfo, const std::vector<Variable>& variables = {}) const
+			{
+				Molecule molecule;
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					if (propertyExpressions_[i])
+						molecule[i] = propertyExpressions_[i](simInfo, variables);
+				}
+				return molecule;
 			}
 		};
 	public:
-		DelayReaction(std::string name, std::shared_ptr<ComposedState> state, double delay) : state_(std::move(state)), delay_(delay), name_(std::move(name))
+		DelayReaction(std::string name, double delay, std::shared_ptr<ComposedState> reactant, Molecule::PropertyNames propertyNames = Molecule::PropertyNames()) : reactant_(std::move(reactant), std::move(propertyNames)), delay_(delay), name_(std::move(name))
 		{
-			for (int i = 0; i < numMoleculeProperties; i++)
-			{
-				std::stringstream name;
-				name << "N"<<i;
-				variables_.emplace_back(name.str(), 0);
-			}
 		}
 		virtual double NextReactionTime(ISimInfo& simInfo) const override
 		{
-			return state_->Num(simInfo) > 0 ? state_->PeakFirst().creationTime + delay_ : stochsim::inf;
+			return reactant_.state_->Num(simInfo) > 0 ? reactant_.state_->PeakFirstCreationTime(simInfo) + delay_ : stochsim::inf;
 		}
 		virtual void Fire(ISimInfo& simInfo) override
 		{
-			auto& molecule = state_->PeakFirst();
-			for (int i = 0; i < numMoleculeProperties; i++)
+			Variables variables;
+			Molecule molecule = reactant_.state_->RemoveFirst(simInfo);
+			for (size_t p = 0; p < molecule.Size(); p++)
 			{
-				variables_[i].second=molecule.properties[i];
+				if (!reactant_.propertyNames_[p].empty())
+				{
+					variables.push_back(Variable(reactant_.propertyNames_[p], molecule[p]));
+
+				}
 			}
-			state_->RemoveFirst(simInfo);
 			for (const auto& product : products_)
 			{
-				product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables_);
+				molecule = product(simInfo, variables);
+				for (size_t i = 0; i < product.stochiometry_; i++)
+				{
+					product.state_->Add(simInfo, molecule, variables);
+				}
 			}
 		}
 		virtual std::string GetName() const override
@@ -59,11 +106,17 @@ namespace stochsim
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			// do nothing.
+			for (auto& product : products_)
+			{
+				product.Initialize(simInfo);
+			}
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
-			// do nothing.
+			for (auto& product : products_)
+			{
+				product.Uninitialize(simInfo);
+			}
 		}
 
 		/// <summary>
@@ -89,23 +142,37 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product.</param>
 		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
-		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties)
+		/// <summary>
+		/// Adds a species as a product of the reaction. When the reaction fires, its concentration is increased according to its stochiometry.
+		/// </summary>
+		/// <param name="state">Species to add as a product.</param>
+		/// <param name="stochiometry">Number of molecules produced when the reaction fires.</param>
+		void AddProduct(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyExpressions propertyExpressions = Molecule::PropertyExpressions())
 		{
 			for (auto& product : products_)
 			{
 				if (state == product.state_)
 				{
-					if (product.properties_ != moleculeProperties)
+					for (auto i = 0; i < propertyExpressions.size(); i++)
 					{
-						std::stringstream errorMessage;
-						errorMessage << "State " << state->GetName() << " cannot take part in reaction " << GetName() << " as a product with different properties being initialized.";
-						throw std::exception(errorMessage.str().c_str());
+						std::string expressionOld("<none>");
+						if (product.propertyExpressions_[i])
+							expressionOld = product.propertyExpressions_[i].GetExpression()->ToCmdl();
+						std::string expressionNew("<none>");
+						if (propertyExpressions[i])
+							expressionNew = propertyExpressions[i]->ToCmdl();
+						if (expressionOld != expressionNew)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
+							throw std::exception(errorMessage.str().c_str());
+						}
 					}
 					product.stochiometry_ += stochiometry;
 					return;
 				}
 			}
-			products_.emplace_back(state, stochiometry, moleculeProperties);
+			products_.emplace_back(state, stochiometry, std::move(propertyExpressions));
 		}
 		/// <summary>
 		/// Returns all products of the reaction.
@@ -126,14 +193,13 @@ namespace stochsim
 		/// <returns>Reactant of the reaction.</returns>
 		std::shared_ptr<ComposedState> GetReactant() const
 		{
-			return state_;
+			return reactant_.state_;
 		}
 	private:
-		std::vector<Variable> variables_;
 		double delay_;
-		std::shared_ptr<ComposedState> state_;
+		Reactant reactant_;
 		const std::string name_;
-		std::vector<ReactionElementWithModifiers> products_;
+		std::vector<Product> products_;
 	};
 }
 

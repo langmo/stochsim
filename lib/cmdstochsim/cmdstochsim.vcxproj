@@ -184,12 +184,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="example1.h" />
-    <ClInclude Include="examples.h" />
-    <ClInclude Include="Parameters.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="example1.cpp" />
     <ClCompile Include="cmdstochsim.cpp" />
   </ItemGroup>
   <ItemGroup>

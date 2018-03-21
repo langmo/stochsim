@@ -11,8 +11,8 @@ namespace stochsim
 		public ILogger
 	{
 	public:
-		typedef std::function<size_t(const MoleculeProperties&)> LoggerFunction;
-		ComposedStateLogger(std::string fileName, LoggerFunction loggerFunction = [](const MoleculeProperties& properties)->size_t {return static_cast<size_t>(properties[0]+0.5); }, size_t initialMaxModified = 10) : modificationCounter_(initialMaxModified), fileName_(fileName), loggerFunction_(loggerFunction)
+		typedef std::function<size_t(const Molecule&)> LoggerFunction;
+		ComposedStateLogger(std::string fileName, LoggerFunction loggerFunction = [](const Molecule& molecule)->size_t {return static_cast<size_t>(molecule[0]+0.5); }, size_t initialMaxModified = 10) : modificationCounter_(initialMaxModified), fileName_(fileName), loggerFunction_(loggerFunction)
 		{
 		}
 
@@ -30,7 +30,7 @@ namespace stochsim
 		}
 		void RemoveListener(const Molecule& molecule, double time)
 		{
-			auto id = loggerFunction_(molecule.properties);
+			auto id = loggerFunction_(molecule);
 			while (id > modificationCounter_.size())
 			{
 				modificationCounter_.resize(2 * modificationCounter_.size());

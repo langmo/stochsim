@@ -179,11 +179,10 @@
     <ClInclude Include="..\..\include\stochsim\ComposedStateLogger.h" />
     <ClInclude Include="..\..\include\stochsim\CustomDelayReaction.h" />
     <ClInclude Include="..\..\include\stochsim\CustomLogger.h" />
-    <ClInclude Include="..\..\include\stochsim\CustomState.h" />
     <ClInclude Include="..\..\include\stochsim\DelayReaction.h" />
+    <ClInclude Include="..\..\include\stochsim\ExpressionHolder.h" />
     <ClInclude Include="..\..\include\stochsim\ProgressLogger.h" />
     <ClInclude Include="..\..\include\stochsim\PropensityReaction.h" />
-    <ClInclude Include="..\..\include\stochsim\ReactionRate.h" />
     <ClInclude Include="..\..\include\stochsim\Simulation.h" />
     <ClInclude Include="..\..\include\stochsim\State.h" />
     <ClInclude Include="..\..\include\stochsim\StateLogger.h" />

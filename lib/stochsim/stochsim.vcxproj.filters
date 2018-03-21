@@ -35,9 +35,6 @@
     <ClInclude Include="..\..\include\stochsim\PropensityReaction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\stochsim\ReactionRate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\stochsim\Simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -53,10 +50,10 @@
     <ClInclude Include="..\..\include\stochsim\stochsim_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\stochsim\CustomState.h">
+    <ClInclude Include="..\..\include\stochsim\CustomDelayReaction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\stochsim\CustomDelayReaction.h">
+    <ClInclude Include="..\..\include\stochsim\ExpressionHolder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

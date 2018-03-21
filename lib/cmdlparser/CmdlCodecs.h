@@ -259,6 +259,12 @@ namespace cmdlparser
 			case ']':
 				*tokenID = TOKEN_RIGHT_SQUARE;
 				return ++stream;
+			case '{':
+				*tokenID = TOKEN_LEFT_CURLY;
+				return ++stream;
+			case '}':
+				*tokenID = TOKEN_RIGHT_CURLY;
+				return ++stream;
 			case '!':
 				if (stream[1] == '=')
 				{

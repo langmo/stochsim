@@ -1,20 +1,10 @@
-// MoiSim.cpp : Defines the entry point for the console application.
-//
-
 #include <iostream>
 #include <string>
-#include "example1.h"
 #include <unordered_map>
 #include <vector>
-#include "examples.h"
 #include "CmdlParser.h"
 #include "StateLogger.h"
 #include "ProgressLogger.h"
-std::vector<Example> getExamples()
-{
-	return
-	{ example1()};
-}
 
 std::string cmdGetOption(int &argc, char **argv, const std::string & option)
 {
@@ -126,45 +116,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	std::string exampleName = cmdGetOption(argc, argv, "-e");
-	if (!exampleName.empty())
-	{
-		auto examples = getExamples();
-		for (auto example : examples)
-		{
-			if (std::get<0>(example).compare(exampleName) != 0)
-				continue;
-			try
-			{
-				std::get<2>(example)(outputFolder);
-				return 0;
-			}
-			catch (const std::runtime_error& re)
-			{
-				std::cerr << "Runtime error: " << re.what() << std::endl;
-				return 1;
-			}
-			catch (const std::exception& ex)
-			{
-				std::cerr << "Error occurred: " << ex.what() << std::endl;
-				return 1;
-			}
-			catch (std::string message)
-			{
-				std::cerr << "Error occured: " << message << std::endl;
-				return 1;
-			}
-			catch (...)
-			{
-				std::cerr << "Unknown error occured." << std::endl;
-				return 1;
-			}
-		}
-		std::cerr << "Unknown example " << exampleName << ".";
-		return 1;
-	}
-
-	// if we are here, the last parameter must be the model path
+	// The last parameter must be the model path
 	std::string model(argv[argc - 1]);
 	try
 	{

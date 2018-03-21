@@ -17,17 +17,24 @@ namespace stochsim
 		{
 			return num_;
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) override
+		virtual void Add(ISimInfo& simInfo, const Molecule& molecule = defaultMolecule, const Variables& variables = {}) override
 		{
-			num_ += num;
+			num_ ++;
 		}
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) override
+		virtual Molecule Remove(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
-			num_ -= num;
+			num_ --;
+			return defaultMolecule;
 		}
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) override
+		virtual Molecule& Transform(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
-			// do nothing, simple states are not counting...
+			static Molecule molecule;
+			molecule.Reset();
+			return molecule;
+		}
+		virtual const Molecule& Peak(ISimInfo& simInfo) const
+		{
+			return defaultMolecule;
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{

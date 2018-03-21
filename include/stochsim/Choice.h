@@ -6,6 +6,7 @@
 #include "stochsim_common.h"
 #include "expression_common.h"
 #include "ExpressionParser.h"
+#include "ExpressionHolder.h"
 namespace stochsim
 {
 	/// <summary>
@@ -28,17 +29,44 @@ namespace stochsim
 		public IState
 	{
 	private:
-		/// <summary>
-		/// Structure to store the information about the products of a Choice, as well as their stochiometries.
-		/// </summary>
-		struct ReactionElementWithModifiers
+		class Product
 		{
 		public:
 			Stochiometry stochiometry_;
 			const std::shared_ptr<IState> state_;
-			const MoleculeProperties properties_;
-			ReactionElementWithModifiers(std::shared_ptr<IState> state, Stochiometry stochiometry, MoleculeProperties properties) : stochiometry_(stochiometry), state_(std::move(state)), properties_(std::move(properties))
+			std::array<ExpressionHolder, Molecule::size_> propertyExpressions_;
+			Product(std::shared_ptr<IState> state, Stochiometry stochiometry, Molecule::PropertyExpressions propertyExpressions) noexcept : stochiometry_(stochiometry), state_(std::move(state))
 			{
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					propertyExpressions_[i].SetExpression(std::move(propertyExpressions[i]));
+				}
+			}
+			inline void Initialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Initialize(simInfo);
+				}
+			}
+			inline void Uninitialize(ISimInfo& simInfo)
+			{
+				for (auto& propertyExpression : propertyExpressions_)
+				{
+					if (propertyExpression)
+						propertyExpression.Uninitialize(simInfo);
+				}
+			}
+			inline Molecule operator() (ISimInfo& simInfo, const std::vector<Variable>& variables = {}) const
+			{
+				Molecule molecule;
+				for (size_t i = 0; i < Molecule::size_; i++)
+				{
+					if (propertyExpressions_[i])
+						molecule[i] = propertyExpressions_[i](simInfo, variables);
+				}
+				return molecule;
 			}
 		};
 
@@ -52,8 +80,9 @@ namespace stochsim
 		/// <param name="condition">The boolean equation for this choice. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
-		Choice(std::string name, std::unique_ptr<expression::IExpression> condition) : name_(std::move(name)), choiceEquation_(std::move(condition)), variables_(10)
+		Choice(std::string name, std::unique_ptr<expression::IExpression> condition) : name_(std::move(name))
 		{
+			SetCondition(std::move(condition));
 		}
 		/// <summary>
 		/// Constructor.
@@ -63,9 +92,9 @@ namespace stochsim
 		/// <param name="condition">The boolean equation for this choice as a string. The string is parsed immediately. If parsing fails e.g. due to a syntax error, an std::exception is thrown. The expression
 		/// can contain any number of arbitrary variable names. These variables are automatically initialized to be zero. This value is only changed before an evaluation of the expression if the reaction responsible
 		/// for triggering the choice (the reaction invoking the Add method) passes a varibale with the same name.</param>
-		Choice(std::string name, std::string condition) : name_(std::move(name)), variables_(10)
+		Choice(std::string name, std::string condition) : name_(std::move(name))
 		{
-			SetCondition(condition);
+			SetCondition(std::move(condition));
 		}
 		/// <summary>
 		/// A choice is not really a state, but only implements the state interface such that it can be added as a reactant or product of any reaction.
@@ -77,77 +106,72 @@ namespace stochsim
 		{
 			return 0;
 		}
-		virtual void Add(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeProperties, const std::vector<Variable>& variables = {}) override
+		virtual void Add(ISimInfo& simInfo, const Molecule& molecule = defaultMolecule, const Variables& variables = {}) override
 		{
-			// Set parser variables
-			bool rebind = false;
-			for (auto& variable : variables)
+			// Find out which choice was made by evaluating the formula with the current variable values.
+			expression::number choice = choiceEquation_(simInfo, variables);
+			
+			// Depending of the choice, either increase one or the other sets of products.
+			if (choice != 0)
 			{
-				auto& valuePtr = variables_[static_cast<expression::identifier>(variable.first)];
-				if (!valuePtr)
+				for (const auto& product : elementsIfTrue_)
 				{
-					valuePtr = std::make_unique<expression::number>(static_cast<expression::number>(variable.second));
-					rebind = true;
-				}
-				else
-				{
-					*valuePtr = static_cast<expression::number>(variable.second);
-				}
-			}
-			if (rebind)
-				rebind_variables(simInfo, false);
-			for (size_t i = 0; i < num; i++)
-			{
-				// Find out which choice was made by evaluating the formula with the current variable values.
-				expression::number choice;
-				try
-				{
-					choice = boundChoiceEquation_->Eval();
-				}
-				catch (const std::exception& e)
-				{
-					std::stringstream errorMessage;
-					errorMessage << "Could not evaluate expression \"";
-					choiceEquation_->PrintCmdl(errorMessage, false);
-					errorMessage << "\" for choice " << name_ << ": " << e.what();
-					throw std::exception(errorMessage.str().c_str());
-				}
-				// Depending of the choice, either increase one or the other sets of products.
-				if (choice != 0)
-				{
-					for (const auto& product : elementsIfTrue_)
+					Molecule molecule = product(simInfo, variables);
+					for (size_t i = 0; i < product.stochiometry_; i++)
 					{
-						product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables);
+						product.state_->Add(simInfo, molecule, variables);
 					}
 				}
-				else
+			}
+			else
+			{
+				for (const auto& product : elementsIfFalse_)
 				{
-					for (const auto& product : elementsIfFalse_)
+					Molecule molecule = product(simInfo, variables);
+					for (size_t i = 0; i < product.stochiometry_; i++)
 					{
-						product.state_->Add(simInfo, product.stochiometry_, product.properties_, variables);
+						product.state_->Add(simInfo, molecule, variables);
 					}
 				}
 			}
 		}
-		virtual void Remove(ISimInfo& simInfo, size_t num = 1, const std::vector<Variable>& variables = {}) override
+		virtual const Molecule& Peak(ISimInfo& simInfo) const override
+		{
+			throw std::exception("Choices must only be used as products of a reaction, not as reactants (i.e. Peak must not be called).");
+		}
+		virtual Molecule Remove(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
 			throw std::exception("Choices must only be used as products of a reaction, not as reactants (i.e. Remove must not be called).");
 		}
-		virtual void Transform(ISimInfo& simInfo, size_t num = 1, const MoleculeProperties& moleculeProperties = defaultMoleculeTransformation, const std::vector<Variable>& variables = {}) override
+		virtual Molecule& Transform(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
 			throw std::exception("Choices must only be used as products of a reaction, not as transformees (i.e. Transform must not be called).");
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
-			variables_.clear();
-			boundChoiceEquation_ = choiceEquation_->Clone();
-			rebind_variables(simInfo, true);
-			boundChoiceEquation_ = boundChoiceEquation_->Simplify();
+			for (auto& product : elementsIfTrue_)
+			{
+				product.Initialize(simInfo);
+			}
+			for (auto& product : elementsIfFalse_)
+			{
+				product.Initialize(simInfo);
+			}
+			if (choiceEquation_)
+				choiceEquation_.Initialize(simInfo);
 		}
 		virtual void Uninitialize(ISimInfo& simInfo) override
 		{
-			variables_.clear();
-			boundChoiceEquation_ = nullptr;
+			if (choiceEquation_)
+				choiceEquation_.Uninitialize(simInfo);
+			for (auto& product : elementsIfTrue_)
+			{
+				product.Uninitialize(simInfo);
+			}
+			for (auto& product : elementsIfFalse_)
+			{
+				product.Uninitialize(simInfo);
+			}
 		}
 		virtual std::string GetName() const noexcept override
 		{
@@ -159,17 +183,32 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to true.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to true.</param>
-		void AddElementIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties) noexcept
+		void AddProductIfTrue(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyExpressions propertyExpressions = Molecule::PropertyExpressions())
 		{
 			for (auto& product : elementsIfTrue_)
 			{
 				if (state == product.state_)
 				{
+					for (auto i = 0; i < propertyExpressions.size(); i++)
+					{
+						std::string expressionOld("<none>");
+						if (product.propertyExpressions_[i])
+							expressionOld = product.propertyExpressions_[i].GetExpression()->ToCmdl();
+						std::string expressionNew("<none>");
+						if (propertyExpressions[i])
+							expressionNew = propertyExpressions[i]->ToCmdl();
+						if (expressionOld != expressionNew)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in choice " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
+							throw std::exception(errorMessage.str().c_str());
+						}
+					}
 					product.stochiometry_ += stochiometry;
 					return;
 				}
 			}
-			elementsIfTrue_.emplace_back(state, stochiometry, moleculeProperties);
+			elementsIfTrue_.emplace_back(state, stochiometry, std::move(propertyExpressions));
 		}
 
 		/// <summary>
@@ -177,40 +216,39 @@ namespace stochsim
 		/// </summary>
 		/// <param name="state">Species to add as a product when the boolean expression evaluates to false.</param>
 		/// <param name="stochiometry">Number of molecules produced when the boolean expression evaluates to false.</param>
-		void AddElementIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, MoleculeProperties moleculeProperties = defaultMoleculeProperties) noexcept
+		void AddProductIfFalse(std::shared_ptr<IState> state, Stochiometry stochiometry = 1, Molecule::PropertyExpressions propertyExpressions = Molecule::PropertyExpressions())
 		{
 			for (auto& product : elementsIfFalse_)
 			{
 				if (state == product.state_)
 				{
+					for (auto i = 0; i < propertyExpressions.size(); i++)
+					{
+						std::string expressionOld("<none>");
+						if (product.propertyExpressions_[i])
+							expressionOld = product.propertyExpressions_[i].GetExpression()->ToCmdl();
+						std::string expressionNew("<none>");
+						if (propertyExpressions[i])
+							expressionNew = propertyExpressions[i]->ToCmdl();
+						if (expressionOld != expressionNew)
+						{
+							std::stringstream errorMessage;
+							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in choice " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
+							throw std::exception(errorMessage.str().c_str());
+						}
+					}
 					product.stochiometry_ += stochiometry;
 					return;
 				}
 			}
-			elementsIfFalse_.emplace_back(state, stochiometry, moleculeProperties);
-		}
-
-		/// <summary>
-		/// Adds a species which can be used in the expression determining the choice.
-		/// </summary>
-		/// <param name="state">Species to add as a modifier.</param>
-		void AddModifier(std::shared_ptr<IState> state) noexcept
-		{
-			for (auto& modifier : modifiers_)
-			{
-				if (state == modifier)
-				{
-					return;
-				}
-			}
-			modifiers_.emplace_back(std::move(state));
+			elementsIfFalse_.emplace_back(state, stochiometry, std::move(propertyExpressions));
 		}
 
 		/// <summary>
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to true.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to true.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetElementsIfTrue() const noexcept
+		stochsim::Collection<stochsim::ReactionElement> GetProductsIfTrue() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : elementsIfTrue_)
@@ -221,24 +259,10 @@ namespace stochsim
 		}
 
 		/// <summary>
-		/// Returns all modifiers.
-		/// </summary>
-		/// <returns>Collection of all modifiers.</returns>
-		stochsim::Collection<std::shared_ptr<IState>> GetModifiers() const noexcept
-		{
-			stochsim::Collection<std::shared_ptr<IState>> returnVal;
-			for (auto& modifier : modifiers_)
-			{
-				returnVal.emplace_back(modifier);
-			}
-			return std::move(returnVal);
-		}
-
-		/// <summary>
 		/// Returns all products and their stochiometries in the case the expression associated to this choice evaluates to false.
 		/// </summary>
 		/// <returns>Products of the reaction if expression evaluates to false.</returns>
-		stochsim::Collection<stochsim::ReactionElement> GetElementsIfFalse() const noexcept
+		stochsim::Collection<stochsim::ReactionElement> GetProductsIfFalse() const noexcept
 		{
 			stochsim::Collection<stochsim::ReactionElement> returnVal;
 			for (auto& product : elementsIfFalse_)
@@ -254,7 +278,7 @@ namespace stochsim
 		/// <returns>Choice equation.</returns>
 		const expression::IExpression* GetCondition() const noexcept
 		{
-			return choiceEquation_.get();
+			return choiceEquation_.GetExpression();
 		}
 		/// <summary>
 		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
@@ -262,7 +286,7 @@ namespace stochsim
 		/// <param name="choiceEquation">Choice equation.</param>
 		void SetCondition(std::unique_ptr<expression::IExpression> choiceEquation) noexcept
 		{
-			choiceEquation_ = std::move(choiceEquation);
+			choiceEquation_.SetExpression(std::move(choiceEquation));
 		}
 		/// <summary>
 		/// Sets the equation determining for which set of products the concentration is increased according to the stochiometry.
@@ -277,125 +301,9 @@ namespace stochsim
 		}
 
 	private:
-		void rebind_variables(ISimInfo& simInfo, bool all)
-		{
-			if (all)
-			{
-				auto defaultFunctions = expression::makeDefaultFunctions();
-				auto defaultVariables = expression::makeDefaultVariables();
-				expression::BindingRegister bindings = [this, &defaultFunctions, &defaultVariables, &simInfo](const expression::identifier name)->std::unique_ptr<expression::IFunctionHolder>
-				{
-					std::string stdName(name);
-					if (name[name.size() - 1] == ')' && name[name.size() - 2] == '(')
-					{
-						if (stdName == "rand()")
-						{
-							std::function<expression::number()> holder = [&simInfo]() -> expression::number
-							{
-								return static_cast<expression::number>(simInfo.Rand());
-							};
-							return expression::makeFunctionHolder(holder, true);
-						}
-						auto default_search = defaultFunctions.find(name);
-						if (default_search != defaultFunctions.end())
-							return default_search->second->Clone();
-
-					}
-					else
-					{
-						auto search = variables_.find(name);
-						if (search != variables_.end())
-						{
-							auto valuePointer = search->second.get();
-							std::function<expression::number()> holder = [valuePointer]() -> expression::number
-							{
-								return *valuePointer;
-							};
-							return expression::makeFunctionHolder(holder, true);
-						}
-
-						for (auto& component : elementsIfTrue_)
-						{
-							auto& state = component.state_;
-							if (state->GetName() == name)
-							{
-								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
-								{
-									return static_cast<expression::number>(state->Num(simInfo));
-								};
-								return expression::makeFunctionHolder(holder, true);
-							}
-						}
-						for (auto& component : elementsIfFalse_)
-						{
-							auto& state = component.state_;
-							if (state->GetName() == name)
-							{
-								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
-								{
-									return static_cast<expression::number>(state->Num(simInfo));
-								};
-								return expression::makeFunctionHolder(holder, true);
-							}
-						}
-						for (auto& state : modifiers_)
-						{
-							if (state->GetName() == name)
-							{
-								std::function<expression::number()> holder = [state, &simInfo]() -> expression::number
-								{
-									return static_cast<expression::number>(state->Num(simInfo));
-								};
-								return expression::makeFunctionHolder(holder, true);
-							}
-						}
-						if (stdName == "time")
-						{
-							std::function<expression::number()> holder = [&simInfo]() -> expression::number
-							{
-								return static_cast<expression::number>(simInfo.GetSimTime());
-							};
-							return expression::makeFunctionHolder(holder, true);
-						}
-						auto default_search = defaultVariables.find(name);
-						if (default_search != defaultVariables.end())
-						{
-							auto value = default_search->second;
-							std::function<expression::number()> binding = [value]()->expression::number {return value; };
-							return expression::makeFunctionHolder(binding, false);
-						}
-					}
-					return nullptr;
-				};
-				boundChoiceEquation_->Bind(bindings);
-			}
-			else
-			{
-				expression::BindingRegister bindings = [this](const expression::identifier name) -> std::unique_ptr<expression::IFunctionHolder>
-				{
-					auto search = variables_.find(name);
-					if (search != variables_.end())
-					{
-						auto valuePointer = search->second.get();
-						std::function<expression::number()> holder = [valuePointer]() -> expression::number
-						{
-							return *valuePointer;
-						};
-						return expression::makeFunctionHolder(holder, true);
-					}
-					return nullptr;
-				};
-				boundChoiceEquation_->Bind(bindings);
-			}
-		}
-
-	private:
 		const std::string name_;
-		std::unique_ptr<expression::IExpression> choiceEquation_;
-		std::unique_ptr<expression::IExpression> boundChoiceEquation_;
-		std::vector<ReactionElementWithModifiers> elementsIfTrue_;
-		std::vector<ReactionElementWithModifiers> elementsIfFalse_;
-		std::vector<std::shared_ptr<IState>> modifiers_;
-		VariablesMap variables_;
+		ExpressionHolder choiceEquation_;
+		std::vector<Product> elementsIfTrue_;
+		std::vector<Product> elementsIfFalse_;
 	};
 }

@@ -150,7 +150,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		}
 
 		double delay = params.Get<double>(2);
-		auto reaction = CreateReaction<stochsim::DelayReaction>(name, composedState, delay);
+		auto reaction = CreateReaction<stochsim::DelayReaction>(name, delay, composedState);
 		params.Set(0, GetReactionReference(reaction));
 	}
 	else if (methodName == "CreateTimerReaction")
@@ -404,12 +404,12 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 			initialMaxModified = params.Get<size_t>(2);
 		else
 			initialMaxModified = 20;
-		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, [property_idx](const stochsim::MoleculeProperties& properties)->size_t
+		auto logger = CreateLogger<stochsim::ComposedStateLogger>(fileName, [property_idx](const stochsim::Molecule& molecule)->size_t
 			{
 				double sum = 0;
 				for (auto i : property_idx)
 				{
-					sum += properties[i];
+					sum += molecule[i];
 				}
 				return static_cast<size_t>(sum + 0.5);
 			}, initialMaxModified);
@@ -680,7 +680,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		else
 			stochiometry = 1;
 
-		choice->AddElementIfTrue(state, stochiometry);
+		choice->AddProductIfTrue(state, stochiometry);
 	}
 	else if (methodName == "AddElementIfFalse")
 	{
@@ -698,18 +698,18 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		else
 			stochiometry = 1;
 
-		choice->AddElementIfFalse(state, stochiometry);
+		choice->AddProductIfFalse(state, stochiometry);
 	}
 	else if (methodName == "GetElementsIfTrue")
 	{
-		auto elements = choice->GetElementsIfTrue();
+		auto elements = choice->GetProductsIfTrue();
 		auto pair = toMatlab(elements);
 		params.Set(0, pair.first.release());
 		params.Set(1, pair.second.release());
 	}
 	else if (methodName == "GetElementsIfFalse")
 	{
-		auto elements = choice->GetElementsIfFalse();
+		auto elements = choice->GetProductsIfFalse();
 		auto pair = toMatlab(elements);
 		params.Set(0, pair.first.release());
 		params.Set(1, pair.second.release());
