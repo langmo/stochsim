@@ -191,7 +191,7 @@ function createReleaseElement(release, show)
 		sourceElemText.style.fontWeight="bold";
 		sourceElem.appendChild(sourceElemText);
 		var sourceURL = document.createElement("a");
-		sourceURL.href = "https://github.com/langmo/youscope/tree/"+id;
+		sourceURL.href = "https://github.com/langmo/stochsim/tree/"+id;
 		sourceURL.target = "_blank";
 		sourceURL.innerHTML = "Tag "+id;			
 		sourceElem.appendChild(sourceURL);
