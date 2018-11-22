@@ -158,7 +158,7 @@ namespace expression
 	/// Specialization of function_holder_base to hold a function having a specific number of arguments, parametrized by Args.
 	/// Usually, this specialization is not used directly, but the function make_function_holder is used to create a transparent handler for a function.
 	/// </summary>
-	template<typename ...Args> class FunctionHolderImpl : IFunctionHolder
+	template<typename ...Args> class FunctionHolderImpl : public IFunctionHolder
 	{
 	public:
 		/// <summary>
