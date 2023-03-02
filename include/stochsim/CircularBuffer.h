@@ -258,16 +258,14 @@ namespace stochsim
 			pos_ = oldPos; 
 			return std::move(temp);
 		}
-		CircularBufferIterator<T>                   operator-(const ptrdiff_t& movement) 
+		CircularBufferIterator<T>                   operator-(const ptrdiff_t& movement) const
 		{ 
-			auto oldPos = pos_; 
-			pos_ -= movement; 
-			auto temp(*this); 
-			pos_ = oldPos; 
+			auto temp(*this);
+			temp.pos_ -= movement;
 			return std::move(temp); 
 		}
 
-		ptrdiff_t									operator-(const CircularBufferIterator<T>& other)
+		ptrdiff_t									operator-(const CircularBufferIterator<T>& other) const
 		{
 			return static_cast<ptrdiff_t>(pos_) - static_cast<ptrdiff_t>(other.pos_);
 		}
