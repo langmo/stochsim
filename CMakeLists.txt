@@ -24,12 +24,19 @@ if (CMAKE_PROJECT_NAME STREQUAL STOCHSIMALL)
   message(STATUS "Building for ${CMAKE_SYSTEM_NAME}")
 endif()
 
-# Always use standard .o suffix
+option(BUILD_MATLAB "ON, if matstochsim should be build. In this case, cache variable MATLAB_PATH has to be set.")
+set(MATLAB_PATH "C:/Program Files/MATLAB/R2015a" CACHE STRING "Full path main folder of Matlab (e.g. C:/Program Files/MATLAB/R2015a). The main folder of Matlab can be recognized by containing a directory with name \"extern\".")
+
+  # Always use standard .o suffix
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
-add_subdirectory (lib/lemon)
-add_subdirectory (lib/expression)
-add_subdirectory (lib/stochsim)
-add_subdirectory (lib/cmdlparser)
-add_subdirectory (lib/cmdstochsim)
+add_subdirectory(lib/lemon)
+add_subdirectory(lib/expression)
+add_subdirectory(lib/stochsim)
+add_subdirectory(lib/cmdlparser)
+add_subdirectory(lib/cmdstochsim)
+if (BUILD_MATLAB)
+  message(STATUS "Building matstochsim with Matlab path \"${MATLAB_PATH}\".")
+  add_subdirectory (lib/matstochsim)
+endif()
