@@ -22,7 +22,7 @@ namespace expression
 			}
 			std::stringstream errorMessage;
 			errorMessage << "Expression contains unbound variable with name \"" << name_ << "\".";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{

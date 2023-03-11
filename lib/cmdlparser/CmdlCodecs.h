@@ -74,7 +74,7 @@ namespace cmdlparser
 			buffer[0] = '\0';
 			if (tokenID == 0 || name.size() <= 0)
 			{
-				throw std::exception("Hashtag ('#') starting preprocessor directive must be immediately followed by the name of the directive.");
+				throw std::runtime_error("Hashtag ('#') starting preprocessor directive must be immediately followed by the name of the directive.");
 			}
 			if (name == "include")
 			{
@@ -88,7 +88,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Preprocessor directive #" << name << " unknown or not supported.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			return stream;
 		}
@@ -112,9 +112,9 @@ namespace cmdlparser
 					i++;
 					stream++;
 					if (i >= bufferLength)
-						throw std::exception("Identifier (string) too long.");
+						throw std::runtime_error("Identifier (string) too long.");
 				}
-				throw std::exception("Quoted identifier (string) does not end in current line. Did you forget a quotation mark ('\"')?");
+				throw std::runtime_error("Quoted identifier (string) does not end in current line. Did you forget a quotation mark ('\"')?");
 			}
 			else
 			{
@@ -133,7 +133,7 @@ namespace cmdlparser
 					i++;
 					stream++;
 					if (i >= bufferLength)
-						throw std::exception("Identifier (string) too long.");
+						throw std::runtime_error("Identifier (string) too long.");
 				}
 				buffer[i] = '\0';
 				*tokenID = TOKEN_IDENTIFIER;
@@ -156,12 +156,12 @@ namespace cmdlparser
 			if (errno != 0)
 			{
 				errno = 0;
-				throw std::exception("Number too large.");
+				throw std::runtime_error("Number too large.");
 			}
 			// check if after the double value there is a valid character.
 			if (IsAlphaNum(*stream))
 			{
-				throw std::exception("Number format incorrect.");
+				throw std::runtime_error("Number format incorrect.");
 			}
 
 			*tokenID = TOKEN_VALUE;

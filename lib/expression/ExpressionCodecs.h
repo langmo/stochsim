@@ -71,7 +71,7 @@ namespace expression
 				i++;
 				stream++;
 				if (i >= bufferLength)
-					throw std::exception("Identifier too long.");
+					throw std::runtime_error("Identifier too long.");
 			}
 			buffer[i] = '\0';
 			*tokenID = TOKEN_IDENTIFIER;
@@ -93,12 +93,12 @@ namespace expression
 			if (errno != 0)
 			{
 				errno = 0;
-				throw std::exception("Number too large or number format invalid.");
+				throw std::runtime_error("Number too large or number format invalid.");
 			}
 			// check if after the double value there is a valid character.
 			if (IsAlphaNum(*stream))
 			{
-				throw std::exception("Number format incorrect.");
+				throw std::runtime_error("Number format incorrect.");
 			}
 
 			*tokenID = TOKEN_VALUE;

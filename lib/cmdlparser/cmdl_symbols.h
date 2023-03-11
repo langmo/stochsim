@@ -37,14 +37,14 @@ namespace cmdlparser
 		operator expression::number() const
 		{
 			if (type_ != type_number)
-				throw std::exception("Terminal symbol is not a number.");
+				throw std::runtime_error("Terminal symbol is not a number.");
 			return numberValue_;
 		}
 
 		operator const expression::identifier() const
 		{
 			if (type_ != type_identifier)
-				throw std::exception("Terminal symbol is not an identifier.");
+				throw std::runtime_error("Terminal symbol is not an identifier.");
 			return identifierValue_;
 		}
 
@@ -79,7 +79,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State " << state_ << " has a negative stochiometry.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			stochiometry_ = static_cast<stochsim::Stochiometry>(stochiometry + 0.5);
 			if (propertyNames)
@@ -88,7 +88,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Number of properties for State " << state_ << " too high (found "<< propertyNames->size()<<", maximally allowed "<<stochsim::Molecule::size_ <<").";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				for (int i = 0; i < propertyNames->size(); i++)
 				{
@@ -131,7 +131,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State " << state_ << " has a negative stochiometry.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			stochiometry_ = static_cast<stochsim::Stochiometry>(stochiometry + 0.5);
 			if (propertyExpressions)
@@ -140,7 +140,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Number of properties for State " << state_ << " too high (found " << propertyExpressions->size() << ", maximally allowed " << stochsim::Molecule::size_ << ").";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				for (int i = 0; i < propertyExpressions->size(); i++)
 				{
@@ -253,13 +253,13 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State " << component->GetState() << " cannot participate in reaction both as a modifier and a reactant.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			if (existingComponent->GetPropertyNames() != component->GetPropertyNames())
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Property names of reactant/modifier " << component->GetState() << " cannot change.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 
 			existingComponent->SetStochiometry(existingComponent->GetStochiometry() + component->GetStochiometry());
@@ -351,7 +351,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State " << component->GetState() << " cannot participate in reaction both as a product and a transformee.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			auto& existingExpressions = existingComponent->GetPropertyExpressions();
 			auto& expressions = component->GetPropertyExpressions();
@@ -362,7 +362,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Property " << std::to_string(i) << " of product/transformee " << component->GetState() << " cannot change.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 			existingComponent->SetStochiometry(existingComponent->GetStochiometry() + component->GetStochiometry());
@@ -390,8 +390,8 @@ namespace cmdlparser
 	class ReactionSpecifier
 	{
 	public:
-		static constexpr char rate_type[] = "rate";
-		static constexpr char delay_type[] = "delay";
+		const inline static char rate_type[] = "rate";
+		const inline static char delay_type[] = "delay";
 		ReactionSpecifier(expression::identifier type, std::unique_ptr<expression::IExpression> value) : type_(std::move(type)), value_(std::move(value))
 		{
 		}
@@ -421,7 +421,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction specifier \""<< search->first <<"\" already defined.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			specifiers_.emplace(specifier->GetType(), std::move(specifier));
 		}
@@ -475,7 +475,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Modifiers are not allowed for conditional reaction components. State " << component.first << " is defined as a modifier.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 			for (auto& component : *componentsIfFalse_)
@@ -484,7 +484,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Modifiers are not allowed for conditional reaction components. State " << component.first << " is defined as a modifier.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 		}
@@ -526,7 +526,7 @@ namespace cmdlparser
 					{
 						std::stringstream errorMessage;
 						errorMessage << "State " << product.first << " is specified as a transformee of the reactions. Transformees must appear on both sides of the reaction arrow ('->'), be marked on both sides by a opening and closing square brackets ('[]'), and have a stochiometry on the LHS at least as big as on the RHS.";
-						throw std::exception(errorMessage.str().c_str());
+						throw std::runtime_error(errorMessage.str().c_str());
 					}
 					search->second->SetStochiometry(search->second->GetStochiometry() - product.second->GetStochiometry());
 					product.second->SetPropertyNames(search->second->GetPropertyNames());

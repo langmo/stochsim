@@ -181,7 +181,7 @@ namespace expression
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Wrong number of arguments (expected "<< sizeof...(Args) << ", found " << arguments.size() <<").";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			return CallHelper(arguments, typename MakeIndices<sizeof...(Args)>::type());
 		}
@@ -382,6 +382,7 @@ namespace expression
 			{
 				expression_ = std::move(other.expression_);
 				inverse_ = other.inverse_;
+				return *this;
 			}
 			/// <summary>
 			/// Returns a pointer to the expression of this element.

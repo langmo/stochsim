@@ -1,8 +1,8 @@
 // Configuration of output
 %token_prefix TOKEN_
 %start_symbol result
-%parse_failure {throw std::exception("Syntax error while parsing expression.");}
-%stack_overflow {throw std::exception("Parser stack overflow while parsing expression.");}
+%parse_failure {throw std::runtime_error("Syntax error while parsing expression.");}
+%stack_overflow {throw std::runtime_error("Parser stack overflow while parsing expression.");}
 %name expression_Parse
 %token_type {TerminalSymbol*}
 %token_destructor {
@@ -296,5 +296,5 @@ result ::= expression(e). {
 }
 // we have to define a symbol of type error somewhere to trigger the error handling routines
 expression ::= error. {
-	throw std::exception("Syntax error.");
+	throw std::runtime_error("Syntax error.");
 }

@@ -53,7 +53,7 @@ namespace stochsim
 		double operator()(ISimInfo& simInfo, const std::vector<Variable>& variables = {}) const
 		{
 			if (!operator bool())
-				throw std::exception("Expression not set.");
+				throw std::runtime_error("Expression not set.");
 
 			// Set temporary variables
 			bool rebind = false;
@@ -80,7 +80,7 @@ namespace stochsim
 		void Initialize(ISimInfo& simInfo)
 		{
 			if (!operator bool())
-				throw std::exception("Expression not set.");
+				throw std::runtime_error("Expression not set.");
 			temporaryVariables_.clear();
 			boundExpession_ = expression_->Clone();
 			bindVariables(simInfo);

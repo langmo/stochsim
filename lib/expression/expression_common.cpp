@@ -86,7 +86,7 @@ namespace expression
 				[]() -> number
 		{
 			static std::default_random_engine randomEngine(std::random_device{}());
-			static std::uniform_real<number> randomUniform;
+			static std::uniform_real_distribution<number> randomUniform;
 			return randomUniform(randomEngine);
 		}
 		), true));

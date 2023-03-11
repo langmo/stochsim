@@ -39,7 +39,7 @@ namespace expression
 		}
 		catch (...)
 		{
-			throw std::exception("Unknown error");
+			throw std::runtime_error("Unknown error");
 		}
 	}
 	ExpressionParser::ExpressionParser() noexcept
@@ -106,7 +106,7 @@ namespace expression
 				// if we are here, we got an unexpected character...
 				std::stringstream errorMessage;
 				errorMessage << "Character '" << *currentCharPtr << "' invalid.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 		}
 		catch (const std::exception& ex)
@@ -118,7 +118,7 @@ namespace expression
 				errorMessage << ' ';
 			errorMessage << "|___ close to here.";
 
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		catch (...)
 		{
@@ -129,7 +129,7 @@ namespace expression
 				errorMessage << ' ';
 			errorMessage << "|___ close to here.";
 
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		
 
@@ -142,19 +142,19 @@ namespace expression
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error while finishing parsing: " << ex.what();
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		catch (...)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error while finishing parsing: Unknown error.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		
 		// Prepare result
 		auto orgResult = parseTree.GetResult();
 		if (!orgResult)
-			throw std::exception("Parse error while finishing parsing: No expression obtained.");
+			throw std::runtime_error("Parse error while finishing parsing: No expression obtained.");
 		auto result = orgResult->Clone();
 		if (bind)
 		{
@@ -175,7 +175,7 @@ namespace expression
 		// Initialize the lemon parser
 		auto handle = expression_ParseAlloc(malloc);
 		if (!handle)
-			throw std::exception("Could not initialize expression parser.");
+			throw std::runtime_error("Could not initialize expression parser.");
 
 		// Setup log file if in debug mode.
 		// Note that if not in debug mode, this functionality is deactivated per #ifndef in the expression_grammar.template.
@@ -184,11 +184,12 @@ namespace expression
 #ifndef NDEBUG
 		if (!logFilePath.empty())
 		{
-			fopen_s(&logFile, logFilePath.c_str(), "w");
+			logFile = fopen(logFilePath.c_str(), "w");
+			char prompt[] = "expression_";
 			if (logFile)
-				expression_ParseTrace(logFile, "expression_");
+				expression_ParseTrace(logFile, prompt);
 			else
-				expression_ParseTrace(0, "expression_");
+				expression_ParseTrace(0, prompt);
 		}
 #endif
 
@@ -209,11 +210,12 @@ namespace expression
 		catch (...)
 		{
 			isError = true;
-			exception = std::exception("Unknown error");
+			exception = std::runtime_error("Unknown error");
 		}
 		expression_ParseFree(handle, free);
 #ifndef NDEBUG
-		expression_ParseTrace(0, "expression_");
+		char prompt[] = "expression_";
+		expression_ParseTrace(0, prompt);
 		if (logFile)
 			fclose(logFile);
 #endif

@@ -3,6 +3,7 @@
 #include <vector>
 #include "stochsim_common.h"
 #include <fstream>
+#include <filesystem>
 namespace stochsim
 {
 	/// <summary>
@@ -81,17 +82,23 @@ namespace stochsim
 				file_->close();
 				file_.reset();
 			}
-			std::string fileName = simInfo.GetSaveFolder();
-			fileName += "/";
-			fileName += fileName_;
+			std::error_code ec{};
+			std::filesystem::path absolutePath{std::filesystem::weakly_canonical( simInfo.GetSaveFolder(), ec)};
+			if(ec)
+			{
+				std::stringstream errorMessage;
+				errorMessage << "Could not determine canonical path for save folder  \"" << simInfo.GetSaveFolder() << "\".";
+				throw std::runtime_error(errorMessage.str().c_str());
+			}
+			absolutePath /= fileName_;
 
 			file_ = std::make_unique<std::ofstream>();
-			file_->open(fileName);
+			file_->open(absolutePath);
 			if (!file_->is_open())
 			{
-				std::string errorMessage = "Could not open file ";
-				errorMessage += fileName;
-				throw new std::exception(errorMessage.c_str());
+				std::string errorMessage = "Could not open log file ";
+				errorMessage += absolutePath;
+				throw new std::runtime_error(errorMessage.c_str());
 			}
 
 			(*file_) << "Time";

@@ -67,19 +67,18 @@ namespace stochsim
 			if (shouldCreate)
 			{
 				time_t t = std::time(0);
-				struct tm now;
-				localtime_s(&now, &t);
+				struct tm* now = localtime(&t);
 				std::stringstream buffer;
 				buffer << baseFolder_;
-				if (uniqueSubFolder_)
+				if (now != nullptr &&uniqueSubFolder_)
 				{
 					buffer << "/"
-						<< (now.tm_year + 1900) << '-'
-						<< (now.tm_mon + 1) << '-'
-						<< now.tm_mday << '_'
-						<< now.tm_hour << '-'
-						<< now.tm_min << '-'
-						<< now.tm_sec << '/';
+						<< (now->tm_year + 1900) << '-'
+						<< (now->tm_mon + 1) << '-'
+						<< now->tm_mday << '_'
+						<< now->tm_hour << '-'
+						<< now->tm_min << '-'
+						<< now->tm_sec << '/';
 				}
 				saveFolder_ = buffer.str();
 				saveFolder_ = CreatePathRecursively(saveFolder_);
@@ -146,7 +145,7 @@ namespace stochsim
 		Impl() : randomEngine_(std::random_device{}()), time_(0), runtime_(0)
 		{
 		}
-		~Impl() {}
+		virtual ~Impl() {}
 		void Run(double runtime)
 		{
 			/**
@@ -299,7 +298,7 @@ namespace stochsim
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction with name " << reaction->GetName() << " already exists in simulation.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			propensityReactions_.push_back(std::move(reaction));
 		}
@@ -309,7 +308,7 @@ namespace stochsim
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction with name "<<reaction->GetName()<< " already exists in simulation.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			eventReactions_.push_back(std::move(reaction));
 		}
@@ -319,7 +318,7 @@ namespace stochsim
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State with name " << state->GetName() << " already exists in simulation.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			states_.push_back(std::move(state));
 		}
@@ -373,7 +372,7 @@ namespace stochsim
 		LogManager logger_;
 		std::default_random_engine randomEngine_;
 		// function to generate uniformly distributed random numbers in [0,1)
-		std::uniform_real<double> randomUniform_;
+		std::uniform_real_distribution<double> randomUniform_;
 	};
 
 	Simulation::Simulation() : impl_(new Simulation::Impl())

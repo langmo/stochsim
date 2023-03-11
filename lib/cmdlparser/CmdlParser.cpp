@@ -1,6 +1,7 @@
 #include <fstream>
 #include <memory>
 #include <set>
+#include <filesystem>
 #include "cmdl_grammar.h"
 #include "CmdlParser.h"
 #include "cmdl_symbols.h"
@@ -48,7 +49,7 @@ namespace cmdlparser
 		}
 		catch (...)
 		{
-			throw std::exception("Unknown error");
+			throw std::runtime_error("Unknown error");
 		}
 	}
 
@@ -113,7 +114,7 @@ namespace cmdlparser
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 						else
 							break;
@@ -132,7 +133,7 @@ namespace cmdlparser
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 						else
 							break;
@@ -152,7 +153,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Cannot initialize state '" << name << "': In one reaction it is used as the species determining the delay of a reaction and in another as a choice, which is invalid.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				for (auto& propertyName : elem.second->GetPropertyNames())
 				{
@@ -162,7 +163,7 @@ namespace cmdlparser
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 						else
 							break;
@@ -182,7 +183,7 @@ namespace cmdlparser
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Cannot initialize state '" << elem.first << "': In one reaction it is used as the species having properties, and in another as a choice, which is invalid.";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 						else
 							break;
@@ -203,7 +204,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Initial condition for state '" << state.first << "' is negative.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			if (state.second.type_ == state_definition::type_simple)
 				sim.CreateState<stochsim::State>(state.first, static_cast<size_t>(initialCondition + 0.5));
@@ -213,7 +214,7 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "State '" << state.first << "' has unknown type.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 		}
 
@@ -261,14 +262,14 @@ namespace cmdlparser
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Reaction \"" << reactionDefinition.first << "\" has neither a rate nor a delay defined.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			else if (rateDef && delayDef)
 			{
 				//TODO: implement
 				std::stringstream errorMessage;
 				errorMessage << "Yet not implemented.";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			else if (rateDef)
 			{
@@ -324,20 +325,20 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which are required to have exactly one reactant.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				auto& reactant = *reactants.begin()->second;
 				if (reactant.IsModifier())
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.GetState() << " is not marked as a modifier.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				if (reactant.GetStochiometry() != 1)
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.GetState() << " has a stochiometry of one.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				auto stateBase = sim.GetState(reactant.GetState());
 				auto state = std::dynamic_pointer_cast<stochsim::ComposedState>(stateBase);
@@ -345,7 +346,7 @@ namespace cmdlparser
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the only reactant " << reactant.GetState() << " is a composed state. This should be ensured automatically, but something seems to have gone wrong.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				auto& orgNames = reactant.GetPropertyNames();
 				stochsim::Molecule::PropertyNames propertyNames;
@@ -360,7 +361,7 @@ namespace cmdlparser
 					{
 						std::stringstream errorMessage;
 						errorMessage << "Reaction " << reactionDefinition.first << " is a delay reaction, which requires that the product " << component.first << " is not marked as a transformee.";
-						throw std::exception(errorMessage.str().c_str());
+						throw std::runtime_error(errorMessage.str().c_str());
 					}
 					else
 					{
@@ -384,13 +385,22 @@ namespace cmdlparser
 	
 	void ParseFileInternal(std::string cmdlFilePath, stochsim::Simulation& sim, cmdlparser::CmdlParseTree& parseTree, void* handle)
 	{
+		// Get absolute path
+		std::error_code ec{};
+		std::filesystem::path absolutePath{std::filesystem::weakly_canonical(cmdlFilePath, ec)};
+		if(ec)
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Could not determine canonical path for cmdl relative path \"" << cmdlFilePath << "\".";
+			throw std::runtime_error(errorMessage.str().c_str());
+		}
 		// Open file
-		std::ifstream infile(cmdlFilePath);
+		std::ifstream infile(absolutePath);
 		if (infile.fail())
 		{
 			std::stringstream errorMessage;
-			errorMessage << "File \"" << cmdlFilePath << "\" does not exist or could not be opened.";
-			throw std::exception(errorMessage.str().c_str());
+			errorMessage << "CMDL file \"" << absolutePath << "\" does not exist or could not be opened.";
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		// Variables to store values and types of tokens
@@ -485,7 +495,7 @@ namespace cmdlparser
 					// if we are here, we got an unexpected character...
 					std::stringstream errorMessage;
 					errorMessage << "Character '" << *currentCharPtr << "' invalid.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 			catch (const std::exception& ex)
@@ -497,7 +507,7 @@ namespace cmdlparser
 					errorMessage << ' ';
 				errorMessage << "|___ close to here.";
 
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			catch (...)
 			{
@@ -508,7 +518,7 @@ namespace cmdlparser
 					errorMessage << ' ';
 				errorMessage << "|___ close to here.";
 
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 		}
 
@@ -516,7 +526,7 @@ namespace cmdlparser
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reached end of file " << cmdlFilePath << " while block comment was still active. Did you forget to write \"*/\" somewhere?";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		// finish parsing
@@ -528,13 +538,13 @@ namespace cmdlparser
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: " << ex.what();
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		catch (...)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: Unknown error.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		
@@ -544,31 +554,31 @@ namespace cmdlparser
 		// Initialize the lemon parser
 		auto handle = cmdl_internal_ParseAlloc(malloc);
 		if(!handle)
-			throw std::exception("Could not initialize cmdl parser.");
+			throw std::runtime_error("Could not initialize cmdl parser.");
 
 		// do the actual parsing of the file.
 		// We only catch errors to quickly close the lemon parser (which requires C logic), and then rethrow them.
 		// Indeed, this wrapper around ParseFileInternal only exists for exactly this reason...
 		bool isError = false;
-		std::exception exception;
+		std::string exceptionMessage{};
 		try
 		{
 			ParseFileInternal(cmdlFilePath, sim, parseTree, handle);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			isError = true;
-			exception = ex;
+			exceptionMessage = ex.what();
 		}
 		catch (...)
 		{
 			isError = true;
-			exception = std::exception("Unknown error");
+			exceptionMessage = "Unknown error";
 		}
 		cmdl_internal_ParseFree(handle, free);
 
 		if (isError)
-			throw exception;
+			throw std::runtime_error(exceptionMessage.c_str());
 
 	}
 	void cmdlparser::CmdlParser::Parse(std::string cmdlFilePath, stochsim::Simulation& sim, std::string logFilePath)
@@ -598,41 +608,43 @@ namespace cmdlparser
 #ifndef NDEBUG
 		if (!logFilePath.empty())
 		{
-			fopen_s(&logFile, logFilePath.c_str(), "w");
+			logFile = fopen(logFilePath.c_str(), "w");
+			char cmdlStr[] = "cmdl_";
 			if (logFile)
-				cmdl_internal_ParseTrace(logFile, "cmdl_");
+				cmdl_internal_ParseTrace(logFile, cmdlStr);
 			else
-				cmdl_internal_ParseTrace(0, "cmdl_");
+				cmdl_internal_ParseTrace(0, cmdlStr);
 		}
 #endif
 
 		// Do the actual parsing.
 		// We only catch errors to quickly close the log file (which requires C logic), and then rethrow them.
 		bool isError = false;
-		std::exception exception;
+		std::string exceptionMessage;
 		try
 		{
 			ParseFile(cmdlFilePath, sim, parseTree);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			isError = true;
-			exception = ex;
+			exceptionMessage = ex.what();
 		}
 		catch (...)
 		{
 			isError = true;
-			exception = std::exception("Unknown error");
+			exceptionMessage = "Unknown error";
 		}
 #ifndef NDEBUG
-		cmdl_internal_ParseTrace(0, "cmdl_");
+		char cmdlStr[] = "cmdl_";
+		cmdl_internal_ParseTrace(0, cmdlStr);
 		if (logFile)
 			fclose(logFile);
 #endif
 		if (isError)
-			throw exception;
+			throw std::runtime_error(exceptionMessage.c_str());
 
 		// Interpret parse tree
-		Interpret(std::move(parseTree), sim);
+		Interpret(parseTree, sim);
 	}
 }

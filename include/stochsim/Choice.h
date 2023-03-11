@@ -146,15 +146,15 @@ namespace stochsim
 		}
 		virtual const Molecule& Peak(ISimInfo& simInfo) const override
 		{
-			throw std::exception("Choices must only be used as products of a reaction, not as reactants (i.e. Peak must not be called).");
+			throw std::runtime_error("Choices must only be used as products of a reaction, not as reactants (i.e. Peak must not be called).");
 		}
 		virtual Molecule Remove(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
-			throw std::exception("Choices must only be used as products of a reaction, not as reactants (i.e. Remove must not be called).");
+			throw std::runtime_error("Choices must only be used as products of a reaction, not as reactants (i.e. Remove must not be called).");
 		}
 		virtual Molecule& Transform(ISimInfo& simInfo, const Variables& variables = {}) override
 		{
-			throw std::exception("Choices must only be used as products of a reaction, not as transformees (i.e. Transform must not be called).");
+			throw std::runtime_error("Choices must only be used as products of a reaction, not as transformees (i.e. Transform must not be called).");
 		}
 		virtual void Initialize(ISimInfo& simInfo) override
 		{
@@ -210,7 +210,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in choice " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					product.stochiometry_ += stochiometry;
@@ -243,7 +243,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in choice " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					product.stochiometry_ += stochiometry;

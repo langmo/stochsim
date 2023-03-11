@@ -165,7 +165,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					product.stochiometry_ += stochiometry;

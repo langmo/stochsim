@@ -30,12 +30,12 @@ namespace expression
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Error while evaluating function \"" << name_ << "\": "<<e.what();
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 			std::stringstream errorMessage;
 			errorMessage << "Function with name \"" << name_ << "\" is unknown.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		virtual std::unique_ptr<IExpression> Simplify(const VariableRegister& variableRegister) const override
 		{

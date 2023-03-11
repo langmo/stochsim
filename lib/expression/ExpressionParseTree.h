@@ -58,7 +58,7 @@ namespace expression
 
 			std::stringstream errorMessage;
 			errorMessage << "Variable with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		std::unique_ptr<expression::IFunctionHolder> GetFunctionHandler(const expression::identifier& name) const
@@ -74,7 +74,7 @@ namespace expression
 
 			std::stringstream errorMessage;
 			errorMessage << "Function with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		/// <summary>
@@ -117,7 +117,7 @@ namespace expression
 
 			std::stringstream errorMessage;
 			errorMessage << "Variable with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		
 	public:

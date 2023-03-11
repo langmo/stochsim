@@ -170,7 +170,7 @@ namespace cmdlparser
 
 			std::stringstream errorMessage;
 			errorMessage << "Variable with name \"" << name << "\" not defined";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		
 	private:

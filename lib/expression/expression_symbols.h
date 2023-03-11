@@ -34,14 +34,14 @@ namespace expression
 		operator expression::number() const
 		{
 			if (type_ != type_number)
-				throw std::exception("Terminal symbol is not a number.");
+				throw std::runtime_error("Terminal symbol is not a number.");
 			return numberValue_;
 		}
 
 		operator const expression::identifier() const
 		{
 			if (type_ != type_identifier)
-				throw std::exception("Terminal symbol is not an identifier.");
+				throw std::runtime_error("Terminal symbol is not an identifier.");
 			return identifierValue_;
 		}
 

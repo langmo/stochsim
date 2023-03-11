@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		if (errno != 0)
 		{
 			errno = 0;
-			throw std::exception("Number too large or number format invalid.");
+			throw std::runtime_error("Number too large or number format invalid.");
 		}
 	}
 
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 		if (errno != 0)
 		{
 			errno = 0;
-			throw std::exception("Number too large or number format invalid.");
+			throw std::runtime_error("Number too large or number format invalid.");
 		}
 	}
 

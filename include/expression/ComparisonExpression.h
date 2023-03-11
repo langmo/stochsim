@@ -34,7 +34,7 @@ namespace expression
 			case type_less_equal:
 				return left <= right;
 			default:
-				throw std::exception("Type of comparison operation internally unknown.");
+				throw std::runtime_error("Type of comparison operation internally unknown.");
 			}
 		}
 	public:

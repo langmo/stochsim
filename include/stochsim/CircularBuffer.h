@@ -63,7 +63,7 @@ namespace stochsim
 		inline void PopTop(size_type num=1)
 		{
 			if (end_ == start_)
-				throw std::exception("Circular buffer empty!");
+				throw std::runtime_error("Circular buffer empty!");
 			start_ = (start_ + num) % capacity_;
 		}
 		/// <summary>

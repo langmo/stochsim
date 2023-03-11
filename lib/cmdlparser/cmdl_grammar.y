@@ -1,8 +1,8 @@
 // Configuration of output
 %token_prefix TOKEN_
 %start_symbol model
-%parse_failure {throw std::exception("Syntax error.");}
-%stack_overflow {throw std::exception("Parser stack overflow while parsing cmdl file.");}
+%parse_failure {throw std::runtime_error("Syntax error.");}
+%stack_overflow {throw std::runtime_error("Parser stack overflow while parsing cmdl file.");}
 %name cmdl_internal_Parse
 %token_type {TerminalSymbol*}
 %token_destructor {
@@ -461,7 +461,7 @@ reactionLeftSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
 	e1=nullptr;
 	delete(e2);
 	e2=nullptr;
-	throw std::exception("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::runtime_error("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
 reactionLeftSide ::= reactionLeftSide(rs_old) PLUS expression(e). [PLUS] {
@@ -469,7 +469,7 @@ reactionLeftSide ::= reactionLeftSide(rs_old) PLUS expression(e). [PLUS] {
 	e=nullptr;
 	delete(rs_old);
 	rs_old=nullptr;
-	throw std::exception("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::runtime_error("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
 %type moleculePropertyNames {MoleculePropertyNames*}
@@ -557,7 +557,7 @@ reactionLeftComponent(rc_new) ::= expression(e) MULTIPLY reactionLeftComponent(r
 
 	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
 	if(stochiometry<=0)
-		throw std::exception("Stochiometry must be positive.");
+		throw std::runtime_error("Stochiometry must be positive.");
 	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
 	rc_new = rc_temp.release();
 }
@@ -597,7 +597,7 @@ reactionRightSide ::= expression(e1) PLUS expression(e2). [MULTIPLY] {
 	e1=nullptr;
 	delete(e2);
 	e2=nullptr;
-	throw std::exception("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::runtime_error("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
 reactionRightSide ::= reactionRightSide(rs_old) PLUS expression(e). [PLUS] {
@@ -605,7 +605,7 @@ reactionRightSide ::= reactionRightSide(rs_old) PLUS expression(e). [PLUS] {
 	e=nullptr;
 	delete(rs_old);
 	rs_old=nullptr;
-	throw std::exception("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
+	throw std::runtime_error("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
 
 %type moleculePropertyExpressions {MoleculePropertyExpressions*}
@@ -692,7 +692,7 @@ reactionRightComponent(rc_new) ::= expression(e) MULTIPLY reactionRightComponent
 
 	auto stochiometry = parseTree->GetExpressionValue(e_temp.get());
 	if(stochiometry<=0)
-		throw std::exception("Stochiometry must be positive.");
+		throw std::runtime_error("Stochiometry must be positive.");
 	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
 	rc_new = rc_temp.release();
 }

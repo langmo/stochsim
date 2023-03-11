@@ -248,7 +248,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) <<" of reactant " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << reactant.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] <<".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					reactant.stochiometry_ += stochiometry;
@@ -274,7 +274,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of modifier " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << modifier.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					modifier.stochiometry_ += stochiometry;
@@ -301,7 +301,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of transformee " << state->GetName() << " in reaction " << GetName() << " was already assigned to the name " << transformee.propertyNames_[i] << ". Cannot re-assign it to the name " << propertyNames[i] << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					for (auto i = 0; i < propertyExpressions.size(); i++)
@@ -316,7 +316,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of transformee " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					transformee.stochiometry_ += stochiometry;
@@ -348,7 +348,7 @@ namespace stochsim
 						{
 							std::stringstream errorMessage;
 							errorMessage << "Property " << std::to_string(i) << " of product " << state->GetName() << " in reaction " << GetName() << " was already assigned to the expression " << expressionOld << ". Cannot re-assign it to the expression " << expressionNew << ".";
-							throw std::exception(errorMessage.str().c_str());
+							throw std::runtime_error(errorMessage.str().c_str());
 						}
 					}
 					product.stochiometry_ += stochiometry;
@@ -463,13 +463,13 @@ namespace stochsim
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Error while computing custom reaction rate of reaction " << name_ << ": " << ex.what();
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 				catch (...)
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Error while computing custom reaction rate of reaction " << name_ << ": Unexpected error.";
-					throw std::exception(errorMessage.str().c_str());
+					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
 			else
