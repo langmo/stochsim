@@ -1,5 +1,6 @@
 #pragma once
 #include "stochsim_common.h"
+#include <list>
 namespace stochsim
 {
 	/// <summary>
@@ -48,7 +49,7 @@ namespace stochsim
 			molecule.Reset();
 			return molecule;
 		}
-		virtual const Molecule& Peak(ISimInfo& simInfo) const
+		virtual const Molecule& Peak(ISimInfo& simInfo) const override
 		{
 			return defaultMolecule;
 		}

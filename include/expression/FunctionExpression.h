@@ -26,7 +26,7 @@ namespace expression
 				{
 					return evalFunction_->operator()(arguments);
 				}
-				catch (const std::exception& e)
+				catch (const std::runtime_error& e)
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Error while evaluating function \"" << name_ << "\": "<<e.what();

@@ -218,14 +218,14 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto composedState = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
 		if (!composedState)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " is not a composed state. Only composed states can be set as reactants to delayed reactions.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 
 		double delay = params.Get<double>(2);
@@ -262,7 +262,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		params.Set(0, GetStateReference(state));
 	}
@@ -306,7 +306,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 		}
 		std::stringstream errorMessage;
 		errorMessage << "Reaction with name " << reactionName << " not defined in simulation.";
-		throw std::exception(errorMessage.str().c_str());		
+		throw std::runtime_error(errorMessage.str().c_str());		
 	}
 	else if (methodName == "Run")
 	{
@@ -389,7 +389,7 @@ void SimulationWrapper::ParseSimulationCommand(const std::string & methodName, M
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class "<< simulationPrefix_<<".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::State>& state, const std::string & methodName, MatlabParams & params)
@@ -415,7 +415,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::State>& stat
 		}
 		std::stringstream errorMessage;
 		errorMessage << "State " << state->GetName() << " is not a State nor a ComposedState.";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 	else if (methodName == "GetName")
 	{
@@ -485,7 +485,7 @@ void SimulationWrapper::ParseStateCommand(std::shared_ptr<stochsim::State>& stat
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << statePrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::ComposedState>& state, const std::string & methodName, MatlabParams & params)
@@ -511,7 +511,7 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 		}
 		std::stringstream errorMessage;
 		errorMessage << "State " << state->GetName() << " is not a State nor a ComposedState.";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 	else if (methodName == "GetName")
 	{
@@ -581,7 +581,7 @@ void SimulationWrapper::ParseComposedStateCommand(std::shared_ptr<stochsim::Comp
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << composedStatePrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 
@@ -599,7 +599,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -625,7 +625,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -651,7 +651,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -679,7 +679,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -721,7 +721,7 @@ void SimulationWrapper::ParsePropensityReactionCommand(std::shared_ptr<stochsim:
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << propensityReactionPrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 
@@ -739,7 +739,7 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -780,7 +780,7 @@ void SimulationWrapper::ParseDelayReactionCommand(std::shared_ptr<stochsim::Dela
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << delayReactionPrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 
@@ -798,7 +798,7 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -831,7 +831,7 @@ void SimulationWrapper::ParseTimerReactionCommand(std::shared_ptr<stochsim::Time
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << delayReactionPrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& choice, const std::string & methodName, MatlabParams & params)
@@ -848,7 +848,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -866,7 +866,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		unsigned int stochiometry;
 		if (params.NumParams() > 1)
@@ -938,7 +938,7 @@ void SimulationWrapper::ParseChoiceCommand(std::shared_ptr<stochsim::Choice>& ch
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Method " << methodName << " not known for class " << choicePrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 
@@ -962,17 +962,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 	{
 		std::stringstream errorMessage;
 		errorMessage << "All command strings except new and delete must be prefixed with the class whose method should be called, followed by "<<prefixSeparator_ << " and the method to be called, e.g. " << simulationPrefix_ <<prefixSeparator_<<"methodName";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 	std::string className = command.substr(0, prefixEnd);
 	if (className.empty())
 	{
-		throw std::exception("Provided class name is empty.");
+		throw std::runtime_error("Provided class name is empty.");
 	}
 	std::string methodName = command.substr(prefixEnd + strlen(prefixSeparator_));
 	if (methodName.empty())
 	{
-		throw std::exception("Provided method name is empty.");
+		throw std::runtime_error("Provided method name is empty.");
 	}
 
 	// Switch between supported classes
@@ -988,16 +988,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto stateObj = std::dynamic_pointer_cast<stochsim::State>(state);
 		if (!stateObj)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name "<< stateName << " is not a simple state.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParseStateCommand(stateObj, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParseStateCommand(stateObj, methodName, paramsParse);
 	}
 	else if (className == composedStatePrefix_)
 	{
@@ -1007,16 +1008,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Composed state (or any state) with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto stateObj = std::dynamic_pointer_cast<stochsim::ComposedState>(state);
 		if (!stateObj)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " is not a composed state.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParseComposedStateCommand(stateObj, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParseComposedStateCommand(stateObj, methodName, paramsParse);
 	}
 	else if (className == choicePrefix_)
 	{
@@ -1026,16 +1028,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Choice (or any state) with name " << stateName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto stateObj = std::dynamic_pointer_cast<stochsim::Choice>(state);
 		if (!stateObj)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "State with name " << stateName << " is not a choice.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParseChoiceCommand(stateObj, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParseChoiceCommand(stateObj, methodName, paramsParse);
 	}
 	else if (className == propensityReactionPrefix_)
 	{
@@ -1045,16 +1048,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto simpleReaction = std::dynamic_pointer_cast<stochsim::PropensityReaction>(reaction);
 		if (!simpleReaction)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " is not a simple reaction.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParsePropensityReactionCommand(simpleReaction, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParsePropensityReactionCommand(simpleReaction, methodName, paramsParse);
 	}
 	else if (className == delayReactionPrefix_)
 	{
@@ -1064,16 +1068,17 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Delay reaction with name " << reactionName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto composedReaction = std::dynamic_pointer_cast<stochsim::DelayReaction>(reaction);
 		if (!composedReaction)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " is not a delayed reaction.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParseDelayReactionCommand(composedReaction, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParseDelayReactionCommand(composedReaction, methodName, paramsParse);
 	}
 	else if (className == timerReactionPrefix_)
 	{
@@ -1083,22 +1088,23 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Timer reaction with name " << reactionName << " not defined in simulation.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto timerReaction = std::dynamic_pointer_cast<stochsim::TimerReaction>(reaction);
 		if (!timerReaction)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Reaction with name " << reactionName << " is not a timer reaction.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
-		ParseTimerReactionCommand(timerReaction, methodName, params.ShiftInputs(1));
+		MatlabParams paramsParse{params.ShiftInputs(1)};
+		ParseTimerReactionCommand(timerReaction, methodName, paramsParse);
 	}
 	else
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Class " << className << " not known. Supported class names are " << simulationPrefix_ << ".";
-		throw std::exception(errorMessage.str().c_str());
+		throw std::runtime_error(errorMessage.str().c_str());
 	}
 }
 

@@ -505,7 +505,7 @@ namespace stochsim
 						errorMessage << rawPath;
 						errorMessage << " to store results. Iteration failed at sub-folder ";
 						errorMessage << ws2s(folder);
-						throw std::exception(errorMessage.str().c_str());
+						throw std::runtime_error(errorMessage.str().c_str());
 					}
 				}
 			}

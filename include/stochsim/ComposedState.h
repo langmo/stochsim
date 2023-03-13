@@ -144,7 +144,7 @@ namespace stochsim
 		{
 			return buffer_[0].creationTime;
 		}
-		virtual const Molecule& Peak(ISimInfo& simInfo) const
+		virtual const Molecule& Peak(ISimInfo& simInfo) const override
 		{
 			return buffer_[randomBufferIndex(simInfo)].molecule;
 		}

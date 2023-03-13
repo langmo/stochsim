@@ -189,7 +189,7 @@ namespace expression
 		{
 			return static_cast<size_t>(sizeof...(Args));
 		}
-		virtual bool IsMutable() const noexcept
+		virtual bool IsMutable() const noexcept override
 		{
 			return mutableFunction_;
 		}

@@ -43,7 +43,7 @@ namespace cmdlparser
 		{
 			cmdl_internal_Parse(handle, tokenID, token, &parseTree);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			throw ex;
 		}
@@ -498,7 +498,7 @@ namespace cmdlparser
 					throw std::runtime_error(errorMessage.str().c_str());
 				}
 			}
-			catch (const std::exception& ex)
+			catch (const std::runtime_error& ex)
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Parse error in file " << cmdlFilePath << ", line " << currentLine << "-" << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
@@ -534,7 +534,7 @@ namespace cmdlparser
 		{
 			ParseToken(handle, 0, nullptr, parseTree);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in file " << cmdlFilePath << " while finishing parsing: " << ex.what();

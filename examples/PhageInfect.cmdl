@@ -2,7 +2,7 @@
 //     Parameters     //
 //********************//
 // Volume
-V = 1; // [ml]
+V = 0.1; // [ml]
 // bacterial growth rate constant
 vcc = 0.55; // [h^-1]
 // phage adsorption rate constant
@@ -78,10 +78,16 @@ $Bl_s + P_i  ->, delta;
 $Bl_s + P_s  ->, delta;
 
 // Fate decision
-Bf{p_i,p_s} -> [rand()<(p_i/(p_i+p_s)*Plys_i + p_s/(p_i+p_s)*(Plys_s)) ? 
-                [rand()<p_i/(p_i+p_s) ? Bp_i : Bp_s] : 
-                [rand()<p_i/(p_i+p_s) ? Bl_i : Bl_s]
-          ], delay:fatePeriod;
+//Bf{p_i,p_s} -> [rand()<(p_i/(p_i+p_s)*Plys_i + p_s/(p_i+p_s)*(Plys_s)) ? 
+//                [rand()<p_i/(p_i+p_s) ? Bp_i : Bp_s] : 
+//                [rand()<p_i/(p_i+p_s) ? Bl_i : Bl_s]
+//          ], delay:fatePeriod;
+
+//Bf{p_i,p_s} -> [rand()<(p_i/(p_i+p_s)*Plys_i + p_s/(p_i+p_s)*(Plys_s)) ? 
+//                Bp_i : 
+//                Bl_i
+//          ], delay:fatePeriod;
+Bf{p_i,p_s} -> Bl_i, delay:fatePeriod;
 
 // Lysis
 Bl_i -> beta *P_i, delay:latentPeriod-fatePeriod;

@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::runtime_error& re)
 	{
-		std::cerr << "Runtime error: " << re.what() << std::endl;
+		std::cerr << "Error error: " << re.what() << std::endl;
 		return 1;
 	}
 	catch (const std::exception& ex)

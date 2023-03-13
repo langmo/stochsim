@@ -48,7 +48,7 @@ namespace stochsim
 			{
 				std::string errorMessage = "Could not open file ";
 				errorMessage += fileName;
-				throw new std::exception(errorMessage.c_str());
+				throw new std::runtime_error(errorMessage.c_str());
 			}
 
 			headerFunc_(*file_);

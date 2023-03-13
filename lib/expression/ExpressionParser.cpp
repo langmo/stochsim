@@ -33,7 +33,7 @@ namespace expression
 		{
 			expression_Parse(handle, tokenID, token, &parseTree);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			throw ex;
 		}
@@ -109,7 +109,7 @@ namespace expression
 				throw std::runtime_error(errorMessage.str().c_str());
 			}
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error in expression close to position " << (lastCharPtr - startCharPtr + 1) << ": " << ex.what();
@@ -138,7 +138,7 @@ namespace expression
 		{
 			ParseToken(handle, 0, nullptr, parseTree);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parse error while finishing parsing: " << ex.what();
@@ -196,13 +196,13 @@ namespace expression
 		// Do the actual parsing.
 		// We only catch errors to quickly close the log file (which requires C logic), and then rethrow them.
 		bool isError = false;
-		std::exception exception;
+		std::runtime_error exception{"Unknown error"};
 		std::unique_ptr<IExpression> result;
 		try
 		{
 			result = ParseInternal(expressionStr, bind, simplify, parseTree, handle);
 		}
-		catch (const std::exception& ex)
+		catch (const std::runtime_error& ex)
 		{
 			isError = true;
 			exception = ex;

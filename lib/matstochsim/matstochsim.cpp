@@ -12,7 +12,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	{
 		command = params.Get<std::string>(0);
 	}
-	catch (const std::exception& ex)
+	catch (const std::runtime_error& ex)
 	{
 		std::stringstream errorMessage;
 		errorMessage << "First parameter must be the name of the class which should be called, or 'new': " << ex.what();
@@ -66,7 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	{
 		simulationRaw = params.Get<const mxArray*>(1);
 	}
-	catch (const std::exception& ex)
+	catch (const std::runtime_error& ex)
 	{
 		std::stringstream errorMessage;
 		errorMessage << "Second parameter must be a handle to a simulation object, except when first parameter is 'new': " << ex.what();
@@ -91,13 +91,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	SimulationWrapper* simulation = GetPtrFromMatlabHandle<SimulationWrapper>(simulationRaw);
 	try
 	{
-		simulation->ParseCommand(command, params.ShiftInputs(2));
+		MatlabParams paramsParse{params.ShiftInputs(2)};
+		simulation->ParseCommand(command, paramsParse);
 	}
 	catch (const std::runtime_error& re)
 	{
 		mexErrMsgTxt(re.what());
 	}
-	catch (const std::exception& ex)
+	catch (const std::runtime_error& ex)
 	{
 		mexErrMsgTxt(ex.what());
 	}

@@ -59,20 +59,20 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Matlab array is not a double array, it's a "<< mxGetClassName(&array) << " array.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		if (::mxGetNumberOfDimensions(&array) != 2)
-			throw std::exception("Only 2D cell arrays can be assigned to.");
+			throw std::runtime_error("Only 2D cell arrays can be assigned to.");
 		const mwSize* size = ::mxGetDimensions(&array);
 		if (row < 0 || row >= size[0])
-			throw std::exception("Invalid row index.");
+			throw std::runtime_error("Invalid row index.");
 		if (column < 0 || column >= size[1])
-			throw std::exception("Invalid column index.");
+			throw std::runtime_error("Invalid column index.");
 		mwIndex dim[] = { row,  column };
 		mwIndex index = ::mxCalcSingleSubscript(&array, 2, dim);
 		double* content = mxGetPr(&array);
 		if (content == NULL)
-			throw std::exception("Matlab array is not a double array");
+			throw std::runtime_error("Matlab array is not a double array");
 		content[index] = value;
 	}
 	static void AssignCellElement(mxArray& cell, mwIndex row, mwIndex column, std::string value)
@@ -81,15 +81,15 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Matlab array is not a cell array, it's a " << mxGetClassName(&cell) << " array.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		if (::mxGetNumberOfDimensions(&cell) != 2)
-			throw std::exception("Only 2D cell arrays can be assigned to.");
+			throw std::runtime_error("Only 2D cell arrays can be assigned to.");
 		const mwSize* size = ::mxGetDimensions(&cell);
 		if (row < 0 || row >= size[0])
-			throw std::exception("Invalid row index.");
+			throw std::runtime_error("Invalid row index.");
 		if (column < 0 || column >= size[1])
-			throw std::exception("Invalid column index.");
+			throw std::runtime_error("Invalid column index.");
 		mwIndex dim[] =  {row,  column};
 		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
 		::mxSetCell(&cell, index, ::mxCreateString(value.c_str()));
@@ -100,15 +100,15 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Matlab array is not a cell array, it's a " << mxGetClassName(&cell) << " array.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		if (::mxGetNumberOfDimensions(&cell) != 2)
-			throw std::exception("Only 2D cell arrays can be assigned to.");
+			throw std::runtime_error("Only 2D cell arrays can be assigned to.");
 		const mwSize* size = ::mxGetDimensions(&cell);
 		if (row < 0 || row >= size[0])
-			throw std::exception("Invalid row index.");
+			throw std::runtime_error("Invalid row index.");
 		if (column < 0 || column >= size[1])
-			throw std::exception("Invalid column index.");
+			throw std::runtime_error("Invalid column index.");
 		mwIndex dim[] = { row,  column };
 		mwIndex index = ::mxCalcSingleSubscript(&cell, 2, dim);
 		::mxSetCell(&cell, index, value.release());
@@ -130,7 +130,7 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
-			throw std::exception(errorMessage.str().c_str()); 
+			throw std::runtime_error(errorMessage.str().c_str()); 
 		}
 		return mxGetScalar(elem);
 	}
@@ -144,7 +144,7 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar double row or column vector.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		auto elements = mxGetNumberOfElements(elem);
 		auto pr = mxGetPr(elem);
@@ -164,7 +164,7 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parameter " << (index + 1) << " must be a struct.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		int numFields = ::mxGetNumberOfFields(elem);
 		for (int i = 0; i < numFields; i++)
@@ -175,7 +175,7 @@ public:
 			{
 				std::stringstream errorMessage;
 				errorMessage << "Field " << name << " of parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
-				throw std::exception(errorMessage.str().c_str());
+				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			auto value= mxGetScalar(field);
 			result.emplace(name, value);
@@ -201,7 +201,7 @@ public:
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Parameter " << (index + 1) << " must be a string less than " << (sizeof(buffer_) - 1) << " characters long.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 		return std::string(buffer_);
 	}
@@ -261,13 +261,13 @@ private:
 	{
 		if (index < 0)
 		{
-			throw std::exception("Invalid negative index.");
+			throw std::runtime_error("Invalid negative index.");
 		}
 		else if (index >= nrhs_)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "At least " << (index + 1) << " parameters expected for function call, only " << nrhs_ << " were provided.";
-			throw std::exception(errorMessage.str().c_str());
+			throw std::runtime_error(errorMessage.str().c_str());
 		}
 	}
 };

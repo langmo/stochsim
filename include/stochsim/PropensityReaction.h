@@ -459,7 +459,7 @@ namespace stochsim
 				{
 					return customRate_.operator()(simInfo);
 				}
-				catch (const std::exception& ex)
+				catch (const std::runtime_error& ex)
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Error while computing custom reaction rate of reaction " << name_ << ": " << ex.what();

@@ -20,7 +20,7 @@ void MatlabProgressLogger::WriteLog(stochsim::ISimInfo& simInfo, double time)
 	{        
 		if (shouldLog_)
 			::mexPrintf("\n");
-		throw std::exception("User interrupt.");
+		throw std::runtime_error("User interrupt.");
 	}
 
 	if (!shouldLog_)
