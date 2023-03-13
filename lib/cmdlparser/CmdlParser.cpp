@@ -235,14 +235,21 @@ namespace cmdlparser
 			return nullptr;
 		};
 
-		// create choices in order of definition
+		// create choices
 		for (auto& choice : parseTree.GetChoices())
 		{
 			auto condition = choice.second->GetCondition()->Simplify(variableRegister);
 			condition->Bind(functionRegister);
 			condition = condition->Simplify(variableRegister);
-
-			auto choiceState = sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
+			sim.CreateState<stochsim::Choice>(choice.first, std::move(condition));
+		}
+		// initialize choices
+		for (auto& choice : parseTree.GetChoices())
+		{
+			auto rawState = sim.GetState(choice.first);
+			auto choiceState = dynamic_cast<stochsim::Choice*>(rawState.get());
+			if(!choiceState)
+				throw std::runtime_error("State which should have been choice isn't one.");
 			for (auto& elem : *choice.second->GetComponentsIfTrue())
 			{
 				choiceState->AddProductIfTrue(sim.GetState(elem.first), elem.second->GetStochiometry(), std::move(elem.second->GetPropertyExpressions()));

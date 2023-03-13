@@ -2,7 +2,7 @@
 //     Parameters     //
 //********************//
 // Volume
-V = 0.1; // [ml]
+V = 0.01; // [ml]
 // bacterial growth rate constant
 vcc = 0.55; // [h^-1]
 // phage adsorption rate constant
