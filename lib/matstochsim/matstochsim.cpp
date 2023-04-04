@@ -98,7 +98,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	{
 		mexErrMsgTxt(re.what());
 	}
-	catch (const std::runtime_error& ex)
+	catch (const std::exception& ex)
 	{
 		mexErrMsgTxt(ex.what());
 	}

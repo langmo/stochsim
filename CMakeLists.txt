@@ -23,11 +23,11 @@ if (CMAKE_PROJECT_NAME STREQUAL STOCHSIMALL)
   #TODO: Fix
   set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
-  message(STATUS "Current build type is: ${CMAKE_BUILD_TYPE}")
-  message(STATUS "Current install path is: ${CMAKE_INSTALL_PREFIX}")
-  message(STATUS "Building for ${CMAKE_SYSTEM_NAME}")
-  message(STATUS "On Macs, CMAKE_APPLE_SILICON_PROCESSOR=${CMAKE_APPLE_SILICON_PROCESSOR}")
-  message(STATUS "Building for processor ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  message(STATUS "Current compiler is:      ${CMAKE_CXX_COMPILER_ID}") 
+  message(STATUS "Current build type is:    ${CMAKE_BUILD_TYPE}")
+  message(STATUS "Current install path is:  ${CMAKE_INSTALL_PREFIX}")
+  message(STATUS "Building for              ${CMAKE_SYSTEM_NAME}")
+  message(STATUS "Building for processor    ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
 
 option(BUILD_MATLAB "ON, if matstochsim should be build. In this case, cache variable MATLAB_PATH has to be set.")

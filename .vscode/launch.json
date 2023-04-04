@@ -8,10 +8,10 @@
             "name": "Debug cmdstochsim",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/debug/lib/cmdstochsim/cmdstochsim",
+            "program": "${workspaceFolder}/debug/lib/cmdstochsim/Debug/cmdstochsim",
             "args": ["-t", "12", "-dt", "0.01" , "../../../examples/PhageInfect.cmdl"],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/debug/lib/cmdstochsim/",
+            "cwd": "${workspaceFolder}/debug/lib/cmdstochsim/Debug",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -28,8 +28,9 @@
                 }
             ],
             //"preLaunchTask": "C/C++: g++ build active file",
-            "preLaunchTask": "buildDebug",
-            "miDebuggerPath": "/usr/bin/gdb"
+            "preLaunchTask": "buildDebug"//,
+            //"miDebuggerPath": "/usr/bin/gdb"
+            //"miDebuggerPath": "gdb.exe"
         }
     ]
 }

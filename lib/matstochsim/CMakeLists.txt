@@ -3,35 +3,30 @@ project (MATSTOCHSIM VERSION 0.1.0)
 
 cmake_policy(SET CMP0115 NEW)
 
-if (WIN32)
-  if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-    #set(MATLAB_DIR "C:/SW/MATLAB/R2015B" CACHE STRING "MATLAB install directory")
-    set(TARGET_SUFFIX mexw64)
-    link_directories(${MATLAB_PATH}/extern/lib/win64/microsoft)
-	else ()
-    #set(MATLAB_DIR "C:/SW/MATLAB/R2015B" CACHE STRING "MATLAB install directory")
-		set(TARGET_SUFFIX mexw32)
-    link_directories(${MATLAB_PATH}/extern/lib/win32/microsoft)
-	endif ()
-elseif (APPLE)
-  #set(MATLAB_DIR "/Applications/MATLAB_R2018b.app" CACHE STRING "MATLAB install directory")
-  set(TARGET_SUFFIX mexmaci64)
-  set (CMAKE_SHARED_LINKER_FLAGS "-Wl,-exported_symbols_list,${MATLAB_PATH}/extern/lib/maci64/mexFunction.map")
-else ()
-  set(TARGET_SUFFIX mexa64)
-endif ()
+# Find Matlab
+find_package(Matlab REQUIRED COMPONENTS MX_LIBRARY MAT_LIBRARY)
+get_filename_component( Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
+find_library( Matlab_UT_LIBRARY NAMES libut.lib libut.so PATHS ${Matlab_MX_LIBRARY_PATH} )
+if(Matlab_FOUND)
+  message(STATUS "Found Matlab installation and libraries:")
+  message(STATUS "- binary dir: ${Matlab_MX_LIBRARY_PATH}")
+  message(STATUS "- inclde dir: ${Matlab_INCLUDE_DIRS}")
+  message(STATUS "- MX:  ${Matlab_MX_LIBRARY}")
+  message(STATUS "- MEX: ${Matlab_MEX_LIBRARY}")
+  message(STATUS "- MAT: ${Matlab_MAT_LIBRARY}")
+  message(STATUS "- UT:  ${Matlab_UT_LIBRARY}")
 
-add_library(matstochsim SHARED "matstochsim.cpp")
-
-if (WIN32)
-  target_compile_definitions(matstochsim PUBLIC
-    MATLAB_MEX_FILE
-    _CRT_SECURE_NO_WARNINGS
-    "DLL_EXPORT_SYM=__declspec(dllexport)"
-  )
+  #set(TARGET_SUFFIX ${Matlab_MEX_EXTENSION})
 else ()
-  target_compile_definitions(matstochsim PUBLIC MATLAB_MEX_FILE)
-endif ()
+endif()
+
+#if (APPLE)
+#  set (CMAKE_SHARED_LINKER_FLAGS "-Wl,-exported_symbols_list,${${Matlab_MX_LIBRARY_PATH}}/mexFunction.map")
+#endif ()
+
+#add_library(matstochsim SHARED "matstochsim.cpp")
+matlab_add_mex(NAME matstochsim SHARED SRC "matstochsim.cpp")
+#target_compile_definitions(matstochsim PUBLIC MATLAB_MEX_FILE)
 
 target_sources(matstochsim
   PRIVATE
@@ -42,30 +37,38 @@ target_sources(matstochsim
 
 target_include_directories(matstochsim
   PRIVATE
-  ${MATLAB_PATH}/extern/include
+  ${Matlab_INCLUDE_DIRS}
   ../../include/expression
   ../../include/cmdlparser
   ../../include/stochsim
   ../../include/matstochsim
   )
 
-if (WIN32)
-  find_package(Matlab REQUIRED COMPONENTS MX_LIBRARY ENG_LIBRARY MEX_COMPILER )
-  target_link_libraries(matstochsim ${Matlab_MX_LIBRARY} ${Matlab_MEX_LIBRARY})
-elseif (APPLE)
-  target_link_libraries(matstochsim PUBLIC
-    ${MATLAB_PATH}/bin/maci64/libmat.dylib
-    ${MATLAB_PATH}/bin/maci64/libmex.dylib
-    ${MATLAB_PATH}/bin/maci64/libmx.dylib
-    ${MATLAB_PATH}/bin/maci64/libut.dylib
-  )
-endif ()
+#target_link_libraries(matstochsim PUBLIC 
+#    ${Matlab_MAT_LIBRARY}
+#    ${Matlab_MEX_LIBRARY}
+#    ${Matlab_MX_LIBRARY} 
+#    ${Matlab_UT_LIBRARY} 
+#  )
+#elseif (APPLE)
+#  target_link_libraries(matstochsim PUBLIC
+#    ${MATLAB_PATH}/bin/maci64/libmat.dylib
+#    ${MATLAB_PATH}/bin/maci64/libmex.dylib
+#    ${MATLAB_PATH}/bin/maci64/libmx.dylib
+#    ${MATLAB_PATH}/bin/maci64/libut.dylib
+#  )
+#endif ()
 
-target_link_libraries (matstochsim PUBLIC cmdlparser)
-target_link_libraries (matstochsim PUBLIC expression)
-target_link_libraries (matstochsim PUBLIC stochsim)
+#target_link_libraries (matstochsim PUBLIC cmdlparser)
+#target_link_libraries (matstochsim PUBLIC expression)
+#target_link_libraries (matstochsim PUBLIC stochsim)
+
+target_link_libraries(matstochsim ${Matlab_UT_LIBRARY})
+target_link_libraries (matstochsim cmdlparser)
+target_link_libraries (matstochsim expression)
+target_link_libraries (matstochsim stochsim)
 
 target_compile_features(matstochsim PRIVATE cxx_std_17)
 
-set_target_properties(matstochsim PROPERTIES PREFIX "")
-set_target_properties(matstochsim PROPERTIES SUFFIX ".${TARGET_SUFFIX}")
+#set_target_properties(matstochsim PROPERTIES PREFIX "")
+#set_target_properties(matstochsim PROPERTIES SUFFIX ".${TARGET_SUFFIX}")

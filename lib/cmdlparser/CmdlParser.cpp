@@ -392,15 +392,16 @@ namespace cmdlparser
 	
 	void ParseFileInternal(std::string cmdlFilePath, stochsim::Simulation& sim, cmdlparser::CmdlParseTree& parseTree, void* handle)
 	{
-		// Get absolute path
-		std::error_code ec{};
+		// TODO: Get absolute path
+		/*std::error_code ec{};
 		std::filesystem::path absolutePath{std::filesystem::weakly_canonical(cmdlFilePath, ec)};
 		if(ec)
 		{
 			std::stringstream errorMessage;
 			errorMessage << "Could not determine canonical path for cmdl relative path \"" << cmdlFilePath << "\".";
 			throw std::runtime_error(errorMessage.str().c_str());
-		}
+		}*/
+		std::filesystem::path absolutePath{std::filesystem::absolute(cmdlFilePath)};
 		// Open file
 		std::ifstream infile(absolutePath);
 		if (infile.fail())

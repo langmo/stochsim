@@ -97,8 +97,8 @@ namespace stochsim
 			if (!file_->is_open())
 			{
 				std::string errorMessage = "Could not open log file ";
-				errorMessage += absolutePath;
-				throw new std::runtime_error(errorMessage.c_str());
+				errorMessage += absolutePath.string();
+				throw std::runtime_error(errorMessage.c_str());
 			}
 
 			(*file_) << "Time";

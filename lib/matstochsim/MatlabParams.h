@@ -121,90 +121,7 @@ public:
 		else
 			return static_cast<T>(Get<double>(index)+0.5); // round to nearest integer value
 	}
-	template<> double Get<double>(size_t index)
-	{
-		index += shift_;
-		AssertParamIndex(index);
-		const mxArray* elem = prhs_[index];
-		if (mxGetM(elem) != 1 || mxGetN(elem) != 1 || !(mxIsNumeric(elem) || mxIsLogical(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
-		{
-			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
-			throw std::runtime_error(errorMessage.str().c_str()); 
-		}
-		return mxGetScalar(elem);
-	}
-	template<> std::vector<double> Get<std::vector<double>>(size_t index)
-	{
-		std::vector<double> result;
-		index += shift_;
-		AssertParamIndex(index);
-		const mxArray* elem = prhs_[index];
-		if ((mxGetM(elem) != 1 && mxGetN(elem) != 1) || !(mxIsDouble(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
-		{
-			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar double row or column vector.";
-			throw std::runtime_error(errorMessage.str().c_str());
-		}
-		auto elements = mxGetNumberOfElements(elem);
-		auto pr = mxGetPr(elem);
-		for (size_t j = 0; j < elements; j++) 
-		{
-			result.push_back(pr[j]);
-		}
-		return std::move(result);
-	}
-	template<> MatlabStruct Get<MatlabStruct>(size_t index)
-	{
-		index += shift_;
-		AssertParamIndex(index);
-		MatlabStruct result;
-		const mxArray* elem = prhs_[index];
-		if (!mxIsStruct(elem) || mxGetM(elem) != 1 || mxGetN(elem) != 1)
-		{
-			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a struct.";
-			throw std::runtime_error(errorMessage.str().c_str());
-		}
-		int numFields = ::mxGetNumberOfFields(elem);
-		for (int i = 0; i < numFields; i++)
-		{
-			auto name = mxGetFieldNameByNumber(elem, i);
-			mxArray* field = mxGetField(elem, 0, name);
-			if (mxGetM(field) != 1 || mxGetN(field) != 1 || !(mxIsNumeric(field) || mxIsLogical(field)) || mxIsEmpty(field) || mxIsComplex(field))
-			{
-				std::stringstream errorMessage;
-				errorMessage << "Field " << name << " of parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
-				throw std::runtime_error(errorMessage.str().c_str());
-			}
-			auto value= mxGetScalar(field);
-			result.emplace(name, value);
-		}
-		return std::move(result);
-	}
-	template<> const mxArray* Get<const mxArray*>(size_t index)
-	{
-		index += shift_;
-		AssertParamIndex(index);
-		return prhs_[index];
-	}
-	template<> bool Get<bool>(size_t index)
-	{
-		return Get<double>(index) != 0;
-	}
-	template<> std::string Get<std::string>(size_t index)
-	{
-		index += shift_;
-		AssertParamIndex(index);
-
-		if (mxGetString(prhs_[index], buffer_, sizeof(buffer_)))
-		{
-			std::stringstream errorMessage;
-			errorMessage << "Parameter " << (index + 1) << " must be a string less than " << (sizeof(buffer_) - 1) << " characters long.";
-			throw std::runtime_error(errorMessage.str().c_str());
-		}
-		return std::string(buffer_);
-	}
+	
 
 	bool IsString(size_t index)
 	{
@@ -226,30 +143,7 @@ public:
 			return;
 		plhs_[index] = ::mxCreateDoubleScalar(static_cast<double>(value));
 	}
-	template<> void Set<mxArray*>(size_t index, mxArray* value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = value;
-	}
-	template<> void Set<std::string>(size_t index, std::string value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = ::mxCreateString(value.c_str());
-	}
-	template<> void Set<const std::string&>(size_t index, const std::string& value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = ::mxCreateString(value.c_str());
-	}
-	template<> void Set<bool>(size_t index, bool value)
-	{
-		if (index >= nlhs_)
-			return;
-		plhs_[index] = ::mxCreateLogicalScalar(value);
-	}
+	
 private:
 	char buffer_[256];
 	const size_t shift_;
@@ -271,4 +165,117 @@ private:
 		}
 	}
 };
+/*
+* Specializations of getters and setters.
+* Must be defined outside of class due to some arcane template specialization rule,
+* which was abolished in C++17 but gcc didn't care and still behaves non-conformant in C++17...
+*/
+template<> inline double MatlabParams::Get<double>(size_t index)
+{
+	index += shift_;
+	AssertParamIndex(index);
+	const mxArray* elem = prhs_[index];
+	if (mxGetM(elem) != 1 || mxGetN(elem) != 1 || !(mxIsNumeric(elem) || mxIsLogical(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
+		throw std::runtime_error(errorMessage.str().c_str()); 
+	}
+	return mxGetScalar(elem);
+}
+template<> inline std::vector<double> MatlabParams::Get<std::vector<double>>(size_t index)
+{
+	std::vector<double> result;
+	index += shift_;
+	AssertParamIndex(index);
+	const mxArray* elem = prhs_[index];
+	if ((mxGetM(elem) != 1 && mxGetN(elem) != 1) || !(mxIsDouble(elem)) || mxIsEmpty(elem) || mxIsComplex(elem))
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Parameter " << (index + 1) << " must be a noncomplex scalar double row or column vector.";
+		throw std::runtime_error(errorMessage.str().c_str());
+	}
+	auto elements = mxGetNumberOfElements(elem);
+	auto pr = mxGetPr(elem);
+	for (size_t j = 0; j < elements; j++) 
+	{
+		result.push_back(pr[j]);
+	}
+	return std::move(result);
+}
+template<> inline MatlabParams::MatlabStruct MatlabParams::Get<MatlabParams::MatlabStruct>(size_t index)
+{
+	index += shift_;
+	AssertParamIndex(index);
+	MatlabParams::MatlabStruct result;
+	const mxArray* elem = prhs_[index];
+	if (!mxIsStruct(elem) || mxGetM(elem) != 1 || mxGetN(elem) != 1)
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Parameter " << (index + 1) << " must be a struct.";
+		throw std::runtime_error(errorMessage.str().c_str());
+	}
+	int numFields = ::mxGetNumberOfFields(elem);
+	for (int i = 0; i < numFields; i++)
+	{
+		auto name = mxGetFieldNameByNumber(elem, i);
+		mxArray* field = mxGetField(elem, 0, name);
+		if (mxGetM(field) != 1 || mxGetN(field) != 1 || !(mxIsNumeric(field) || mxIsLogical(field)) || mxIsEmpty(field) || mxIsComplex(field))
+		{
+			std::stringstream errorMessage;
+			errorMessage << "Field " << name << " of parameter " << (index + 1) << " must be a noncomplex scalar number (e.g. a double).";
+			throw std::runtime_error(errorMessage.str().c_str());
+		}
+		auto value= mxGetScalar(field);
+		result.emplace(name, value);
+	}
+	return std::move(result);
+}
+template<> inline const mxArray* MatlabParams::Get<const mxArray*>(size_t index)
+{
+	index += shift_;
+	AssertParamIndex(index);
+	return prhs_[index];
+}
+template<> inline bool MatlabParams::Get<bool>(size_t index)
+{
+	return Get<double>(index) != 0;
+}
+template<> inline std::string MatlabParams::Get<std::string>(size_t index)
+{
+	index += shift_;
+	AssertParamIndex(index);
+
+	if (mxGetString(prhs_[index], buffer_, sizeof(buffer_)))
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Parameter " << (index + 1) << " must be a string less than " << (sizeof(buffer_) - 1) << " characters long.";
+		throw std::runtime_error(errorMessage.str().c_str());
+	}
+	return std::string(buffer_);
+}
+template<> inline void MatlabParams::Set<mxArray*>(size_t index, mxArray* value)
+{
+	if (index >= nlhs_)
+		return;
+	plhs_[index] = value;
+}
+template<> inline void MatlabParams::Set<std::string>(size_t index, std::string value)
+{
+	if (index >= nlhs_)
+		return;
+	plhs_[index] = ::mxCreateString(value.c_str());
+}
+template<> inline void MatlabParams::Set<const std::string&>(size_t index, const std::string& value)
+{
+	if (index >= nlhs_)
+		return;
+	plhs_[index] = ::mxCreateString(value.c_str());
+}
+template<> inline void MatlabParams::Set<bool>(size_t index, bool value)
+{
+	if (index >= nlhs_)
+		return;
+	plhs_[index] = ::mxCreateLogicalScalar(value);
+}
 

@@ -480,7 +480,8 @@ namespace stochsim
 	}
 	std::string CreatePathRecursively(std::string rawPath)
 	{
-#if defined(_WIN32)
+// TODO: FIX
+/*#if defined(_WIN32)
 		std::wstring wRawPath = s2ws(rawPath);
 		// remove trailing / or \ 
 		while (wRawPath[wRawPath.size() - 1] == L'\\' || wRawPath[wRawPath.size() - 1] == L'/')
@@ -517,6 +518,7 @@ namespace stochsim
 #else
 		// TODO: Since I don't know how to recursively create folders on other systems, I simply save everything in current path, but this should be fixed somehow...
 		return "";
-#endif
+#endif*/
+		return "";
 	}
 }

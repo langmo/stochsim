@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <functional>
 #include <utility>
+#include <cstring>
 
 #include "StatePropertyLogger.h"
 
@@ -969,7 +970,7 @@ void SimulationWrapper::ParseCommand(const std::string & command, MatlabParams& 
 	{
 		throw std::runtime_error("Provided class name is empty.");
 	}
-	std::string methodName = command.substr(prefixEnd + strlen(prefixSeparator_));
+	std::string methodName = command.substr(prefixEnd + std::strlen(prefixSeparator_));
 	if (methodName.empty())
 	{
 		throw std::runtime_error("Provided method name is empty.");

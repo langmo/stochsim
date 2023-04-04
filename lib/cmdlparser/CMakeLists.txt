@@ -6,7 +6,7 @@ cmake_policy(SET CMP0115 NEW)
 # Compile grammar
 add_custom_command(
   OUTPUT ${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.c
-  COMMAND ${CMAKE_BINARY_DIR}/lib/lemon/lemon -T${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.template ${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.y
+  COMMAND $<TARGET_FILE:lemon> -T${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.template ${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.y
   DEPENDS ${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.template ${CMDLPARSER_SOURCE_DIR}/cmdl_grammar.y
 )
 

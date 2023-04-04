@@ -24,45 +24,45 @@
 */
 #include <stdio.h>
 /************ Begin %include sections from the grammar ************************/
-#line 14 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 14 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "expression_common.h"
-#line 15 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 15 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "ComparisonExpression.h"
-#line 16 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 16 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "ConditionalExpression.h"
-#line 17 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 17 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "ExponentiationExpression.h"
-#line 18 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 18 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "ConjunctionExpression.h"
-#line 19 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 19 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "DisjunctionExpression.h"
-#line 20 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 20 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "UnaryNotExpression.h"
-#line 21 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 21 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "NumberExpression.h"
-#line 22 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 22 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "ProductExpression.h"
-#line 23 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 23 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "SumExpression.h"
-#line 24 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 24 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "UnaryMinusExpression.h"
-#line 25 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 25 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "VariableExpression.h"
-#line 26 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 26 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "FunctionExpression.h"
-#line 28 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 28 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "cmdl_symbols.h"
-#line 29 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 29 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "CmdlParseTree.h"
-#line 30 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 30 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include "CmdlParser.h"
-#line 32 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 32 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 #include  <assert.h>
-#line 33 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 33 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 using namespace expression;
-#line 34 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 34 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 using namespace cmdlparser;
-#line 66 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 66 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -818,172 +818,172 @@ static void yy_destructor(
     case 30: /* MODEL_NAME */
     case 31: /* INCLUDE */
 {
-#line 8 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 8 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 
 	delete (yypminor->yy0);
 	(yypminor->yy0) = nullptr;
 
-#line 827 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 827 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 33: /* variable */
 {
-#line 81 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 81 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy100);
 	(yypminor->yy100) = nullptr;
 
-#line 837 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 837 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 34: /* expression */
 {
-#line 108 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 108 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy64);
 	(yypminor->yy64) = nullptr;
 
-#line 847 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 847 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 35: /* arguments */
 {
-#line 158 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 158 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy103);
 	(yypminor->yy103) = nullptr;
 
-#line 857 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 857 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 36: /* comparison */
 {
-#line 142 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 142 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy73);
 	(yypminor->yy73) = nullptr;
 
-#line 867 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 867 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 37: /* sum */
 {
-#line 179 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 179 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy78);
 	(yypminor->yy78) = nullptr;
 
-#line 877 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 877 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 38: /* product */
 {
-#line 208 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 208 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy50);
 	(yypminor->yy50) = nullptr;
 
-#line 887 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 887 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 39: /* conjunction */
 {
-#line 238 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 238 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy45);
 	(yypminor->yy45) = nullptr;
 
-#line 897 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 897 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 40: /* disjunction */
 {
-#line 258 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 258 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy87);
 	(yypminor->yy87) = nullptr;
 
-#line 907 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 907 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 43: /* reactionLeftSide */
 {
-#line 434 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 434 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy96);
 	(yypminor->yy96) = nullptr;
 
-#line 917 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 917 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 44: /* reactionRightSide */
 {
-#line 570 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 570 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy5);
 	(yypminor->yy5) = nullptr;
 
-#line 927 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 927 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 45: /* reactionSpecifiers */
 {
-#line 376 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 376 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy29);
 	(yypminor->yy29) = nullptr;
 
-#line 937 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 937 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 46: /* reactionSpecifier */
 {
-#line 399 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 399 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy97);
 	(yypminor->yy97) = nullptr;
 
-#line 947 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 947 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 47: /* reactionLeftComponent */
 {
-#line 508 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 508 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy14);
 	(yypminor->yy14) = nullptr;
 
-#line 957 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 957 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 48: /* moleculePropertyNames */
 {
-#line 476 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 476 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy110);
 	(yypminor->yy110) = nullptr;
 
-#line 967 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 967 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 49: /* reactionRightComponent */
 {
-#line 643 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 643 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy77);
 	(yypminor->yy77) = nullptr;
 
-#line 977 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 977 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
     case 50: /* moleculePropertyExpressions */
 {
-#line 612 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 612 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
  
 	delete (yypminor->yy30);
 	(yypminor->yy30) = nullptr;
 
-#line 987 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 987 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -1162,9 +1162,9 @@ static void yyStackOverflow(yyParser *yypParser){
    /* Here code is inserted which will execute if the parser
    ** stack every overflows */
 /******** Begin %stack_overflow code ******************************************/
-#line 5 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 5 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 throw std::runtime_error("Parser stack overflow while parsing cmdl file.");
-#line 1168 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1168 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 /******** End %stack_overflow code ********************************************/
    cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
@@ -1385,7 +1385,7 @@ static void yy_reduce(
 /********** Begin reduce actions **********************************************/
         YYMINORTYPE yylhsminor;
       case 0: /* variable ::= IDENTIFIER LEFT_SQUARE expression RIGHT_SQUARE */
-#line 85 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 85 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier name = *yymsp[-3].minor.yy0;
 	delete yymsp[-3].minor.yy0;
@@ -1397,33 +1397,33 @@ static void yy_reduce(
 	auto value = static_cast<size_t>(parseTree->GetExpressionValue(e_temp.get())+0.5);
 	yylhsminor.yy100 = new identifier(name+"["+std::to_string(value)+"]");
 }
-#line 1401 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1401 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,19,&yymsp[-2].minor);
   yy_destructor(yypParser,20,&yymsp[0].minor);
   yymsp[-3].minor.yy100 = yylhsminor.yy100;
         break;
       case 1: /* variable ::= IDENTIFIER */
-#line 96 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 96 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy100 = new identifier(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1413 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1413 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy100 = yylhsminor.yy100;
         break;
       case 2: /* expression ::= variable */
-#line 112 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 112 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new VariableExpression(*yymsp[0].minor.yy100);
 	delete yymsp[0].minor.yy100;
 	yymsp[0].minor.yy100 = nullptr;
 }
-#line 1423 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1423 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 3: /* expression ::= variable LEFT_ROUND arguments RIGHT_ROUND */
-#line 117 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 117 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto func = new FunctionExpression(*yymsp[-3].minor.yy100);
 	delete yymsp[-3].minor.yy100;
@@ -1438,326 +1438,326 @@ static void yy_reduce(
 	yylhsminor.yy64 = func;
 	func = nullptr;
 }
-#line 1442 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1442 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,21,&yymsp[-2].minor);
   yy_destructor(yypParser,22,&yymsp[0].minor);
   yymsp[-3].minor.yy64 = yylhsminor.yy64;
         break;
       case 4: /* expression ::= VALUE */
-#line 132 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 132 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new NumberExpression(*yymsp[0].minor.yy0);
 	delete yymsp[0].minor.yy0;
 	yymsp[0].minor.yy0 = nullptr;
 }
-#line 1454 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1454 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 5: /* expression ::= LEFT_ROUND expression RIGHT_ROUND */
 {  yy_destructor(yypParser,21,&yymsp[-2].minor);
-#line 137 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 137 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[-2].minor.yy64 = yymsp[-1].minor.yy64;
 }
-#line 1463 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1463 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,22,&yymsp[0].minor);
 }
         break;
       case 6: /* comparison ::= expression QUESTIONMARK expression COLON expression */
-#line 146 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 146 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy73 = new ConditionalExpression(std::unique_ptr<IExpression>(yymsp[-4].minor.yy64), std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 	yymsp[-2].minor.yy64 = nullptr;
 	yymsp[0].minor.yy64 = nullptr;
 	yymsp[-4].minor.yy64 = nullptr;
 }
-#line 1475 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1475 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-3].minor);
   yy_destructor(yypParser,23,&yymsp[-1].minor);
   yymsp[-4].minor.yy73 = yylhsminor.yy73;
         break;
       case 7: /* expression ::= comparison */
-#line 152 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 152 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy73;
 }
-#line 1485 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1485 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 8: /* arguments ::= */
-#line 162 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 162 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[1].minor.yy103 = new FunctionArguments();
 }
-#line 1493 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1493 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
         break;
       case 9: /* arguments ::= expression */
-#line 165 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 165 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy103 = new FunctionArguments();
 	yylhsminor.yy103->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy64));
 	yymsp[0].minor.yy64 = nullptr;
 }
-#line 1502 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1502 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy103 = yylhsminor.yy103;
         break;
       case 10: /* arguments ::= arguments COMMA expression */
-#line 170 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 170 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy103 = yymsp[-2].minor.yy103;
 	yymsp[-2].minor.yy103 = nullptr;
 	yylhsminor.yy103->push_back(typename FunctionArguments::value_type(yymsp[0].minor.yy64));
 	yymsp[0].minor.yy64 = nullptr;
 }
-#line 1513 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1513 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yymsp[-2].minor.yy103 = yylhsminor.yy103;
         break;
       case 11: /* expression ::= sum */
-#line 183 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 183 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy78;
 }
-#line 1522 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1522 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 12: /* sum ::= expression PLUS expression */
-#line 186 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 186 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy78 = new SumExpression();
 	yylhsminor.yy78->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy78->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1532 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1532 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy78 = yylhsminor.yy78;
         break;
       case 13: /* sum ::= expression MINUS expression */
-#line 191 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 191 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy78 = new SumExpression();
 	yylhsminor.yy78->PushBack(false,  std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy78->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1543 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1543 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy78 = yylhsminor.yy78;
         break;
       case 14: /* sum ::= sum PLUS expression */
-#line 196 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 196 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy78 = yymsp[-2].minor.yy78;
 	yylhsminor.yy78->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1553 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1553 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy78 = yylhsminor.yy78;
         break;
       case 15: /* sum ::= sum MINUS expression */
-#line 200 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 200 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy78 = yymsp[-2].minor.yy78;
 	yylhsminor.yy78->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1563 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1563 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,12,&yymsp[-1].minor);
   yymsp[-2].minor.yy78 = yylhsminor.yy78;
         break;
       case 16: /* expression ::= product */
-#line 212 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 212 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy50;
 }
-#line 1572 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1572 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 17: /* product ::= expression MULTIPLY expression */
-#line 215 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 215 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy50 = new ProductExpression();
 	yylhsminor.yy50->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy50->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1583 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1583 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy50 = yylhsminor.yy50;
         break;
       case 18: /* product ::= expression DIVIDE expression */
-#line 221 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 221 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy50 = new ProductExpression();
 	yylhsminor.yy50->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy50->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1595 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1595 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy50 = yylhsminor.yy50;
         break;
       case 19: /* product ::= product MULTIPLY expression */
-#line 227 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 227 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy50 = yymsp[-2].minor.yy50;
 	yylhsminor.yy50->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1605 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1605 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy50 = yylhsminor.yy50;
         break;
       case 20: /* product ::= product DIVIDE expression */
-#line 231 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 231 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy50 = yymsp[-2].minor.yy50;
 	yylhsminor.yy50->PushBack(true, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1615 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1615 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,14,&yymsp[-1].minor);
   yymsp[-2].minor.yy50 = yylhsminor.yy50;
         break;
       case 21: /* expression ::= conjunction */
-#line 242 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 242 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy45;
 }
-#line 1624 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1624 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 22: /* conjunction ::= expression AND expression */
-#line 245 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 245 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy45 = new ConjunctionExpression();
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1635 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1635 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy45 = yylhsminor.yy45;
         break;
       case 23: /* conjunction ::= conjunction AND expression */
-#line 251 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 251 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy45 = yymsp[-2].minor.yy45;
 	yylhsminor.yy45->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1645 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1645 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,3,&yymsp[-1].minor);
   yymsp[-2].minor.yy45 = yylhsminor.yy45;
         break;
       case 24: /* expression ::= disjunction */
-#line 262 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 262 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = yymsp[0].minor.yy87;
 }
-#line 1654 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1654 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy64 = yylhsminor.yy64;
         break;
       case 25: /* disjunction ::= expression OR expression */
-#line 265 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 265 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy87 = new DisjunctionExpression();
 	yylhsminor.yy87->PushBack(false, std::unique_ptr<IExpression>(yymsp[-2].minor.yy64));
 	yylhsminor.yy87->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 
 }
-#line 1665 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1665 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy87 = yylhsminor.yy87;
         break;
       case 26: /* disjunction ::= disjunction OR expression */
-#line 271 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 271 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy87 = yymsp[-2].minor.yy87;
 	yylhsminor.yy87->PushBack(false, std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1675 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1675 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,4,&yymsp[-1].minor);
   yymsp[-2].minor.yy87 = yylhsminor.yy87;
         break;
       case 27: /* expression ::= NOT expression */
 {  yy_destructor(yypParser,16,&yymsp[-1].minor);
-#line 277 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 277 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy64 = new UnaryNotExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1685 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1685 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
         break;
       case 28: /* expression ::= MINUS expression */
 {  yy_destructor(yypParser,12,&yymsp[-1].minor);
-#line 282 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 282 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[-1].minor.yy64 = new UnaryMinusExpression(std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1694 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1694 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
         break;
       case 29: /* expression ::= expression EXP expression */
-#line 287 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 287 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ExponentiationExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64));
 }
-#line 1702 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1702 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,15,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 30: /* expression ::= expression EQUAL expression */
-#line 293 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 293 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_equal);
 }
-#line 1711 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1711 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,5,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 31: /* expression ::= expression NOT_EQUAL expression */
-#line 296 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 296 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_not_equal);
 }
-#line 1720 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1720 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,6,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 32: /* expression ::= expression GREATER expression */
-#line 299 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 299 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_greater);
 }
-#line 1729 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1729 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,7,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 33: /* expression ::= expression GREATER_EQUAL expression */
-#line 302 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 302 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_greater_equal);
 }
-#line 1738 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1738 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,8,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 34: /* expression ::= expression LESS expression */
-#line 305 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 305 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_less);
 }
-#line 1747 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1747 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,9,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 35: /* expression ::= expression LESS_EQUAL expression */
-#line 308 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 308 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy64 = new ComparisonExpression(std::unique_ptr<IExpression>(yymsp[-2].minor.yy64), std::unique_ptr<IExpression>(yymsp[0].minor.yy64), ComparisonExpression::type_less_equal);
 }
-#line 1756 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1756 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,10,&yymsp[-1].minor);
   yymsp[-2].minor.yy64 = yylhsminor.yy64;
         break;
       case 36: /* assignment ::= variable ASSIGN expression SEMICOLON */
-#line 320 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 320 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-3].minor.yy100 and yymsp[-1].minor.yy64 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1769,12 +1769,12 @@ static void yy_reduce(
 
 	parseTree->CreateVariable(std::move(name), parseTree->GetExpressionValue(e_temp.get()));
 }
-#line 1773 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1773 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,25,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 37: /* assignment ::= variable ASSIGN LEFT_SQUARE expression RIGHT_SQUARE SEMICOLON */
-#line 332 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 332 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	// create_variable might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy100 and yymsp[-2].minor.yy64 by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1786,14 +1786,14 @@ static void yy_reduce(
 
 	parseTree->CreateVariable(std::move(name), std::move(e_temp));
 }
-#line 1790 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1790 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,25,&yymsp[-4].minor);
   yy_destructor(yypParser,19,&yymsp[-3].minor);
   yy_destructor(yypParser,20,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 38: /* reaction ::= reactionLeftSide ARROW reactionRightSide COMMA reactionSpecifiers SEMICOLON */
-#line 346 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 346 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy96, yymsp[-3].minor.yy5 and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1806,13 +1806,13 @@ static void yy_reduce(
 
 	parseTree->CreateReaction(std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
 }
-#line 1810 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1810 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,26,&yymsp[-4].minor);
   yy_destructor(yypParser,24,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 39: /* reaction ::= variable COMMA reactionLeftSide ARROW reactionRightSide COMMA reactionSpecifiers SEMICOLON */
-#line 359 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 359 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	// create_reaction might throw an exception, which results in automatic destruction of yymsp[-5].minor.yy96, yymsp[-3].minor.yy5 and e by the parser. We thus have to make sure that
 	// they point to null to avoid double deletion.
@@ -1828,14 +1828,14 @@ static void yy_reduce(
 
 	parseTree->CreateReaction(std::move(name), std::move(reactants_temp), std::move(products_temp), std::move(rss_temp));
 }
-#line 1832 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1832 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-6].minor);
   yy_destructor(yypParser,26,&yymsp[-4].minor);
   yy_destructor(yypParser,24,&yymsp[-2].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
         break;
       case 40: /* reactionSpecifiers ::= reactionSpecifier */
-#line 380 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 380 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rss_temp = std::make_unique<ReactionSpecifiers>();
 	auto rs_temp = std::unique_ptr<ReactionSpecifier>(yymsp[0].minor.yy97);
@@ -1844,11 +1844,11 @@ static void yy_reduce(
 	rss_temp->PushBack(std::move(rs_temp));
 	yylhsminor.yy29 = rss_temp.release();
 }
-#line 1848 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1848 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy29 = yylhsminor.yy29;
         break;
       case 41: /* reactionSpecifiers ::= reactionSpecifiers COMMA reactionSpecifier */
-#line 388 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 388 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rss_temp = std::unique_ptr<ReactionSpecifiers>(yymsp[-2].minor.yy29);
 	yymsp[-2].minor.yy29 = nullptr;
@@ -1858,12 +1858,12 @@ static void yy_reduce(
 	rss_temp->PushBack(std::move(rs_temp));
 	yylhsminor.yy29 = rss_temp.release();
 }
-#line 1862 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1862 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yymsp[-2].minor.yy29 = yylhsminor.yy29;
         break;
       case 42: /* reactionSpecifier ::= expression */
-#line 403 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 403 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64 = nullptr;
@@ -1871,11 +1871,11 @@ static void yy_reduce(
 	auto value = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy97 = new ReactionSpecifier(ReactionSpecifier::rate_type, std::make_unique<NumberExpression>(value));
 }
-#line 1875 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1875 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy97 = yylhsminor.yy97;
         break;
       case 43: /* reactionSpecifier ::= variable COLON expression */
-#line 411 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 411 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64 = nullptr;
@@ -1886,32 +1886,32 @@ static void yy_reduce(
 	auto value = parseTree->GetExpressionValue(e_temp.get());
 	yylhsminor.yy97 = new ReactionSpecifier(name, std::make_unique<NumberExpression>(value));
 }
-#line 1890 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1890 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,23,&yymsp[-1].minor);
   yymsp[-2].minor.yy97 = yylhsminor.yy97;
         break;
       case 44: /* reactionSpecifier ::= LEFT_SQUARE expression RIGHT_SQUARE */
 {  yy_destructor(yypParser,19,&yymsp[-2].minor);
-#line 422 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 422 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[-1].minor.yy64);
 	yymsp[-1].minor.yy64 = nullptr;
 	yymsp[-2].minor.yy97 = nullptr;
 	yymsp[-2].minor.yy97 = new ReactionSpecifier(ReactionSpecifier::rate_type, std::move(e_temp));
 }
-#line 1903 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1903 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,20,&yymsp[0].minor);
 }
         break;
       case 45: /* reactionLeftSide ::= */
-#line 438 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 438 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[1].minor.yy96 = new ReactionLeftSide();
 }
-#line 1912 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1912 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
         break;
       case 46: /* reactionLeftSide ::= reactionLeftComponent */
-#line 441 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 441 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rc_temp = std::unique_ptr<ReactionLeftComponent>(yymsp[0].minor.yy14);
 	yymsp[0].minor.yy14 = nullptr;
@@ -1921,11 +1921,11 @@ static void yy_reduce(
 	rs_temp->PushBack(std::move(rc_temp));
 	yylhsminor.yy96 = rs_temp.release();
 }
-#line 1925 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1925 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy96 = yylhsminor.yy96;
         break;
       case 47: /* reactionLeftSide ::= reactionLeftSide PLUS reactionLeftComponent */
-#line 450 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 450 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy96 = yymsp[-2].minor.yy96;
 	yymsp[-2].minor.yy96 = nullptr;
@@ -1934,12 +1934,12 @@ static void yy_reduce(
 
 	yylhsminor.yy96->PushBack(std::move(rc_temp));
 }
-#line 1938 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1938 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy96 = yylhsminor.yy96;
         break;
       case 48: /* reactionLeftSide ::= expression PLUS expression */
-#line 459 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 459 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	delete(yymsp[-2].minor.yy64);
 	yymsp[-2].minor.yy64=nullptr;
@@ -1947,11 +1947,11 @@ static void yy_reduce(
 	yymsp[0].minor.yy64=nullptr;
 	throw std::runtime_error("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1951 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1951 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
       case 49: /* reactionLeftSide ::= reactionLeftSide PLUS expression */
-#line 467 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 467 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	delete(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64=nullptr;
@@ -1959,19 +1959,19 @@ static void yy_reduce(
 	yymsp[-2].minor.yy96=nullptr;
 	throw std::runtime_error("Reactants or modifiers of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 1963 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1963 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
       case 50: /* moleculePropertyNames ::= */
-#line 480 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 480 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[1].minor.yy110 = new MoleculePropertyNames();
 	yymsp[1].minor.yy110->push_back("");
 }
-#line 1972 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1972 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
         break;
       case 51: /* moleculePropertyNames ::= variable */
-#line 484 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 484 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier name = *yymsp[0].minor.yy100;
 	delete yymsp[0].minor.yy100;
@@ -1980,11 +1980,11 @@ static void yy_reduce(
 	yylhsminor.yy110 = new MoleculePropertyNames();
 	yylhsminor.yy110->push_back(name);
 }
-#line 1984 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1984 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy110 = yylhsminor.yy110;
         break;
       case 52: /* moleculePropertyNames ::= moleculePropertyNames COMMA variable */
-#line 492 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 492 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy110 = yymsp[-2].minor.yy110;
 	yymsp[-2].minor.yy110 = nullptr;
@@ -1994,23 +1994,23 @@ static void yy_reduce(
 
 	yylhsminor.yy110->push_back(name);
 }
-#line 1998 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 1998 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yymsp[-2].minor.yy110 = yylhsminor.yy110;
         break;
       case 53: /* moleculePropertyNames ::= moleculePropertyNames COMMA */
-#line 501 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 501 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy110 = yymsp[-1].minor.yy110;
 	yymsp[-1].minor.yy110 = nullptr;
 	yylhsminor.yy110->push_back("");
 }
-#line 2009 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2009 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[0].minor);
   yymsp[-1].minor.yy110 = yylhsminor.yy110;
         break;
       case 54: /* reactionLeftComponent ::= variable */
-#line 512 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 512 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy100;
 	delete yymsp[0].minor.yy100;
@@ -2019,11 +2019,11 @@ static void yy_reduce(
 
 	yylhsminor.yy14 = new ReactionLeftComponent(state, 1, false);
 }
-#line 2023 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2023 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy14 = yylhsminor.yy14;
         break;
       case 55: /* reactionLeftComponent ::= variable LEFT_CURLY moleculePropertyNames RIGHT_CURLY */
-#line 520 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 520 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[-3].minor.yy100;
 	delete yymsp[-3].minor.yy100;
@@ -2034,14 +2034,14 @@ static void yy_reduce(
 
 	yylhsminor.yy14 = new ReactionLeftComponent(state, 1, false, std::move(as_temp));
 }
-#line 2038 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2038 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,27,&yymsp[-2].minor);
   yy_destructor(yypParser,28,&yymsp[0].minor);
   yymsp[-3].minor.yy14 = yylhsminor.yy14;
         break;
       case 56: /* reactionLeftComponent ::= DOLLAR variable */
 {  yy_destructor(yypParser,29,&yymsp[-1].minor);
-#line 531 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 531 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy100;
 	delete yymsp[0].minor.yy100;
@@ -2050,12 +2050,12 @@ static void yy_reduce(
 
 	yymsp[-1].minor.yy14 = new ReactionLeftComponent(state, 1, true);
 }
-#line 2054 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2054 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
         break;
       case 57: /* reactionLeftComponent ::= DOLLAR variable LEFT_CURLY moleculePropertyNames RIGHT_CURLY */
 {  yy_destructor(yypParser,29,&yymsp[-4].minor);
-#line 540 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 540 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[-3].minor.yy100;
 	delete yymsp[-3].minor.yy100;
@@ -2066,13 +2066,13 @@ static void yy_reduce(
 
 	yymsp[-4].minor.yy14 = new ReactionLeftComponent(state, 1, true, std::move(as_temp));
 }
-#line 2070 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2070 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,27,&yymsp[-2].minor);
   yy_destructor(yypParser,28,&yymsp[0].minor);
 }
         break;
       case 58: /* reactionLeftComponent ::= expression MULTIPLY reactionLeftComponent */
-#line 551 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 551 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rc_temp = std::unique_ptr<ReactionLeftComponent>(yymsp[0].minor.yy14);
 	yymsp[0].minor.yy14 = nullptr;
@@ -2086,19 +2086,19 @@ static void yy_reduce(
 	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
 	yylhsminor.yy14 = rc_temp.release();
 }
-#line 2090 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2090 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy14 = yylhsminor.yy14;
         break;
       case 59: /* reactionRightSide ::= */
-#line 574 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 574 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[1].minor.yy5 = new ReactionRightSide();
 }
-#line 2099 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2099 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
         break;
       case 60: /* reactionRightSide ::= reactionRightComponent */
-#line 577 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 577 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rc_temp = std::unique_ptr<ReactionRightComponent>(yymsp[0].minor.yy77);
 	yymsp[0].minor.yy77 = nullptr;
@@ -2108,11 +2108,11 @@ static void yy_reduce(
 	rs_temp->PushBack(std::move(rc_temp));
 	yylhsminor.yy5 = rs_temp.release();
 }
-#line 2112 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2112 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy5 = yylhsminor.yy5;
         break;
       case 61: /* reactionRightSide ::= reactionRightSide PLUS reactionRightComponent */
-#line 586 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 586 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy5 = yymsp[-2].minor.yy5;
 	yymsp[-2].minor.yy5 = nullptr;
@@ -2121,12 +2121,12 @@ static void yy_reduce(
 
 	yylhsminor.yy5->PushBack(std::move(rc_temp));
 }
-#line 2125 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2125 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
   yymsp[-2].minor.yy5 = yylhsminor.yy5;
         break;
       case 62: /* reactionRightSide ::= expression PLUS expression */
-#line 595 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 595 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	delete(yymsp[-2].minor.yy64);
 	yymsp[-2].minor.yy64=nullptr;
@@ -2134,11 +2134,11 @@ static void yy_reduce(
 	yymsp[0].minor.yy64=nullptr;
 	throw std::runtime_error("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 2138 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2138 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
       case 63: /* reactionRightSide ::= reactionRightSide PLUS expression */
-#line 603 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 603 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	delete(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64=nullptr;
@@ -2146,19 +2146,19 @@ static void yy_reduce(
 	yymsp[-2].minor.yy5=nullptr;
 	throw std::runtime_error("Products or transformees of a reaction must either be state names, or an expression (representing the stochiometry of the state) times the state name, in this order.");
 }
-#line 2150 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2150 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,11,&yymsp[-1].minor);
         break;
       case 64: /* moleculePropertyExpressions ::= */
-#line 616 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 616 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yymsp[1].minor.yy30 = new MoleculePropertyExpressions();
 	yymsp[1].minor.yy30->push_back(std::unique_ptr<IExpression>(nullptr));
 }
-#line 2159 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2159 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
         break;
       case 65: /* moleculePropertyExpressions ::= expression */
-#line 620 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 620 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[0].minor.yy64);
 	yymsp[0].minor.yy64 = nullptr;
@@ -2166,11 +2166,11 @@ static void yy_reduce(
 	yylhsminor.yy30 = new MoleculePropertyExpressions();
 	yylhsminor.yy30->push_back(std::move(e_temp));
 }
-#line 2170 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2170 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy30 = yylhsminor.yy30;
         break;
       case 66: /* moleculePropertyExpressions ::= moleculePropertyExpressions COMMA expression */
-#line 627 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 627 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy30 = yymsp[-2].minor.yy30;
 	yymsp[-2].minor.yy30 = nullptr;
@@ -2179,24 +2179,24 @@ static void yy_reduce(
 
 	yylhsminor.yy30->push_back(std::move(e_temp));
 }
-#line 2183 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2183 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[-1].minor);
   yymsp[-2].minor.yy30 = yylhsminor.yy30;
         break;
       case 67: /* moleculePropertyExpressions ::= moleculePropertyExpressions COMMA */
-#line 635 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 635 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	yylhsminor.yy30 = yymsp[-1].minor.yy30;
 	yymsp[-1].minor.yy30 = nullptr;
 
 	yylhsminor.yy30->push_back(std::unique_ptr<IExpression>(nullptr));
 }
-#line 2195 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2195 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,24,&yymsp[0].minor);
   yymsp[-1].minor.yy30 = yylhsminor.yy30;
         break;
       case 68: /* reactionRightComponent ::= variable */
-#line 647 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 647 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy100;
 	delete yymsp[0].minor.yy100;
@@ -2205,11 +2205,11 @@ static void yy_reduce(
 
 	yylhsminor.yy77 = new ReactionRightComponent(state, 1, false);
 }
-#line 2209 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2209 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yymsp[0].minor.yy77 = yylhsminor.yy77;
         break;
       case 69: /* reactionRightComponent ::= variable LEFT_CURLY moleculePropertyExpressions RIGHT_CURLY */
-#line 655 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 655 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[-3].minor.yy100;
 	delete yymsp[-3].minor.yy100;
@@ -2220,14 +2220,14 @@ static void yy_reduce(
 
 	yylhsminor.yy77 = new ReactionRightComponent(state, 1, false, std::move(as_temp));
 }
-#line 2224 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2224 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,27,&yymsp[-2].minor);
   yy_destructor(yypParser,28,&yymsp[0].minor);
   yymsp[-3].minor.yy77 = yylhsminor.yy77;
         break;
       case 70: /* reactionRightComponent ::= DOLLAR variable */
 {  yy_destructor(yypParser,29,&yymsp[-1].minor);
-#line 666 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 666 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[0].minor.yy100;
 	delete yymsp[0].minor.yy100;
@@ -2236,12 +2236,12 @@ static void yy_reduce(
 
 	yymsp[-1].minor.yy77 = new ReactionRightComponent(state, 1, true);
 }
-#line 2240 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2240 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 }
         break;
       case 71: /* reactionRightComponent ::= DOLLAR variable LEFT_CURLY moleculePropertyExpressions RIGHT_CURLY */
 {  yy_destructor(yypParser,29,&yymsp[-4].minor);
-#line 675 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 675 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier state = *yymsp[-3].minor.yy100;
 	delete yymsp[-3].minor.yy100;
@@ -2252,13 +2252,13 @@ static void yy_reduce(
 
 	yymsp[-4].minor.yy77 = new ReactionRightComponent(state, 1, true, std::move(as_temp));
 }
-#line 2256 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2256 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,27,&yymsp[-2].minor);
   yy_destructor(yypParser,28,&yymsp[0].minor);
 }
         break;
       case 72: /* reactionRightComponent ::= expression MULTIPLY reactionRightComponent */
-#line 686 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 686 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto rc_temp = std::unique_ptr<ReactionRightComponent>(yymsp[0].minor.yy77);
 	yymsp[0].minor.yy77 = nullptr;
@@ -2272,13 +2272,13 @@ static void yy_reduce(
 	rc_temp->SetStochiometry(static_cast<stochsim::Stochiometry>(rc_temp->GetStochiometry()*stochiometry));
 	yylhsminor.yy77 = rc_temp.release();
 }
-#line 2276 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2276 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,13,&yymsp[-1].minor);
   yymsp[-2].minor.yy77 = yylhsminor.yy77;
         break;
       case 73: /* reactionRightComponent ::= LEFT_SQUARE expression QUESTIONMARK reactionRightSide COLON reactionRightSide RIGHT_SQUARE */
 {  yy_destructor(yypParser,19,&yymsp[-6].minor);
-#line 700 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 700 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	auto e_temp = std::unique_ptr<IExpression>(yymsp[-5].minor.yy64);
 	yymsp[-5].minor.yy64 = nullptr;
@@ -2291,7 +2291,7 @@ static void yy_reduce(
 	identifier state = parseTree->CreateChoice(std::move(e_temp), std::move(s1_temp), std::move(s2_temp));
 	yymsp[-6].minor.yy77 = new ReactionRightComponent(state, 1, false);
 }
-#line 2295 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2295 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,2,&yymsp[-4].minor);
   yy_destructor(yypParser,23,&yymsp[-2].minor);
   yy_destructor(yypParser,20,&yymsp[0].minor);
@@ -2299,23 +2299,23 @@ static void yy_reduce(
         break;
       case 74: /* preprocessorDirective ::= INCLUDE variable SEMICOLON */
 {  yy_destructor(yypParser,31,&yymsp[-2].minor);
-#line 720 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 720 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 	identifier fileName = *yymsp[-1].minor.yy100;
 	delete yymsp[-1].minor.yy100;
 	yymsp[-1].minor.yy100 = nullptr;
 	parseTree->IncludeFile(fileName);
 }
-#line 2310 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2310 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,1,&yymsp[0].minor);
 }
         break;
       case 75: /* preprocessorDirective ::= MODEL_NAME IDENTIFIER SEMICOLON */
 {  yy_destructor(yypParser,30,&yymsp[-2].minor);
-#line 717 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 717 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 {
 }
-#line 2319 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2319 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
   yy_destructor(yypParser,17,&yymsp[-1].minor);
   yy_destructor(yypParser,1,&yymsp[0].minor);
 }
@@ -2372,9 +2372,9 @@ static void yy_parse_failed(
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
 /************ Begin %parse_failure code ***************************************/
-#line 4 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.y"
+#line 4 "C:/stochsim/lib/cmdlparser/cmdl_grammar.y"
 throw std::runtime_error("Syntax error.");
-#line 2378 "/Users/antoineloussouarn/Desktop/stochsim/lib/cmdlparser/cmdl_grammar.c"
+#line 2378 "C:/stochsim/lib/cmdlparser/cmdl_grammar.c"
 /************ End %parse_failure code *****************************************/
   cmdl_internal_ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
