@@ -12,7 +12,7 @@ end
 % This struct is passed to stochsim when it is parsing the model file.
 % All parameters defined here overwrite the corresponding parameters
 % defined in the model file.
-p = struct('V', 0.1, 'fatePeriod', 10/60); % Smaller volume decreases simulation runtime.
+p = struct('V', 0.01, 'fatePeriod', 10/60); % Smaller volume decreases simulation runtime.
 
 %% Parse/read in model file
 sim = stochSimulation(modelFile, p);

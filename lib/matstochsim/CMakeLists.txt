@@ -15,18 +15,11 @@ if(Matlab_FOUND)
   message(STATUS "- MEX: ${Matlab_MEX_LIBRARY}")
   message(STATUS "- MAT: ${Matlab_MAT_LIBRARY}")
   message(STATUS "- UT:  ${Matlab_UT_LIBRARY}")
-
-  #set(TARGET_SUFFIX ${Matlab_MEX_EXTENSION})
 else ()
+  message(STATUS "Could not find Matlab installation. Configure Matlab_MX_LIBRARY_PATH, Matlab_INCLUDE_DIRS, Matlab_MX_LIBRARY, Matlab_MEX_LIBRARY, Matlab_MAT_LIBRARY and Matlab_UT_LIBRARY manually!")
 endif()
 
-#if (APPLE)
-#  set (CMAKE_SHARED_LINKER_FLAGS "-Wl,-exported_symbols_list,${${Matlab_MX_LIBRARY_PATH}}/mexFunction.map")
-#endif ()
-
-#add_library(matstochsim SHARED "matstochsim.cpp")
 matlab_add_mex(NAME matstochsim SHARED SRC "matstochsim.cpp")
-#target_compile_definitions(matstochsim PUBLIC MATLAB_MEX_FILE)
 
 target_sources(matstochsim
   PRIVATE
@@ -44,31 +37,9 @@ target_include_directories(matstochsim
   ../../include/matstochsim
   )
 
-#target_link_libraries(matstochsim PUBLIC 
-#    ${Matlab_MAT_LIBRARY}
-#    ${Matlab_MEX_LIBRARY}
-#    ${Matlab_MX_LIBRARY} 
-#    ${Matlab_UT_LIBRARY} 
-#  )
-#elseif (APPLE)
-#  target_link_libraries(matstochsim PUBLIC
-#    ${MATLAB_PATH}/bin/maci64/libmat.dylib
-#    ${MATLAB_PATH}/bin/maci64/libmex.dylib
-#    ${MATLAB_PATH}/bin/maci64/libmx.dylib
-#    ${MATLAB_PATH}/bin/maci64/libut.dylib
-#  )
-#endif ()
-
-#target_link_libraries (matstochsim PUBLIC cmdlparser)
-#target_link_libraries (matstochsim PUBLIC expression)
-#target_link_libraries (matstochsim PUBLIC stochsim)
-
 target_link_libraries(matstochsim ${Matlab_UT_LIBRARY})
 target_link_libraries (matstochsim cmdlparser)
 target_link_libraries (matstochsim expression)
 target_link_libraries (matstochsim stochsim)
 
 target_compile_features(matstochsim PRIVATE cxx_std_17)
-
-#set_target_properties(matstochsim PROPERTIES PREFIX "")
-#set_target_properties(matstochsim PROPERTIES SUFFIX ".${TARGET_SUFFIX}")

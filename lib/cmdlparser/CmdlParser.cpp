@@ -275,7 +275,7 @@ namespace cmdlparser
 			{
 				//TODO: implement
 				std::stringstream errorMessage;
-				errorMessage << "Yet not implemented.";
+				errorMessage << "Reactions with both delays and rates are yet not implemented. Currently, they have to be split into two separate reactions, with an intermediate species.";
 				throw std::runtime_error(errorMessage.str().c_str());
 			}
 			else if (rateDef)
@@ -392,16 +392,13 @@ namespace cmdlparser
 	
 	void ParseFileInternal(std::string cmdlFilePath, stochsim::Simulation& sim, cmdlparser::CmdlParseTree& parseTree, void* handle)
 	{
-		// TODO: Get absolute path
-		/*std::error_code ec{};
-		std::filesystem::path absolutePath{std::filesystem::weakly_canonical(cmdlFilePath, ec)};
+		std::error_code ec;
+		std::filesystem::path absolutePath{std::filesystem::absolute(cmdlFilePath, ec)};
 		if(ec)
 		{
-			std::stringstream errorMessage;
-			errorMessage << "Could not determine canonical path for cmdl relative path \"" << cmdlFilePath << "\".";
-			throw std::runtime_error(errorMessage.str().c_str());
-		}*/
-		std::filesystem::path absolutePath{std::filesystem::absolute(cmdlFilePath)};
+			// try to work with relative path
+			absolutePath = cmdlFilePath;
+		}
 		// Open file
 		std::ifstream infile(absolutePath);
 		if (infile.fail())

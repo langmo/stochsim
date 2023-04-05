@@ -18,24 +18,19 @@ if (CMAKE_PROJECT_NAME STREQUAL STOCHSIMALL)
     set(CMAKE_INSTALL_PREFIX ${PROFIPP_BINARY_DIR}/install
       CACHE PATH "Default install path" FORCE)
   endif()
-
-  set(CMAKE_APPLE_SILICON_PROCESSOR "x86_64" CACHE STRING "Either arm64 or x86_64; depending on the architecture stochsim should be compiled on MacOS.")
-  #TODO: Fix
-  set(CMAKE_OSX_ARCHITECTURES "x86_64")
-
+  if(APPLE)
+    # Matlab is currently not silicon compatible.
+    set(CMAKE_APPLE_SILICON_PROCESSOR "x86_64" CACHE STRING "Either arm64 or x86_64; depending on the architecture stochsim should be compiled on MacOS.")
+    set(CMAKE_OSX_ARCHITECTURES "x86_64")
+  endif()
   message(STATUS "Current compiler is:      ${CMAKE_CXX_COMPILER_ID}") 
   message(STATUS "Current build type is:    ${CMAKE_BUILD_TYPE}")
   message(STATUS "Current install path is:  ${CMAKE_INSTALL_PREFIX}")
-  message(STATUS "Building for              ${CMAKE_SYSTEM_NAME}")
-  message(STATUS "Building for processor    ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  message(STATUS "Building for:             ${CMAKE_SYSTEM_NAME}")
+  message(STATUS "Building for processor:   ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
 
-option(BUILD_MATLAB "ON, if matstochsim should be build. In this case, cache variable MATLAB_PATH has to be set.")
-set(MATLAB_PATH "C:/Program Files/MATLAB/R2015a" CACHE STRING "Full path main folder of Matlab (e.g. C:/Program Files/MATLAB/R2015a). The main folder of Matlab can be recognized by containing a directory with name \"extern\".")
-
-  # Always use standard .o suffix
-#set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
-#set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+option(BUILD_MATLAB "ON, if matstochsim should be build. Requires Matlab to be installed. The generator should be one supported by Matlab, i.e. mex and other compiled libs should be available for the compiler.")
 
 add_subdirectory(lib/lemon)
 add_subdirectory(lib/expression)

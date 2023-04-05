@@ -162,8 +162,14 @@ namespace stochsim
 		}
 	};
 
-	template<class T> class CircularBufferIterator : public std::iterator<std::random_access_iterator_tag, T, ptrdiff_t>
+	template<class T> class CircularBufferIterator
 	{
+	public:
+		typedef T         value_type;
+		typedef ptrdiff_t  difference_type;
+		typedef T*   pointer;
+		typedef T& reference;
+		typedef std::random_access_iterator_tag  iterator_category;
 	private:
 		CircularBuffer<T>* buffer_;
 		typename CircularBuffer<T>::size_type pos_;

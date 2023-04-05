@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <functional>
+#include <filesystem>
 #include "DelayReaction.h"
 namespace stochsim
 {
@@ -54,16 +55,15 @@ namespace stochsim
 				file_->close();
 				file_.reset();
 			}
-			std::string fileName = simInfo.GetSaveFolder();
-			fileName += "/";
-			fileName += fileName_;
+			std::filesystem::path filePath{simInfo.GetSaveFolder()};
+			filePath /= fileName_;
 
 			file_ = std::make_unique<std::ofstream>();
-			file_->open(fileName);
+			file_->open(filePath.string().c_str());
 			if (!file_->is_open())
 			{
 				std::string errorMessage = "Could not open file ";
-				errorMessage += fileName;
+				errorMessage += filePath.string();
 				throw std::runtime_error(errorMessage.c_str());
 			}
 

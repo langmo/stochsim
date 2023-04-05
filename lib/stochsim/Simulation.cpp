@@ -2,20 +2,13 @@
 #include <math.h>    
 #include <cassert>
 #include <sstream> 
-#define __STDC_WANT_LIB_EXT1__ 1
-#include <time.h>
 #include <locale>
 #include <codecvt>
 #include <iostream>
 #include <vector>
 #include <random>
-#if defined(_WIN32)
-// Exclude rarely-used stuff from Windows headers
-#define WIN32_LEAN_AND_MEAN
-// Windows Header Files:
-#include <SDKDDKVer.h>
-#include <windows.h>
-#endif
+#include <filesystem>
+
 namespace stochsim
 {
 	std::string CreatePathRecursively(std::string rawPath);
@@ -460,65 +453,15 @@ namespace stochsim
 		return impl_->GetLogger().IsUniqueSubfolder();
 	}
 
-
-
-
-	std::wstring s2ws(const std::string& str)
-	{
-		using convert_typeX = std::codecvt_utf8<wchar_t>;
-		std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-		return converterX.from_bytes(str);
-	}
-
-	std::string ws2s(const std::wstring& wstr)
-	{
-		using convert_typeX = std::codecvt_utf8<wchar_t>;
-		std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-		return converterX.to_bytes(wstr);
-	}
 	std::string CreatePathRecursively(std::string rawPath)
 	{
-// TODO: FIX
-/*#if defined(_WIN32)
-		std::wstring wRawPath = s2ws(rawPath);
-		// remove trailing / or \ 
-		while (wRawPath[wRawPath.size() - 1] == L'\\' || wRawPath[wRawPath.size() - 1] == L'/')
-			wRawPath.resize(wRawPath.size()-1);
-		std::wstring::size_type pos = 0;
-		while (true)
-		{
-			std::wstring::size_type end1 = wRawPath.find(L'\\', pos);
-			std::wstring::size_type end2 = wRawPath.find(L'/', pos);
-			std::wstring::size_type end = end1 < end2 ? end1 : end2;
-			std::wstring folder = wRawPath.substr(0, end);
-			if (folder[folder.size() - 1] != ':')
-			{
-				if (!CreateDirectory(folder.c_str(), NULL))
-				{
-					DWORD err = GetLastError();
-
-					if (err != ERROR_ALREADY_EXISTS)
-					{
-						std::stringstream errorMessage;
-						errorMessage << "Could not create folder ";
-						errorMessage << rawPath;
-						errorMessage << " to store results. Iteration failed at sub-folder ";
-						errorMessage << ws2s(folder);
-						throw std::runtime_error(errorMessage.str().c_str());
-					}
-				}
-			}
-			if (end == std::wstring::npos)
-				break;
-			pos = end + 1;
-		}
-		return rawPath;
-#else
-		// TODO: Since I don't know how to recursively create folders on other systems, I simply save everything in current path, but this should be fixed somehow...
-		return "";
-#endif*/
-		return "";
+		std::error_code ec;
+		std::filesystem::path folderPath{std::filesystem::weakly_canonical(rawPath, ec)};
+		if(ec)
+			return "";
+		std::filesystem::create_directories(folderPath, ec );
+		if(ec)
+			return "";
+		return folderPath.string();
 	}
 }
