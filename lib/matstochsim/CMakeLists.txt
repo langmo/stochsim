@@ -6,7 +6,7 @@ cmake_policy(SET CMP0115 NEW)
 # Find Matlab
 find_package(Matlab REQUIRED COMPONENTS MX_LIBRARY MAT_LIBRARY)
 get_filename_component( Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
-find_library( Matlab_UT_LIBRARY NAMES libut.lib libut.so PATHS ${Matlab_MX_LIBRARY_PATH} )
+find_library( Matlab_UT_LIBRARY NAMES libut.lib libut.so libut.dylib PATHS ${Matlab_MX_LIBRARY_PATH} )
 if(Matlab_FOUND)
   message(STATUS "Found Matlab installation and libraries:")
   message(STATUS "- binary dir: ${Matlab_MX_LIBRARY_PATH}")
